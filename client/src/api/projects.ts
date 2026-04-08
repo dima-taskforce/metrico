@@ -4,8 +4,8 @@ import type { Project } from '../types/api';
 export interface CreateProjectData {
   name: string;
   objectType: Project['objectType'];
-  address?: string;
-  defaultCeilingHeight?: number;
+  address?: string | undefined;
+  defaultCeilingHeight?: number | undefined;
 }
 
 export const projectsApi = {
