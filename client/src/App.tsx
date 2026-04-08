@@ -8,6 +8,8 @@ import { WizardLayout } from './layouts/WizardLayout';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlaceholderStep } from './pages/wizard/PlaceholderStep';
 import { ProjectInfoStep } from './pages/wizard/ProjectInfoStep';
+import { RoomsStep } from './pages/wizard/RoomsStep';
+import { MeasureStep } from './pages/wizard/MeasureStep';
 
 // Lazy imports for main pages (to be implemented in S1-08, S1-09, S1-11)
 import { LoginPage } from './pages/LoginPage';
@@ -55,11 +57,17 @@ function App() {
           <Route path="/wizard/:projectId" element={<WizardLayout />}>
             <Route index element={<Navigate to="info" replace />} />
             <Route path="info" element={<ProjectInfoStep />} />
-            <Route path="rooms" element={<PlaceholderStep title="Комнаты" />} />
+            <Route path="rooms" element={<RoomsStep />} />
             <Route path="walls" element={<PlaceholderStep title="Стены" />} />
             <Route path="elements" element={<PlaceholderStep title="Элементы" />} />
             <Route path="photos" element={<PlaceholderStep title="Фото" />} />
           </Route>
+
+          {/* Room measure flow — full-screen, outside WizardLayout sidebar */}
+          <Route
+            path="/wizard/:projectId/rooms/:roomId/measure"
+            element={<MeasureStep />}
+          />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
