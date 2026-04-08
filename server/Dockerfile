@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY server/package.json ./server/
 # Stub client package to satisfy workspace resolution without installing frontend deps
-RUN echo '{"name":"@metrico/client","version":"1.0.0","private":true}' > ./client/package.json
+RUN mkdir -p ./client && echo '{"name":"@metrico/client","version":"1.0.0","private":true}' > ./client/package.json
 
 # Install all dependencies
 RUN npm ci --workspace=server
@@ -30,7 +30,7 @@ ENV NODE_ENV=production
 # Copy root package files
 COPY package.json package-lock.json ./
 COPY server/package.json ./server/
-RUN echo '{"name":"@metrico/client","version":"1.0.0","private":true}' > ./client/package.json
+RUN mkdir -p ./client && echo '{"name":"@metrico/client","version":"1.0.0","private":true}' > ./client/package.json
 
 # Install production dependencies only
 RUN npm ci --workspace=server --omit=dev
