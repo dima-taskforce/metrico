@@ -58,23 +58,19 @@ export function useAutoSave<T>(
         retryCountRef.current = 0;
 
         // Auto-reset to idle after 2 seconds
-        const resetTimeout = setTimeout(() => {
+        setTimeout(() => {
           setStatus('idle');
         }, 2000);
-
-        return () => clearTimeout(resetTimeout);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Ошибка сохранения';
 
         if (retryCount < maxRetries) {
           // Exponential backoff: 1s, 2s, 4s
           const backoffMs = Math.pow(2, retryCount) * 1000;
-          const retryTimeout = setTimeout(() => {
+          setTimeout(() => {
             retryCountRef.current = retryCount + 1;
             performSave(retryCount + 1);
           }, backoffMs);
-
-          return () => clearTimeout(retryTimeout);
         } else {
           setStatus('error');
           setError(`${errorMessage} (попытка ${retryCount}/${maxRetries})`);
