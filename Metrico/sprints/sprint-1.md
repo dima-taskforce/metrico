@@ -58,12 +58,22 @@ Nginx location-блоки:
 **Описание:**
 Создать `prisma/schema.prisma` с полной моделью данных из `technical-requirements.md` (раздел 4). Все сущности: User, Project, Room, Wall, WallAdjacency, WindowOpening, DoorOpening, RoomElement, RoomPhoto, Angle, FloorPlanLayout. Все enum-ы, все связи с `onDelete: Cascade`. Провайдер: SQLite.
 
+Новые модели в связи с переизучением потока обмера (углы = буквы, стены = пары углов, новая сегментация):
+
+- **WallSegment** (упорядоченные сегменты периметра): wallId, sortOrder, segmentType (enum: PLAIN, WINDOW, DOOR, PROTRUSION, NICHE, PARTITION), length, depth?, windowOpeningId?, doorOpeningId?.
+- **WallElevation** (развёртка стены): wallId (unique), svgData?.
+- **Wall**: добавить поля `cornerFrom` (id угла A) и `cornerTo` (id угла B), заменить `label: String` примерами "A-B". Заменить связи: вместо `windows WindowOpening[]` и `doors DoorOpening[]` — `segments WallSegment[]` и `elevation WallElevation?`.
+- **WindowOpening**: удалить pierWidthLeft, pierWidthRight.
+- **DoorOpening**: удалить pierWidthLeft, pierWidthRight.
+- **RoomElement**: добавить positionX (Float?, позиция на развёртке от начала стены) и cornerLabel (String?, буква угла, если элемент углов: "A", "B" и т.д.).
+- **Angle**: добавить cornerLabel (String, буква угла: "A", "B", "C", "D"...).
+
 Запустить первую миграцию: `npx prisma migrate dev --name init`.
 
 Создать `PrismaModule` (глобальный) и `PrismaService`.
 
 **Результат:**
-- `prisma/schema.prisma` полностью соответствует техтребованиям.
+- `prisma/schema.prisma` полностью соответствует техтребованиям и новой архитектуре.
 - Миграция применена, `metrico.db` создан.
 - `PrismaService` доступен во всех модулях.
 
@@ -78,21 +88,25 @@ Nginx location-блоки:
 **Описание:**
 Реализовать:
 - `POST /api/auth/register` — регистрация (email + пароль). Хэширование через bcrypt (cost ≥ 12). Устанавливает authProvider = LOCAL.
-- `POST /api/auth/login` — вход. Возвращает access token (JWT, 15 мин) + httpOnly refresh cookie (30 дней).
-- `POST /api/auth/refresh` — обновление access token по refresh cookie.
+- `POST /api/auth/login` — вход. Возвращает access token (JWT, 15 мин) + httpOnly refresh cookie (30 дней). **Создаёт запись RefreshToken** (tokenHash = SHA-256 от оригинального токена, expiresAt = +30 дней).
+- `POST /api/auth/refresh` — обновление access token по refresh cookie. **Ищет RefreshToken по tokenHash, проверяет revokedAt и expiresAt**. При успехе — аннулирует старый токен (revokedAt = now()), создаёт новый (rotation).
+- `POST /api/auth/logout` — аннулирование текущего refresh токена (revokedAt = now()). Очищает httpOnly cookie.
 - `JwtAuthGuard` — guard для защиты эндпоинтов.
 - `@CurrentUser()` — кастомный декоратор для получения текущего пользователя.
 
 DTO: `RegisterDto`, `LoginDto` с class-validator.
 
+**RefreshToken — stateful JWT (CRIT-02):** refresh токены хранятся в таблице `RefreshToken` для поддержки инвалидации при logout и смене пароля (S3-07). Оригинальный токен хранится только в httpOnly cookie, в БД — SHA-256 хэш.
+
 **Тесты:**
 - Регистрация: успех, дубликат email, невалидный email.
-- Логин: успех, неверный пароль, несуществующий пользователь.
-- Refresh: успех, невалидный токен.
+- Логин: успех, неверный пароль, несуществующий пользователь, создаётся RefreshToken.
+- Refresh: успех (rotation), невалидный токен, revoked токен, истёкший токен.
+- Logout: токен помечается revoked, повторный refresh возвращает 401.
 - Guard: отклонение без токена, с истёкшим токеном.
 
 **Результат:**
-- Авторизация работает через JWT.
+- Авторизация работает через stateful JWT.
 - Все эндпоинты покрыты тестами.
 
 **Зависимости:** S1-03.

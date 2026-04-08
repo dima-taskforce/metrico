@@ -16,11 +16,15 @@ git commit --allow-empty -m "chore: initial commit"
 | Layer | Technology |
 |-------|-----------|
 | Backend | NestJS (Node.js 20 LTS, TypeScript strict) |
-| Frontend | Next.js 14 App Router |
+| Frontend | React 18 + Vite (SPA) |
+| Routing | React Router v6 |
+| State | Zustand |
 | ORM | Prisma |
 | Styling | Tailwind CSS |
 | Auth | JWT + httpOnly cookie |
 | Infra | Docker Compose v2 + Nginx + Certbot |
+
+> **Важно:** фронтенд — чистый SPA (React + Vite), **не** Next.js. Директории: `client/` (фронтенд), `server/` (бэкенд). Единственный источник правды по стеку — `docs/technical-requirements.md`.
 
 ## Commands
 
@@ -55,15 +59,26 @@ npx prisma generate     # регенерировать клиент
 
 ```
 metrico/
-├── backend/        # NestJS API
+├── client/         # React 18 SPA (Vite)
 │   ├── src/
-│   │   ├── modules/  # feature-модули (auth, users, ...)
-│   │   ├── prisma/   # PrismaService
-│   │   └── main.ts
+│   │   ├── api/       # API-клиент
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── stores/    # Zustand stores
+│   │   ├── hooks/
+│   │   └── types/
+│   ├── index.html
+│   └── vite.config.ts
+├── server/         # NestJS API
+│   ├── src/
+│   │   ├── auth/
+│   │   ├── projects/
+│   │   ├── rooms/
+│   │   └── prisma/
 │   └── prisma/
 │       └── schema.prisma
-├── frontend/       # Next.js App Router
-│   └── app/
+├── seed/           # Тестовые данные
+│   └── test-apartment.json
 ├── nginx/          # конфиги reverse proxy
 ├── docker-compose.yml
 └── .env.example

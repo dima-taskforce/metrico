@@ -112,6 +112,7 @@ CI/CD: GitHub Actions
 - authProvider (enum: LOCAL / GOOGLE / YANDEX)
 - projects → Project[] (onDelete: Cascade)
 - passwordResetTokens → PasswordResetToken[] (onDelete: Cascade)
+- refreshTokens → RefreshToken[] (onDelete: Cascade)
 - createdAt, updatedAt (DateTime)
 
 ### PasswordResetToken
@@ -122,6 +123,19 @@ CI/CD: GitHub Actions
 - usedAt (DateTime?) — null, если токен не использован; заполняется при успешном сбросе
 - createdAt (DateTime, @default(now()))
 - @@index([userId])
+
+### RefreshToken
+- id (String, @id @default(uuid()))
+- userId → User (onDelete: Cascade)
+- tokenHash (String, @unique) — SHA-256 хэш от оригинального refresh-токена
+- expiresAt (DateTime) — TTL 30 дней
+- revokedAt (DateTime?) — null если токен активен; заполняется при logout / смене пароля
+- createdAt (DateTime, @default(now()))
+- @@index([userId])
+
+**Использование:** при POST /api/auth/refresh — ищется запись по хэшу из httpOnly-куки, проверяется `revokedAt` и `expiresAt`. При POST /api/auth/logout и POST /api/auth/reset-password — устанавливается `revokedAt = now()` для всех активных токенов пользователя. Это обеспечивает: инвалидацию сессии при смене пароля (S3-07), защиту от повторного использования украденного токена.
+
+**Единицы измерения:** все линейные размеры в БД хранятся в **миллиметрах (Int/Float)**. Конвертация в см/м выполняется только на клиенте для отображения. Площади в `expectedCalculations` хранятся в м² (Float, 2 знака).
 
 ### Project
 - id (String, @id @default(uuid()))
@@ -157,15 +171,19 @@ CI/CD: GitHub Actions
 - `computedPerimeter` — сумма длин всех сегментов (WallSegment.length) по периметру. Альтернативно: сумма Wall.length (должна совпадать с суммой сегментов).
 - `computedVolume` — площадь × средняя высота потолка ((h1 + h2) / 2).
 
-**Алгоритм вычисления площади (RoomsCalcService):**
-Стены упорядочены по `sortOrder`. Углы между последовательными стенами берутся из сущности Angle (если не задан — считается 90°). Начальная вершина — (0, 0), начальное направление — вправо. Из длин стен и углов восстанавливаются координаты вершин полигона, затем площадь считается по формуле Гаусса (Shoelace formula). Для прямоугольников — упрощённая формула: длина × ширина.
+**Конвенция обхода стен:** стены перечислены **по часовой стрелке** (clockwise), начиная от угла A (левый нижний при входе). `sortOrder` определяет порядок обхода. Это обеспечивает корректный знак площади в формуле Гаусса и единообразную ориентацию полигонов.
+
+**Алгоритм вычисления площади (RoomsCalcService — внутренний сервис, не имеет REST-эндпоинтов, вызывается из PlanAssemblerService и RoomsService):**
+Стены упорядочены по `sortOrder` (по часовой стрелке). Углы между последовательными стенами берутся из сущности Angle (если не задан — считается 90°). Начальная вершина — (0, 0), начальное направление — вправо. Из длин стен и углов восстанавливаются координаты вершин полигона, затем площадь считается по формуле Гаусса (Shoelace formula). Для прямоугольников — упрощённая формула: длина × ширина.
+
+**Важно (HIGH-01):** Shoelace formula для clockwise-полигона возвращает отрицательное значение. Результат обязательно берётся по модулю: `computedArea = Math.abs(shoelaceSum) / 2`. Тест обязан проверять: площадь всегда > 0.
 
 ### Wall
 - id (String, @id @default(uuid()))
 - roomId → Room (onDelete: Cascade)
 - label (String, пара углов: «A-B», «B-C», «C-D»...)
-- cornerFrom (String, начальный угол: «A», «B», «C»...)
-- cornerTo (String, конечный угол: «B», «C», «D»...)
+- cornerFrom (String, начальный угол: «A», «B», «C»... Формат: одна заглавная латинская буква A-Z. Максимум 26 углов на комнату.)
+- cornerTo (String, конечный угол: «B», «C», «D»... Формат: одна заглавная латинская буква A-Z.)
 - length (Float)
 - material (enum: CONCRETE / DRYWALL / BRICK / OTHER)
 - wallType (enum: EXTERNAL / INTERNAL / ADJACENT)
@@ -173,6 +191,10 @@ CI/CD: GitHub Actions
 - sortOrder (Int)
 - segments → WallSegment[] (onDelete: Cascade)
 - elevation → WallElevation? (onDelete: Cascade)
+- adjacenciesAsWallA → WallAdjacency[] @relation("adjacencyWallA")
+- adjacenciesAsWallB → WallAdjacency[] @relation("adjacencyWallB")
+- anglesAsWallA → Angle[] @relation("angleWallA")
+- anglesAsWallB → Angle[] @relation("angleWallB")
 - @@index([roomId])
 
 **Примечание по кривизне:** `curvatureAvg` вычисляется на лету как среднее трёх точек, не хранится в БД.
@@ -216,8 +238,12 @@ CI/CD: GitHub Actions
 
 **Инварианты (проверяются на бэкенде при создании):**
 - wallA и wallB принадлежат разным комнатам одного проекта.
-- Обратная связь (wallB→wallA) не создаётся как отдельная запись — проверка в обе стороны.
+- Обратная связь (wallB→wallA) не создаётся как отдельная запись — **проверка в обе стороны обязательна**: `@@unique([wallAId, wallBId])` защищает только от (A,B), но не от (B,A). AdjacencyService.create() должен перед вставкой проверять существование записи с `{wallAId: wallBId, wallBId: wallAId}` и возвращать `409 Conflict` если найдена.
 - Если hasDoorBetween = true, doorOpeningId должен быть не null.
+
+**Защита инварианта при удалении двери:** `doorOpeningId` имеет `onDelete: SetNull`. При удалении DoorOpening Prisma middleware должен обнулить `hasDoorBetween` в соответствующей WallAdjacency (реализуется в AdjacencyModule).
+
+**Частичное перекрытие стен (MVP):** при стыковке стен разной длины (например, Коридор D-E 725мм и Кухня D-A 3390мм) PlanAssembler выравнивает по начальной точке стены (`ALIGN_START`). Поле `wallBOffset` отсутствует — это осознанное упрощение MVP. При расширении добавить `alignmentType (enum: ALIGN_START / ALIGN_CENTER / ALIGN_CUSTOM, @default(ALIGN_START))` и `wallBOffset (Int?, мм)` в модель WallAdjacency.
 
 ### WindowOpening
 - id (String, @id @default(uuid()))
@@ -232,6 +258,8 @@ CI/CD: GitHub Actions
 - id (String, @id @default(uuid()))
 - wallId → Wall (onDelete: Cascade)
 - width, heightFromScreed (Float)
+- revealLeft (Float?, мм — глубина откоса слева)
+- revealRight (Float?, мм — глубина откоса справа)
 - photoPath (String?)
 
 **Примечание:** поле `connectsToRoomId` удалено. Информация о том, в какую комнату ведёт дверь, определяется через WallAdjacency (единственный источник правды). Это исключает рассинхронизацию данных.
@@ -256,7 +284,7 @@ CI/CD: GitHub Actions
 | height | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | depth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ (диаметр) |
 | positionX | — | ✓ | ✓ | ✓ | ✓ | ✓ |
-| wallId | — (может быть null, колонна в центре) | ✓ | ✓ | ✓ | ✓ | — |
+| wallId | — (может быть null, колонна в центре) | ✓ | ✓ | ✓ | ✓ | рекоменд. (null для стояка в центре) |
 | offsetFromWall | — | — | ✓ | — | — | ✓ |
 | offsetFromFloor | — | — | ✓ | ✓ | ✓ | — |
 
@@ -266,6 +294,9 @@ CI/CD: GitHub Actions
 - id (String, @id @default(uuid()))
 - roomId → Room (onDelete: Cascade)
 - photoType (enum: OVERVIEW_BEFORE / OVERVIEW_AFTER / DETAIL)
+  - `OVERVIEW_BEFORE` — общий вид комнаты до начала обмера (пустая комната)
+  - `OVERVIEW_AFTER` — общий вид комнаты после обмера (с разметкой, рулеткой, маркерами)
+  - `DETAIL` — фото конкретного элемента или сложного места
 - filePath (String)
 - createdAt
 
@@ -284,6 +315,7 @@ CI/CD: GitHub Actions
 - id (String, @id @default(uuid()))
 - projectId → Project (@unique, onDelete: Cascade)
 - layoutJson (Json — позиции и повороты комнат на плане)
+- layoutVersion (Int, @default(1)) — версия формата layoutJson (для миграции при изменении структуры)
 - svgData (String?, сгенерированный SVG)
 
 **Структура layoutJson** (Zod-схема для валидации на бэкенде):
@@ -500,7 +532,7 @@ AppModule
                                         - проверка размера (≤ 10 МБ)
                                      5. multer → сохранение во временную директорию
                                      6. PhotosService:
-                                        - sharp: очистка EXIF-данных
+                                        - sharp: auto-rotate по EXIF orientation tag, затем очистка EXIF-данных (GDPR)
                                         - sharp: генерация thumbnail (400px по большей стороне)
                                         - перемещение в uploads/{userId}/{projectId}/{roomId}/
                                         - сохранение пути в БД (RoomPhoto или element.photoPath)
@@ -531,6 +563,8 @@ AppModule
 - Пользователь может через UI (React-Konva): перетаскивать комнаты, поворачивать на 90°, менять привязку стены.
 - Изменения сохраняются в `layoutJson` через `PUT /api/projects/:id/plan`.
 - SVG перегенерируется на клиенте (Konva → SVG export) и отправляется на сервер.
+
+**Разделение SVG / Canvas:** Konva.js (Canvas) используется для интерактивного редактирования плана (drag & drop, поворот комнат). SVG используется для хранения в БД (`FloorPlanLayout.svgData`, `WallElevation.svgData`) и для экспорта в PDF. Конвертация: Konva → SVG export на клиенте.
 
 ---
 
