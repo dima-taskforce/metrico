@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { planApi } from '../api/plan';
+import { projectsApi } from '../api/projects';
 import { usePlanStore } from '../stores/planStore';
+import type { ProjectStatus } from '../types/api';
 import { PlanCanvas } from '../components/plan/PlanCanvas';
 import { PlanTotals } from '../components/dashboard/PlanTotals';
 import { RoomDetailsSidebar } from '../components/dashboard/RoomDetailsSidebar';
@@ -27,20 +29,25 @@ export function PlanDashboardPage() {
   } = usePlanStore();
 
   const [projectLabel, setProjectLabel] = useState('Проект');
+  const [projectStatus, setProjectStatus] = useState<ProjectStatus | null>(null);
   const [selectedWallId, setSelectedWallId] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [reopenLoading, setReopenLoading] = useState(false);
 
   useEffect(() => {
     if (!projectId) return;
     reset();
     setStatus('loading');
 
-    planApi
-      .getFloorPlan(projectId)
-      .then((data) => {
-        setPlanData(data);
-        setProjectLabel(data.projectLabel ?? 'Проект');
+    Promise.all([
+      planApi.getFloorPlan(projectId),
+      projectsApi.get(projectId),
+    ])
+      .then(([planData, project]) => {
+        setPlanData(planData);
+        setProjectLabel(planData.projectLabel ?? 'Проект');
+        setProjectStatus(project.status);
         setStatus('done');
       })
       .catch((err: Error) => {
@@ -64,6 +71,17 @@ export function PlanDashboardPage() {
   const handleCloseSidebar = useCallback(() => {
     setSelectedRoomId(null);
   }, [setSelectedRoomId]);
+
+  const handleReopen = async () => {
+    if (!projectId) return;
+    setReopenLoading(true);
+    try {
+      await projectsApi.reopen(projectId);
+      navigate(`/wizard/${projectId}/plan`);
+    } finally {
+      setReopenLoading(false);
+    }
+  };
 
   const handleDownloadPdf = async () => {
     if (!projectId) return;
@@ -108,12 +126,15 @@ export function PlanDashboardPage() {
       <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white shrink-0">
         <h1 className="text-base font-semibold text-gray-900 truncate">{projectLabel}</h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate(`/wizard/${projectId}/plan`)}
-            className="text-sm px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
-          >
-            Редактировать
-          </button>
+          {projectStatus === 'COMPLETED' && (
+            <button
+              onClick={handleReopen}
+              disabled={reopenLoading}
+              className="text-sm px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 disabled:opacity-50"
+            >
+              {reopenLoading ? 'Открытие…' : 'Редактировать'}
+            </button>
+          )}
           <button
             onClick={handleDownloadPdf}
             disabled={pdfLoading}

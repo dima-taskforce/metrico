@@ -22,6 +22,8 @@ export const projectsApi = {
 
   duplicate: (id: string) => api.post<Project>(`/projects/${id}/duplicate`),
 
+  reopen: (id: string) => api.patch<Project>(`/projects/${id}/reopen`, {}),
+
   uploadBlueprint: (id: string, file: File) =>
     api.upload<Project>(`/projects/${id}/blueprint`, file),
 };
