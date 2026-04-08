@@ -9,7 +9,9 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { PlaceholderStep } from './pages/wizard/PlaceholderStep';
 import { ProjectInfoStep } from './pages/wizard/ProjectInfoStep';
 import { RoomsStep } from './pages/wizard/RoomsStep';
+import { SummaryStep } from './pages/wizard/SummaryStep';
 import { MeasureStep } from './pages/wizard/MeasureStep';
+import { PlanStep } from './pages/wizard/PlanStep';
 
 // Lazy imports for main pages (to be implemented in S1-08, S1-09, S1-11)
 import { LoginPage } from './pages/LoginPage';
@@ -58,6 +60,8 @@ function App() {
             <Route index element={<Navigate to="info" replace />} />
             <Route path="info" element={<ProjectInfoStep />} />
             <Route path="rooms" element={<RoomsStep />} />
+            <Route path="plan" element={<PlanStep />} />
+            <Route path="summary" element={<SummaryStep />} />
             <Route path="walls" element={<PlaceholderStep title="Стены" />} />
             <Route path="elements" element={<PlaceholderStep title="Элементы" />} />
             <Route path="photos" element={<PlaceholderStep title="Фото" />} />

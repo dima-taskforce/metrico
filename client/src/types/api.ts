@@ -147,6 +147,73 @@ export interface ValidateSegmentsResult {
   isValid: boolean;
 }
 
+export interface FloorPlanSegment {
+  id: string;
+  label: string;
+  length: number;
+  segmentType: string;
+}
+
+export interface FloorPlanOpening {
+  id: string;
+  label: string;
+  type: string;
+  width: number;
+  height: number;
+}
+
+export interface FloorPlanWall {
+  id: string;
+  roomId: string;
+  label: string;
+  length: number;
+  material: string;
+  wallType: string;
+  sortOrder: number;
+  segments: FloorPlanSegment[];
+  openings: FloorPlanOpening[];
+}
+
+export interface FloorPlanElement {
+  id: string;
+  label: string;
+  elementType: string;
+  depth: number;
+  x: number;
+  y: number;
+}
+
+export interface FloorPlanRoom {
+  id: string;
+  label: string;
+  perimeter: number;
+  area: number | null;
+  volume: number | null;
+  ceilingHeight: number | null;
+  walls: FloorPlanWall[];
+  elements: FloorPlanElement[];
+  curvatureMean: number | null;
+  curvatureStdDev: number | null;
+}
+
+export interface FloorPlanAdjacency {
+  id: string;
+  wallAId: string;
+  wallBId: string;
+  wallALabel: string;
+  wallBLabel: string;
+  hasDoor: boolean;
+  doorLabel?: string;
+}
+
+export interface GetPlanDto {
+  projectId: string;
+  projectLabel: string;
+  rooms: FloorPlanRoom[];
+  adjacencies: FloorPlanAdjacency[];
+  generatedAt: Date;
+}
+
 export interface ApiError {
   message: string;
   statusCode: number;

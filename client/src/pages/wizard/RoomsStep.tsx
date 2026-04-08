@@ -258,7 +258,7 @@ export function RoomsStep() {
           ← Назад
         </Button>
         <Button
-          onClick={() => navigate(`/wizard/${projectId}/walls`)}
+          onClick={() => navigate(`/wizard/${projectId}/plan`)}
           disabled={rooms.length === 0}
         >
           Далее →
