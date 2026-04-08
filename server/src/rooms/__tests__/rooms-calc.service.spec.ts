@@ -3,8 +3,6 @@ import { WallMaterial, WallType } from '@prisma/client';
 import { RoomsCalcService } from '../rooms-calc.service';
 import type { Wall, Angle } from '@prisma/client';
 
-const NOW = new Date();
-
 const makeWall = (overrides: Partial<Wall> = {}): Wall => ({
   id: 'w1',
   roomId: 'r1',
@@ -18,20 +16,18 @@ const makeWall = (overrides: Partial<Wall> = {}): Wall => ({
   curvatureBottom: null,
   curvatureMiddle: null,
   curvatureTop: null,
-  createdAt: NOW,
-  updatedAt: NOW,
   ...overrides,
 });
 
 const makeAngle = (overrides: Partial<Angle> = {}): Angle => ({
   id: 'a1',
   roomId: 'r1',
+  cornerLabel: 'A',
   wallAId: 'w1',
   wallBId: 'w2',
   isRightAngle: true,
   angleDegrees: null,
-  createdAt: NOW,
-  updatedAt: NOW,
+  photoPath: null,
   ...overrides,
 });
 

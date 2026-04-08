@@ -18,6 +18,7 @@ interface RoomMeasureState {
 
   // UI state
   activeWallId: string | null;
+  isDirty: boolean;
 
   // Setters
   setCurrentRoom: (room: Room | null) => void;
@@ -29,6 +30,7 @@ interface RoomMeasureState {
   setElements: (elements: RoomElement[]) => void;
   setAngles: (angles: Angle[]) => void;
   setActiveWallId: (wallId: string | null) => void;
+  setIsDirty: (isDirty: boolean) => void;
 
   // Updaters
   upsertWall: (wall: Wall) => void;
@@ -57,6 +59,7 @@ const initialState = {
   elements: [],
   angles: [],
   activeWallId: null,
+  isDirty: false,
 };
 
 export const useRoomMeasureStore = create<RoomMeasureState>((set) => ({
@@ -64,16 +67,17 @@ export const useRoomMeasureStore = create<RoomMeasureState>((set) => ({
 
   setCurrentRoom: (room) => set({ currentRoom: room }),
   setSubstep: (step) => set({ currentSubstep: step }),
-  setWalls: (walls) => set({ walls }),
+  setWalls: (walls) => set({ walls, isDirty: true }),
   setWindows: (wallId, windows) =>
-    set((s) => ({ windows: { ...s.windows, [wallId]: windows } })),
+    set((s) => ({ windows: { ...s.windows, [wallId]: windows }, isDirty: true })),
   setDoors: (wallId, doors) =>
-    set((s) => ({ doors: { ...s.doors, [wallId]: doors } })),
+    set((s) => ({ doors: { ...s.doors, [wallId]: doors }, isDirty: true })),
   setSegments: (wallId, segments) =>
-    set((s) => ({ segments: { ...s.segments, [wallId]: segments } })),
-  setElements: (elements) => set({ elements }),
-  setAngles: (angles) => set({ angles }),
+    set((s) => ({ segments: { ...s.segments, [wallId]: segments }, isDirty: true })),
+  setElements: (elements) => set({ elements, isDirty: true }),
+  setAngles: (angles) => set({ angles, isDirty: true }),
   setActiveWallId: (wallId) => set({ activeWallId: wallId }),
+  setIsDirty: (isDirty) => set({ isDirty }),
 
   upsertWall: (wall) =>
     set((s) => {
