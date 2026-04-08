@@ -302,7 +302,7 @@ export function WallElevationStep() {
   }
 
   return (
-    <div className="p-6 max-w-xl">
+    <div className="p-6 max-w-xl pb-20 sm:pb-6">
       <div className="flex items-center gap-2 mb-1">
         <h3 className="text-lg font-semibold text-gray-900">3.6 Развёртка стен</h3>
         <MeasurementHint stepKey="wall-elevation" />
@@ -453,7 +453,7 @@ export function WallElevationStep() {
       </form>
 
       {/* Navigation */}
-      <div className="flex justify-between">
+      <div className="sticky bottom-0 bg-white border-t border-gray-100 -mx-6 px-6 py-3 flex justify-between mt-4">
         <Button variant="secondary" onClick={() => setSubstep(5)}>
           ← Назад
         </Button>

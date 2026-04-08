@@ -132,7 +132,7 @@ export function PhotoChecklistStep() {
   };
 
   return (
-    <div className="p-6 max-w-xl">
+    <div className="p-6 max-w-xl pb-20 sm:pb-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-1">3.7 Фото и чеклист</h3>
       <p className="text-sm text-gray-500 mb-4">
         Сделайте общее фото комнаты и убедитесь, что все замеры выполнены.
@@ -176,6 +176,7 @@ export function PhotoChecklistStep() {
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          capture="environment"
           className="hidden"
           onChange={handleUpload}
         />
@@ -244,7 +245,7 @@ export function PhotoChecklistStep() {
       )}
 
       {/* Navigation */}
-      <div className="flex justify-between items-center">
+      <div className="sticky bottom-0 bg-white border-t border-gray-100 -mx-6 px-6 py-3 flex justify-between items-center mt-4">
         <Button variant="secondary" onClick={() => setSubstep(6)}>
           ← Назад
         </Button>

@@ -166,7 +166,7 @@ export function PerimeterWalkStep() {
   }
 
   return (
-    <div className="p-6 max-w-xl">
+    <div className="p-6 max-w-xl pb-20 sm:pb-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-1">3.4 Обход периметра</h3>
 
       {/* Wall tabs */}
@@ -311,7 +311,7 @@ export function PerimeterWalkStep() {
       )}
 
       {/* Navigation */}
-      <div className="flex justify-between">
+      <div className="sticky bottom-0 bg-white border-t border-gray-100 -mx-6 px-6 py-3 flex justify-between mt-4">
         <Button variant="secondary" onClick={() => setSubstep(3)}>← Назад</Button>
         <div className="flex gap-2">
           {wallIdx < walls.length - 1 ? (

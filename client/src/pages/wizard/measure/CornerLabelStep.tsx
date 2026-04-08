@@ -70,7 +70,7 @@ export function CornerLabelStep() {
   const corners = CORNER_LETTERS.slice(0, cornerCount).split('');
 
   return (
-    <div className="p-6 max-w-xl">
+    <div className="p-6 max-w-xl pb-20 sm:pb-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-1">3.1 Разметка углов</h3>
       <p className="text-sm text-gray-500 mb-6">
         Стоя в комнате, выберите левый нижний угол — это угол&nbsp;<strong>A</strong>.
@@ -104,7 +104,7 @@ export function CornerLabelStep() {
         </p>
       </div>
 
-      <div className="flex justify-end">
+      <div className="sticky bottom-0 bg-white border-t border-gray-100 -mx-6 px-6 py-3 flex justify-end mt-4">
         <Button onClick={() => setSubstep(2)}>Далее → Высота потолка</Button>
       </div>
     </div>

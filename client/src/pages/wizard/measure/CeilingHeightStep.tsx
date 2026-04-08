@@ -54,7 +54,7 @@ export function CeilingHeightStep() {
   };
 
   return (
-    <div className="p-6 max-w-md">
+    <div className="p-6 max-w-md pb-20 sm:pb-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-1">3.2 Высота потолка</h3>
       <p className="text-sm text-gray-500 mb-6">
         Измерьте высоту в двух точках: у наружной стены (под окном) и у противоположной.
@@ -110,7 +110,7 @@ export function CeilingHeightStep() {
 
         {errors.root && <p className="text-sm text-red-500">{errors.root.message}</p>}
 
-        <div className="flex justify-between pt-2">
+        <div className="sticky bottom-0 bg-white border-t border-gray-100 -mx-6 px-6 py-3 flex justify-between mt-4">
           <Button type="button" variant="secondary" onClick={() => setSubstep(1)}>
             ← Назад
           </Button>

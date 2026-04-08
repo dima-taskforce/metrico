@@ -226,7 +226,7 @@ export function OpeningsStep() {
   );
 
   return (
-    <div className="p-6 max-w-xl">
+    <div className="p-6 max-w-xl pb-20 sm:pb-6">
       <div className="flex items-center gap-2 mb-1">
         <h3 className="text-lg font-semibold text-gray-900">3.5 Проёмы и откосы</h3>
         <MeasurementHint stepKey="window" />
@@ -260,7 +260,7 @@ export function OpeningsStep() {
         </div>
       ))}
 
-      <div className="flex justify-between pt-2">
+      <div className="sticky bottom-0 bg-white border-t border-gray-100 -mx-6 px-6 py-3 flex justify-between mt-4">
         <Button variant="secondary" onClick={() => setSubstep(4)}>← Назад</Button>
         <Button onClick={() => setSubstep(6)}>Далее → Развёртка</Button>
       </div>
