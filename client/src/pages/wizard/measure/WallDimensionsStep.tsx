@@ -6,6 +6,7 @@ import { wallsApi } from '../../../api/walls';
 import { useRoomMeasureStore } from '../../../stores/roomMeasureStore';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
+import { MeasurementHint } from '../../../components/MeasurementHint';
 import type { RoomShape, WallMaterial, WallType } from '../../../types/api';
 
 const WALL_MATERIAL_LABELS: Record<WallMaterial, string> = {
@@ -149,7 +150,10 @@ export function WallDimensionsStep() {
 
   return (
     <div className="p-6 max-w-xl">
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">3.3 Габариты стен</h3>
+      <div className="flex items-center gap-2 mb-1">
+        <h3 className="text-lg font-semibold text-gray-900">3.3 Габариты стен</h3>
+        <MeasurementHint stepKey="wall-length" />
+      </div>
       <p className="text-sm text-gray-500 mb-2">
         Введите длину каждой стены в метрах. Укажите материал и тип стены.
       </p>

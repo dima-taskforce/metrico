@@ -7,6 +7,7 @@ import { elementsApi } from '../../../api/elements';
 import { useRoomMeasureStore } from '../../../stores/roomMeasureStore';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
+import { MeasurementHint } from '../../../components/MeasurementHint';
 import type { Wall, WallSegment, ElementType, SegmentType } from '../../../types/api';
 
 const ELEMENT_TYPE_LABELS: Record<ElementType, string> = {
@@ -302,7 +303,11 @@ export function WallElevationStep() {
 
   return (
     <div className="p-6 max-w-xl">
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">3.6 Развёртка стен</h3>
+      <div className="flex items-center gap-2 mb-1">
+        <h3 className="text-lg font-semibold text-gray-900">3.6 Развёртка стен</h3>
+        <MeasurementHint stepKey="wall-elevation" />
+        <MeasurementHint stepKey="curvature" position="bottom" />
+      </div>
       <p className="text-sm text-gray-500 mb-4">
         Проверьте развёртку каждой стены, укажите кривизну и разместите элементы.
       </p>

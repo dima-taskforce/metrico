@@ -6,6 +6,7 @@ import { openingsApi } from '../../../api/openings';
 import { useRoomMeasureStore } from '../../../stores/roomMeasureStore';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
+import { MeasurementHint } from '../../../components/MeasurementHint';
 import type { Wall, WindowOpening, DoorOpening } from '../../../types/api';
 
 // --- Window form ---
@@ -226,7 +227,11 @@ export function OpeningsStep() {
 
   return (
     <div className="p-6 max-w-xl">
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">3.5 Проёмы и откосы</h3>
+      <div className="flex items-center gap-2 mb-1">
+        <h3 className="text-lg font-semibold text-gray-900">3.5 Проёмы и откосы</h3>
+        <MeasurementHint stepKey="window" />
+        <MeasurementHint stepKey="door" position="bottom" />
+      </div>
       <p className="text-sm text-gray-500 mb-4">
         Для каждого окна и двери введите высоту, высоту подоконника и глубину откосов.
         Ширина проёма уже взята из длины сегмента.
