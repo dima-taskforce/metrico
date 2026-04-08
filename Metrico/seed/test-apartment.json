@@ -1,0 +1,480 @@
+{
+  "_comment": "Seed-данные на основе обмерного плана (скриншот 1). Двухкомнатная квартира. Все размеры в мм.",
+  "_source": "Обмерный план с ivd.ru (Instagram @vo.plan)",
+
+  "project": {
+    "name": "Тестовая двушка (seed)",
+    "address": "г. Москва, тестовый адрес",
+    "objectType": "APARTMENT",
+    "defaultCeilingHeight": 2700,
+    "status": "COMPLETED"
+  },
+
+  "rooms": [
+    {
+      "name": "Большая комната",
+      "type": "LIVING",
+      "shape": "RECTANGLE",
+      "ceilingHeight1": 2700,
+      "ceilingHeight2": 2695,
+      "sortOrder": 1,
+      "walls": [
+        {
+          "label": "A",
+          "length": 3791,
+          "material": "CONCRETE",
+          "wallType": "EXTERNAL",
+          "curvatureBottom": 3,
+          "curvatureMiddle": 5,
+          "curvatureTop": 2,
+          "_comment": "Тестовая кривизна: avg = 3.33 мм, deviation = 1.67 мм"
+        },
+        {
+          "label": "B",
+          "length": 2450,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "C",
+          "length": 3791,
+          "material": "CONCRETE",
+          "wallType": "EXTERNAL",
+          "curvatureBottom": 1,
+          "curvatureMiddle": 2,
+          "curvatureTop": 1,
+          "_comment": "Малая кривизна: avg = 1.33 мм, deviation = 0.67 мм"
+        },
+        {
+          "label": "D",
+          "length": 2450,
+          "material": "CONCRETE",
+          "wallType": "ADJACENT",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        }
+      ],
+      "windows": [
+        {
+          "wallLabel": "A",
+          "width": 1987,
+          "height": 1500,
+          "sillHeightFromScreed": 800,
+          "revealWidthLeft": null,
+          "revealWidthRight": null,
+          "isFrenchDoor": false,
+          "pierWidthLeft": 1090,
+          "pierWidthRight": null
+        }
+      ],
+      "doors": [
+        {
+          "wallLabel": "D",
+          "width": 900,
+          "heightFromScreed": 2100,
+          "pierWidthLeft": null,
+          "pierWidthRight": null
+        }
+      ],
+      "elements": [
+        {
+          "elementType": "RADIATOR",
+          "description": "Отопительный прибор",
+          "width": 1000,
+          "height": 600,
+          "depth": 100,
+          "offsetFromWall": 30,
+          "offsetFromFloor": 100,
+          "wallLabel": "A"
+        }
+      ],
+      "photos": []
+    },
+    {
+      "name": "Маленькая комната",
+      "type": "BEDROOM",
+      "shape": "RECTANGLE",
+      "ceilingHeight1": 2700,
+      "ceilingHeight2": 2698,
+      "sortOrder": 2,
+      "walls": [
+        {
+          "label": "A",
+          "length": 3791,
+          "material": "CONCRETE",
+          "wallType": "EXTERNAL",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "B",
+          "length": 1367,
+          "material": "CONCRETE",
+          "wallType": "ADJACENT",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "C",
+          "length": 3791,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "D",
+          "length": 1367,
+          "material": "CONCRETE",
+          "wallType": "ADJACENT",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        }
+      ],
+      "windows": [
+        {
+          "wallLabel": "A",
+          "width": 864,
+          "height": 1500,
+          "sillHeightFromScreed": 800,
+          "revealWidthLeft": null,
+          "revealWidthRight": null,
+          "isFrenchDoor": false,
+          "pierWidthLeft": 1079,
+          "pierWidthRight": null
+        }
+      ],
+      "doors": [
+        {
+          "wallLabel": "D",
+          "width": 800,
+          "heightFromScreed": 2100,
+          "pierWidthLeft": null,
+          "pierWidthRight": null
+        }
+      ],
+      "elements": [
+        {
+          "elementType": "PIPE",
+          "description": "Отопление D30",
+          "width": 30,
+          "height": null,
+          "depth": 30,
+          "offsetFromWall": 120,
+          "offsetFromFloor": 0,
+          "wallLabel": "A"
+        }
+      ],
+      "photos": []
+    },
+    {
+      "name": "Коридор",
+      "type": "CORRIDOR",
+      "shape": "L_SHAPE",
+      "ceilingHeight1": 2700,
+      "ceilingHeight2": 2700,
+      "sortOrder": 3,
+      "walls": [
+        {
+          "label": "A",
+          "length": 1361,
+          "material": "CONCRETE",
+          "wallType": "ADJACENT",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "B",
+          "length": 1585,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "C",
+          "length": 351,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "D",
+          "length": 725,
+          "material": "CONCRETE",
+          "wallType": "ADJACENT",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null,
+          "_comment": "Скорректировано для замыкания Г-полигона: D = F - B = 2310 - 1585 = 725"
+        },
+        {
+          "label": "E",
+          "length": 1010,
+          "material": "CONCRETE",
+          "wallType": "ADJACENT",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null,
+          "_comment": "Скорректировано для замыкания Г-полигона: E = A - C = 1361 - 351 = 1010"
+        },
+        {
+          "label": "F",
+          "length": 2310,
+          "material": "CONCRETE",
+          "wallType": "ADJACENT",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        }
+      ],
+      "windows": [],
+      "doors": [
+        {
+          "wallLabel": "B",
+          "width": 940,
+          "heightFromScreed": 2100,
+          "pierWidthLeft": 120,
+          "pierWidthRight": null,
+          "_comment": "Входная дверь"
+        }
+      ],
+      "elements": [],
+      "photos": []
+    },
+    {
+      "name": "Санузел",
+      "type": "BATHROOM",
+      "shape": "RECTANGLE",
+      "ceilingHeight1": 2700,
+      "ceilingHeight2": 2700,
+      "sortOrder": 4,
+      "walls": [
+        {
+          "label": "A",
+          "length": 2190,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "B",
+          "length": 1019,
+          "material": "CONCRETE",
+          "wallType": "ADJACENT",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "C",
+          "length": 2190,
+          "material": "CONCRETE",
+          "wallType": "ADJACENT",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "D",
+          "length": 1019,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        }
+      ],
+      "windows": [],
+      "doors": [
+        {
+          "wallLabel": "C",
+          "width": 710,
+          "heightFromScreed": 2100,
+          "pierWidthLeft": 208,
+          "pierWidthRight": null
+        }
+      ],
+      "elements": [],
+      "photos": []
+    },
+    {
+      "name": "Кухня",
+      "type": "KITCHEN",
+      "shape": "RECTANGLE",
+      "ceilingHeight1": 2700,
+      "ceilingHeight2": 2696,
+      "sortOrder": 5,
+      "walls": [
+        {
+          "label": "A",
+          "length": 4110,
+          "material": "CONCRETE",
+          "wallType": "EXTERNAL",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null,
+          "_comment": "Внешняя стена с окном"
+        },
+        {
+          "label": "B",
+          "length": 3390,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "C",
+          "length": 4110,
+          "material": "CONCRETE",
+          "wallType": "ADJACENT",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        },
+        {
+          "label": "D",
+          "length": 3390,
+          "material": "CONCRETE",
+          "wallType": "ADJACENT",
+          "curvatureBottom": null,
+          "curvatureMiddle": null,
+          "curvatureTop": null
+        }
+      ],
+      "windows": [
+        {
+          "wallLabel": "A",
+          "width": 1460,
+          "height": 1500,
+          "sillHeightFromScreed": 800,
+          "revealWidthLeft": null,
+          "revealWidthRight": null,
+          "isFrenchDoor": false,
+          "pierWidthLeft": 1200,
+          "pierWidthRight": null,
+          "_comment": "Кухонное окно на внешней стене"
+        }
+      ],
+      "doors": [
+        {
+          "wallLabel": "C",
+          "width": 870,
+          "heightFromScreed": 2100,
+          "pierWidthLeft": 110,
+          "pierWidthRight": null
+        }
+      ],
+      "elements": [],
+      "photos": []
+    }
+  ],
+
+  "adjacencies": [
+    {
+      "roomA": "Большая комната",
+      "wallA": "D",
+      "roomB": "Коридор",
+      "wallB": "F",
+      "hasDoorBetween": true
+    },
+    {
+      "roomA": "Маленькая комната",
+      "wallA": "D",
+      "roomB": "Коридор",
+      "wallB": "E",
+      "hasDoorBetween": true
+    },
+    {
+      "roomA": "Коридор",
+      "wallA": "A",
+      "roomB": "Санузел",
+      "wallB": "B",
+      "hasDoorBetween": true
+    },
+    {
+      "roomA": "Коридор",
+      "wallA": "D",
+      "roomB": "Кухня",
+      "wallB": "D",
+      "hasDoorBetween": true,
+      "_comment": "Коридор D (457) примыкает к Кухня D (3390). Коридор занимает часть стены кухни (частичное перекрытие). PlanAssembler использует длину меньшей стены для стыковки."
+    }
+  ],
+
+  "expectedCalculations": {
+    "_comment": "Эталонные значения для unit-тестов. Площади в м², периметры в м, объёмы в м³.",
+    "rooms": [
+      {
+        "name": "Большая комната",
+        "area": 9.29,
+        "perimeter": 12.482,
+        "volume": 25.07,
+        "_areaFormula": "3.791 × 2.450 = 9.288 ≈ 9.29"
+      },
+      {
+        "name": "Маленькая комната",
+        "area": 5.18,
+        "perimeter": 10.316,
+        "volume": 13.98,
+        "_areaFormula": "3.791 × 1.367 = 5.182 ≈ 5.18"
+      },
+      {
+        "name": "Коридор",
+        "area": 2.89,
+        "perimeter": 7.342,
+        "volume": 7.80,
+        "_areaFormula": "Г-образная: полный прямоугольник (1.361 × 2.310) минус вырезанный угол (0.351 × 0.725) = 3.144 - 0.254 = 2.889 ≈ 2.89"
+      },
+      {
+        "name": "Санузел",
+        "area": 2.23,
+        "perimeter": 6.418,
+        "volume": 6.02,
+        "_areaFormula": "2.190 × 1.019 = 2.232 ≈ 2.23"
+      },
+      {
+        "name": "Кухня",
+        "area": 13.93,
+        "perimeter": 15.000,
+        "volume": 37.61,
+        "_areaFormula": "4.110 × 3.390 = 13.933 ≈ 13.93"
+      }
+    ],
+    "totalArea": 33.52,
+    "_totalAreaFormula": "9.29 + 5.18 + 2.89 + 2.23 + 13.93 = 33.52",
+
+    "curvature": [
+      {
+        "room": "Большая комната",
+        "wall": "A",
+        "curvatureAvg": 3.33,
+        "curvatureDeviation": 1.67,
+        "_formula": "avg = (3+5+2)/3 = 3.33, deviation = max(|3-3.33|, |5-3.33|, |2-3.33|) = 1.67"
+      },
+      {
+        "room": "Большая комната",
+        "wall": "C",
+        "curvatureAvg": 1.33,
+        "curvatureDeviation": 0.67,
+        "_formula": "avg = (1+2+1)/3 = 1.33, deviation = max(|1-1.33|, |2-1.33|, |1-1.33|) = 0.67"
+      }
+    ]
+  }
+}
