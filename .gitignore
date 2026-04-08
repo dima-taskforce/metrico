@@ -51,8 +51,6 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 
-# Prisma
-server/prisma/migrations/*/migration.sql
 
 # Testing
 .vitest/

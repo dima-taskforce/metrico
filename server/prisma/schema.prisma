@@ -1,0 +1,346 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// =====================
+// Enums
+// =====================
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  YANDEX
+}
+
+enum ObjectType {
+  APARTMENT
+  STUDIO
+  APARTMENTS
+  HOUSE
+}
+
+enum ProjectStatus {
+  DRAFT
+  COMPLETED
+}
+
+enum RoomType {
+  KITCHEN
+  BEDROOM
+  BATHROOM
+  CORRIDOR
+  BALCONY
+  STORAGE
+  LIVING
+  OTHER
+}
+
+enum RoomShape {
+  RECTANGLE
+  L_SHAPE
+  U_SHAPE
+  CUSTOM
+}
+
+enum WallMaterial {
+  CONCRETE
+  DRYWALL
+  BRICK
+  OTHER
+}
+
+enum WallType {
+  EXTERNAL
+  INTERNAL
+  ADJACENT
+}
+
+enum SegmentType {
+  PLAIN
+  WINDOW
+  DOOR
+  PROTRUSION
+  NICHE
+  PARTITION
+}
+
+enum ElementType {
+  COLUMN
+  VENT_SHAFT
+  RADIATOR
+  ELECTRICAL_PANEL
+  LOW_VOLTAGE_PANEL
+  PIPE
+}
+
+enum PhotoType {
+  OVERVIEW_BEFORE
+  OVERVIEW_AFTER
+  DETAIL
+}
+
+// =====================
+// Models
+// =====================
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String?
+  name         String
+  authProvider AuthProvider @default(LOCAL)
+
+  projects             Project[]
+  refreshTokens        RefreshToken[]
+  passwordResetTokens  PasswordResetToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Project {
+  id                  String        @id @default(uuid())
+  userId              String
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                String
+  address             String?
+  objectType          ObjectType
+  defaultCeilingHeight Float?
+  status              ProjectStatus @default(DRAFT)
+  blueprintPhotoPath  String?
+
+  rooms         Room[]
+  floorPlanLayout FloorPlanLayout?
+  adjacencies   WallAdjacency[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Room {
+  id             String    @id @default(uuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name           String
+  type           RoomType
+  shape          RoomShape
+  ceilingHeight1 Float?
+  ceilingHeight2 Float?
+  sortOrder      Int
+  isMeasured     Boolean   @default(false)
+
+  walls    Wall[]
+  elements RoomElement[]
+  photos   RoomPhoto[]
+  angles   Angle[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+model Wall {
+  id           String       @id @default(uuid())
+  roomId       String
+  room         Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  label        String
+  cornerFrom   String
+  cornerTo     String
+  length       Float
+  material     WallMaterial @default(CONCRETE)
+  wallType     WallType     @default(INTERNAL)
+  curvatureBottom Float?
+  curvatureMiddle Float?
+  curvatureTop    Float?
+  sortOrder    Int
+
+  segments  WallSegment[]
+  elevation WallElevation?
+  elements  RoomElement[]
+
+  adjacenciesAsWallA WallAdjacency[] @relation("adjacencyWallA")
+  adjacenciesAsWallB WallAdjacency[] @relation("adjacencyWallB")
+  anglesAsWallA      Angle[]         @relation("angleWallA")
+  anglesAsWallB      Angle[]         @relation("angleWallB")
+
+  windowOpenings WindowOpening[]
+  doorOpenings   DoorOpening[]
+
+  @@index([roomId])
+}
+
+model WallSegment {
+  id            String      @id @default(uuid())
+  wallId        String
+  wall          Wall        @relation(fields: [wallId], references: [id], onDelete: Cascade)
+  sortOrder     Int
+  segmentType   SegmentType
+  length        Float
+  depth         Float?
+  description   String?
+
+  windowOpeningId String?
+  windowOpening   WindowOpening? @relation(fields: [windowOpeningId], references: [id], onDelete: Cascade)
+
+  doorOpeningId String?
+  doorOpening   DoorOpening? @relation(fields: [doorOpeningId], references: [id], onDelete: Cascade)
+
+  @@index([wallId])
+}
+
+model WallElevation {
+  id      String  @id @default(uuid())
+  wallId  String  @unique
+  wall    Wall    @relation(fields: [wallId], references: [id], onDelete: Cascade)
+  svgData String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WallAdjacency {
+  id        String  @id @default(uuid())
+  wallAId   String
+  wallA     Wall    @relation("adjacencyWallA", fields: [wallAId], references: [id], onDelete: Cascade)
+  wallBId   String
+  wallB     Wall    @relation("adjacencyWallB", fields: [wallBId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  hasDoorBetween Boolean @default(false)
+  doorOpeningId  String?
+  doorOpening    DoorOpening? @relation(fields: [doorOpeningId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@unique([wallAId, wallBId])
+  @@index([projectId])
+}
+
+model WindowOpening {
+  id                  String  @id @default(uuid())
+  wallId              String
+  wall                Wall    @relation(fields: [wallId], references: [id], onDelete: Cascade)
+  width               Float
+  height              Float
+  sillHeightFromScreed Float
+  revealWidthLeft     Float?
+  revealWidthRight    Float?
+  isFrenchDoor        Boolean @default(false)
+  photoPath           String?
+
+  segments WallSegment[]
+
+  @@index([wallId])
+}
+
+model DoorOpening {
+  id              String  @id @default(uuid())
+  wallId          String
+  wall            Wall    @relation(fields: [wallId], references: [id], onDelete: Cascade)
+  width           Float
+  heightFromScreed Float
+  revealLeft      Float?
+  revealRight     Float?
+  photoPath       String?
+
+  segments     WallSegment[]
+  adjacencies  WallAdjacency[]
+
+  @@index([wallId])
+}
+
+model RoomElement {
+  id          String      @id @default(uuid())
+  roomId      String
+  room        Room        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  elementType ElementType
+  width       Float?
+  height      Float?
+  depth       Float?
+  positionX   Float?
+  offsetFromWall  Float?
+  offsetFromFloor Float?
+  wallId      String?
+  wall        Wall?       @relation(fields: [wallId], references: [id], onDelete: SetNull)
+  cornerLabel String?
+  description String?
+  photoPath   String?
+
+  @@index([roomId])
+  @@index([wallId])
+}
+
+model RoomPhoto {
+  id        String    @id @default(uuid())
+  roomId    String
+  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  photoType PhotoType
+  filePath  String
+  createdAt DateTime  @default(now())
+
+  @@index([roomId])
+}
+
+model Angle {
+  id           String  @id @default(uuid())
+  roomId       String
+  room         Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  cornerLabel  String
+  wallAId      String
+  wallA        Wall    @relation("angleWallA", fields: [wallAId], references: [id], onDelete: Cascade)
+  wallBId      String
+  wallB        Wall    @relation("angleWallB", fields: [wallBId], references: [id], onDelete: Cascade)
+  isRightAngle Boolean @default(true)
+  angleDegrees Float?
+  photoPath    String?
+
+  @@index([roomId])
+}
+
+model FloorPlanLayout {
+  id            String  @id @default(uuid())
+  projectId     String  @unique
+  project       Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  layoutJson    String
+  layoutVersion Int     @default(1)
+  svgData       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
