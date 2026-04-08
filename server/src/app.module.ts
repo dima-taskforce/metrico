@@ -14,6 +14,7 @@ import { PhotosModule } from './photos/photos.module';
 import { AdjacencyModule } from './adjacency/adjacency.module';
 import { PlanModule } from './plan/plan.module';
 import { PdfModule } from './pdf/pdf.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { PdfModule } from './pdf/pdf.module';
     AdjacencyModule,
     PlanModule,
     PdfModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
