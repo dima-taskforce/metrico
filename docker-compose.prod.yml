@@ -88,7 +88,7 @@ services:
     restart: "no"
     working_dir: /build
     volumes:
-      - ./client:/build/client:ro
+      - ./client:/build/client
       - ./package.json:/build/package.json:ro
       - ./package-lock.json:/build/package-lock.json:ro
       - ./tsconfig.base.json:/build/tsconfig.base.json:ro
