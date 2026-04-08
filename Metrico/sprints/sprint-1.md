@@ -56,7 +56,12 @@ Nginx location-блоки:
 **Агент:** nestjs-expert
 
 **Описание:**
-Создать `prisma/schema.prisma` с полной моделью данных из `technical-requirements.md` (раздел 4). Все сущности: User, Project, Room, Wall, WallAdjacency, WindowOpening, DoorOpening, RoomElement, RoomPhoto, Angle, FloorPlanLayout. Все enum-ы, все связи с `onDelete: Cascade`. Провайдер: SQLite.
+Создать `prisma/schema.prisma` с полной моделью данных из `technical-requirements.md` (раздел 4). Все сущности: User, Project, Room, Wall, WallAdjacency, WindowOpening, DoorOpening, RoomElement, RoomPhoto, Angle, FloorPlanLayout, **RefreshToken**, **PasswordResetToken**. Все enum-ы, все связи с `onDelete: Cascade`. Провайдер: SQLite.
+
+**Обязательные дополнительные модели (без них S1-04 и S3-07 не скомпилируются):**
+
+- **RefreshToken** (нужна S1-04 AuthModule — stateful JWT): `userId → User (onDelete: Cascade)`, `tokenHash String @unique` (SHA-256 хэш от оригинального токена), `expiresAt DateTime`, `revokedAt DateTime?`, `createdAt DateTime @default(now())`. Индекс: `@@index([userId])`.
+- **PasswordResetToken** (нужна S3-07 PasswordResetModule): `userId → User (onDelete: Cascade)`, `tokenHash String @unique` (bcrypt-хэш от SHA-256 токена), `expiresAt DateTime`, `usedAt DateTime?`, `createdAt DateTime @default(now())`.
 
 Новые модели в связи с переизучением потока обмера (углы = буквы, стены = пары углов, новая сегментация):
 

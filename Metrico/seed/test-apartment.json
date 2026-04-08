@@ -1,6 +1,8 @@
 {
   "_comment": "Seed-данные на основе обмерного плана (скриншот 1). Двухкомнатная квартира. Все размеры в мм.",
   "_source": "Обмерный план с ivd.ru (Instagram @vo.plan)",
+  "_seedNote": "Двухфазный seed: 1) создать Room → Wall → Window/Door, получить ID; 2) создать WallSegment с FK windowOpeningId/doorOpeningId + Angle. Поля _windowOpeningIndex/_doorOpeningIndex — индексы в массивах windows/doors этой комнаты, резолвятся seed-скриптом.",
+  "_adjacencySemantics": "ВАЖНО для PlanAssembler и UI-агентов: поля wallA/wallB в adjacency определяют ГЕОМЕТРИЧЕСКИ СМЕЖНЫЕ стены (используются для позиционирования комнат относительно друг друга). Поле _doorOpeningRef указывает на дверной проём, через который осуществляется проход между комнатами. _doorOpeningRef НЕ обязан находиться на wallA/wallB — дверь может быть на соседней (поворотной) стене той же комнаты. PlanAssembler выравнивает комнаты по wallA/wallB; дверной проём отрисовывается на своей физической стене. Это намеренное проектное решение: Санузел и Кухня имеют двери на стенах, перпендикулярных shared wall (угловое расположение дверей).",
 
   "project": {
     "name": "Тестовая двушка (seed)",
@@ -20,64 +22,118 @@
       "sortOrder": 1,
       "walls": [
         {
-          "label": "A",
+          "label": "A-B",
+          "cornerFrom": "A",
+          "cornerTo": "B",
           "length": 3791,
           "material": "CONCRETE",
           "wallType": "EXTERNAL",
           "curvatureBottom": 3,
           "curvatureMiddle": 5,
           "curvatureTop": 2,
-          "_comment": "Тестовая кривизна: avg = 3.33 мм, deviation = 1.67 мм"
+          "_comment": "Тестовая кривизна: avg = 3.33 мм, deviation = 1.67 мм",
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 1090,
+              "_comment": "Простенок до окна"
+            },
+            {
+              "sortOrder": 2,
+              "segmentType": "WINDOW",
+              "length": 1987,
+              "_windowOpeningIndex": 0,
+              "_comment": "Окно"
+            },
+            {
+              "sortOrder": 3,
+              "segmentType": "PLAIN",
+              "length": 714,
+              "_comment": "Простенок после окна (3791-1090-1987=714)"
+            }
+          ]
         },
         {
-          "label": "B",
+          "label": "B-C",
+          "cornerFrom": "B",
+          "cornerTo": "C",
           "length": 2450,
           "material": "CONCRETE",
           "wallType": "INTERNAL",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 2450
+            }
+          ]
         },
         {
-          "label": "C",
+          "label": "C-D",
+          "cornerFrom": "C",
+          "cornerTo": "D",
           "length": 3791,
           "material": "CONCRETE",
           "wallType": "EXTERNAL",
           "curvatureBottom": 1,
           "curvatureMiddle": 2,
           "curvatureTop": 1,
-          "_comment": "Малая кривизна: avg = 1.33 мм, deviation = 0.67 мм"
+          "_comment": "Малая кривизна: avg = 1.33 мм, deviation = 0.67 мм",
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 3791
+            }
+          ]
         },
         {
-          "label": "D",
+          "label": "D-A",
+          "cornerFrom": "D",
+          "cornerTo": "A",
           "length": 2450,
           "material": "CONCRETE",
           "wallType": "ADJACENT",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 1550,
+              "_comment": "Простенок до двери"
+            },
+            {
+              "sortOrder": 2,
+              "segmentType": "DOOR",
+              "length": 900,
+              "_doorOpeningIndex": 0,
+              "_comment": "Дверь"
+            }
+          ]
         }
       ],
       "windows": [
         {
-          "wallLabel": "A",
+          "wallLabel": "A-B",
           "width": 1987,
           "height": 1500,
           "sillHeightFromScreed": 800,
           "revealWidthLeft": null,
           "revealWidthRight": null,
-          "isFrenchDoor": false,
-          "pierWidthLeft": 1090,
-          "pierWidthRight": null
+          "isFrenchDoor": false
         }
       ],
       "doors": [
         {
-          "wallLabel": "D",
+          "wallLabel": "D-A",
           "width": 900,
-          "heightFromScreed": 2100,
-          "pierWidthLeft": null,
-          "pierWidthRight": null
+          "heightFromScreed": 2100
         }
       ],
       "elements": [
@@ -89,10 +145,18 @@
           "depth": 100,
           "offsetFromWall": 30,
           "offsetFromFloor": 100,
-          "wallLabel": "A"
+          "wallLabel": "A-B",
+          "positionX": 1090,
+          "cornerLabel": null
         }
       ],
-      "photos": []
+      "photos": [],
+      "angles": [
+        {"cornerLabel": "A", "angle": 90},
+        {"cornerLabel": "B", "angle": 90},
+        {"cornerLabel": "C", "angle": 90},
+        {"cornerLabel": "D", "angle": 90}
+      ]
     },
     {
       "name": "Маленькая комната",
@@ -103,62 +167,116 @@
       "sortOrder": 2,
       "walls": [
         {
-          "label": "A",
+          "label": "A-B",
+          "cornerFrom": "A",
+          "cornerTo": "B",
           "length": 3791,
           "material": "CONCRETE",
           "wallType": "EXTERNAL",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 1079,
+              "_comment": "Простенок до окна"
+            },
+            {
+              "sortOrder": 2,
+              "segmentType": "WINDOW",
+              "length": 864,
+              "_windowOpeningIndex": 0,
+              "_comment": "Окно"
+            },
+            {
+              "sortOrder": 3,
+              "segmentType": "PLAIN",
+              "length": 1848,
+              "_comment": "Простенок после окна (3791-1079-864=1848)"
+            }
+          ]
         },
         {
-          "label": "B",
+          "label": "B-C",
+          "cornerFrom": "B",
+          "cornerTo": "C",
           "length": 1367,
           "material": "CONCRETE",
           "wallType": "ADJACENT",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 1367
+            }
+          ]
         },
         {
-          "label": "C",
+          "label": "C-D",
+          "cornerFrom": "C",
+          "cornerTo": "D",
           "length": 3791,
           "material": "CONCRETE",
           "wallType": "INTERNAL",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 3791
+            }
+          ]
         },
         {
-          "label": "D",
+          "label": "D-A",
+          "cornerFrom": "D",
+          "cornerTo": "A",
           "length": 1367,
           "material": "CONCRETE",
           "wallType": "ADJACENT",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 567,
+              "_comment": "Простенок до двери"
+            },
+            {
+              "sortOrder": 2,
+              "segmentType": "DOOR",
+              "length": 800,
+              "_doorOpeningIndex": 0,
+              "_comment": "Дверь"
+            }
+          ]
         }
       ],
       "windows": [
         {
-          "wallLabel": "A",
+          "wallLabel": "A-B",
           "width": 864,
           "height": 1500,
           "sillHeightFromScreed": 800,
           "revealWidthLeft": null,
           "revealWidthRight": null,
-          "isFrenchDoor": false,
-          "pierWidthLeft": 1079,
-          "pierWidthRight": null
+          "isFrenchDoor": false
         }
       ],
       "doors": [
         {
-          "wallLabel": "D",
+          "wallLabel": "D-A",
           "width": 800,
-          "heightFromScreed": 2100,
-          "pierWidthLeft": null,
-          "pierWidthRight": null
+          "heightFromScreed": 2100
         }
       ],
       "elements": [
@@ -170,10 +288,18 @@
           "depth": 30,
           "offsetFromWall": 120,
           "offsetFromFloor": 0,
-          "wallLabel": "A"
+          "wallLabel": "A-B",
+          "positionX": 1079,
+          "cornerLabel": null
         }
       ],
-      "photos": []
+      "photos": [],
+      "angles": [
+        {"cornerLabel": "A", "angle": 90},
+        {"cornerLabel": "B", "angle": 90},
+        {"cornerLabel": "C", "angle": 90},
+        {"cornerLabel": "D", "angle": 90}
+      ]
     },
     {
       "name": "Коридор",
@@ -184,75 +310,149 @@
       "sortOrder": 3,
       "walls": [
         {
-          "label": "A",
+          "label": "A-B",
+          "cornerFrom": "A",
+          "cornerTo": "B",
           "length": 1361,
           "material": "CONCRETE",
           "wallType": "ADJACENT",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 1361
+            }
+          ]
         },
         {
-          "label": "B",
+          "label": "B-C",
+          "cornerFrom": "B",
+          "cornerTo": "C",
           "length": 1585,
           "material": "CONCRETE",
           "wallType": "INTERNAL",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 120,
+              "_comment": "Простенок до двери"
+            },
+            {
+              "sortOrder": 2,
+              "segmentType": "DOOR",
+              "length": 940,
+              "_doorOpeningIndex": 0,
+              "_comment": "Входная дверь"
+            },
+            {
+              "sortOrder": 3,
+              "segmentType": "PLAIN",
+              "length": 525,
+              "_comment": "Простенок после двери (1585-120-940=525)"
+            }
+          ]
         },
         {
-          "label": "C",
+          "label": "C-D",
+          "cornerFrom": "C",
+          "cornerTo": "D",
           "length": 351,
           "material": "CONCRETE",
           "wallType": "INTERNAL",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 351
+            }
+          ]
         },
         {
-          "label": "D",
+          "label": "D-E",
+          "cornerFrom": "D",
+          "cornerTo": "E",
           "length": 725,
           "material": "CONCRETE",
           "wallType": "ADJACENT",
           "curvatureBottom": null,
           "curvatureMiddle": null,
           "curvatureTop": null,
-          "_comment": "Скорректировано для замыкания Г-полигона: D = F - B = 2310 - 1585 = 725"
+          "_comment": "Скорректировано для замыкания Г-полигона: D = F - B = 2310 - 1585 = 725",
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 725
+            }
+          ]
         },
         {
-          "label": "E",
+          "label": "E-F",
+          "cornerFrom": "E",
+          "cornerTo": "F",
           "length": 1010,
           "material": "CONCRETE",
           "wallType": "ADJACENT",
           "curvatureBottom": null,
           "curvatureMiddle": null,
           "curvatureTop": null,
-          "_comment": "Скорректировано для замыкания Г-полигона: E = A - C = 1361 - 351 = 1010"
+          "_comment": "Скорректировано для замыкания Г-полигона: E = A - C = 1361 - 351 = 1010",
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 1010
+            }
+          ]
         },
         {
-          "label": "F",
+          "label": "F-A",
+          "cornerFrom": "F",
+          "cornerTo": "A",
           "length": 2310,
           "material": "CONCRETE",
           "wallType": "ADJACENT",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 2310
+            }
+          ]
         }
       ],
       "windows": [],
       "doors": [
         {
-          "wallLabel": "B",
+          "wallLabel": "B-C",
           "width": 940,
           "heightFromScreed": 2100,
-          "pierWidthLeft": 120,
-          "pierWidthRight": null,
           "_comment": "Входная дверь"
         }
       ],
       "elements": [],
-      "photos": []
+      "photos": [],
+      "angles": [
+        {"cornerLabel": "A", "angle": 90},
+        {"cornerLabel": "B", "angle": 90},
+        {"cornerLabel": "C", "angle": 90},
+        {"cornerLabel": "D", "angle": 270, "_comment": "Вогнутый угол L-образного коридора"},
+        {"cornerLabel": "E", "angle": 90},
+        {"cornerLabel": "F", "angle": 90}
+      ]
     },
     {
       "name": "Санузел",
@@ -263,54 +463,108 @@
       "sortOrder": 4,
       "walls": [
         {
-          "label": "A",
+          "label": "A-B",
+          "cornerFrom": "A",
+          "cornerTo": "B",
           "length": 2190,
           "material": "CONCRETE",
           "wallType": "INTERNAL",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 2190
+            }
+          ]
         },
         {
-          "label": "B",
+          "label": "B-C",
+          "cornerFrom": "B",
+          "cornerTo": "C",
           "length": 1019,
           "material": "CONCRETE",
           "wallType": "ADJACENT",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 1019
+            }
+          ]
         },
         {
-          "label": "C",
+          "label": "C-D",
+          "cornerFrom": "C",
+          "cornerTo": "D",
           "length": 2190,
           "material": "CONCRETE",
           "wallType": "ADJACENT",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 208,
+              "_comment": "Простенок до двери"
+            },
+            {
+              "sortOrder": 2,
+              "segmentType": "DOOR",
+              "length": 710,
+              "_doorOpeningIndex": 0,
+              "_comment": "Дверь"
+            },
+            {
+              "sortOrder": 3,
+              "segmentType": "PLAIN",
+              "length": 1272,
+              "_comment": "Простенок после двери (2190-208-710=1272)"
+            }
+          ]
         },
         {
-          "label": "D",
+          "label": "D-A",
+          "cornerFrom": "D",
+          "cornerTo": "A",
           "length": 1019,
           "material": "CONCRETE",
           "wallType": "INTERNAL",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 1019
+            }
+          ]
         }
       ],
       "windows": [],
       "doors": [
         {
-          "wallLabel": "C",
+          "wallLabel": "C-D",
           "width": 710,
-          "heightFromScreed": 2100,
-          "pierWidthLeft": 208,
-          "pierWidthRight": null
+          "heightFromScreed": 2100
         }
       ],
       "elements": [],
-      "photos": []
+      "photos": [],
+      "angles": [
+        {"cornerLabel": "A", "angle": 90},
+        {"cornerLabel": "B", "angle": 90},
+        {"cornerLabel": "C", "angle": 90},
+        {"cornerLabel": "D", "angle": 90}
+      ]
     },
     {
       "name": "Кухня",
@@ -321,100 +575,173 @@
       "sortOrder": 5,
       "walls": [
         {
-          "label": "A",
+          "label": "A-B",
+          "cornerFrom": "A",
+          "cornerTo": "B",
           "length": 4110,
           "material": "CONCRETE",
           "wallType": "EXTERNAL",
           "curvatureBottom": null,
           "curvatureMiddle": null,
           "curvatureTop": null,
-          "_comment": "Внешняя стена с окном"
+          "_comment": "Внешняя стена с окном",
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 1200,
+              "_comment": "Простенок до окна"
+            },
+            {
+              "sortOrder": 2,
+              "segmentType": "WINDOW",
+              "length": 1460,
+              "_windowOpeningIndex": 0,
+              "_comment": "Окно"
+            },
+            {
+              "sortOrder": 3,
+              "segmentType": "PLAIN",
+              "length": 1450,
+              "_comment": "Простенок после окна (4110-1200-1460=1450)"
+            }
+          ]
         },
         {
-          "label": "B",
+          "label": "B-C",
+          "cornerFrom": "B",
+          "cornerTo": "C",
           "length": 3390,
           "material": "CONCRETE",
           "wallType": "INTERNAL",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 3390
+            }
+          ]
         },
         {
-          "label": "C",
+          "label": "C-D",
+          "cornerFrom": "C",
+          "cornerTo": "D",
           "length": 4110,
           "material": "CONCRETE",
           "wallType": "ADJACENT",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 110,
+              "_comment": "Простенок до двери"
+            },
+            {
+              "sortOrder": 2,
+              "segmentType": "DOOR",
+              "length": 870,
+              "_doorOpeningIndex": 0,
+              "_comment": "Дверь"
+            },
+            {
+              "sortOrder": 3,
+              "segmentType": "PLAIN",
+              "length": 3130,
+              "_comment": "Простенок после двери (4110-110-870=3130)"
+            }
+          ]
         },
         {
-          "label": "D",
+          "label": "D-A",
+          "cornerFrom": "D",
+          "cornerTo": "A",
           "length": 3390,
           "material": "CONCRETE",
           "wallType": "ADJACENT",
           "curvatureBottom": null,
           "curvatureMiddle": null,
-          "curvatureTop": null
+          "curvatureTop": null,
+          "segments": [
+            {
+              "sortOrder": 1,
+              "segmentType": "PLAIN",
+              "length": 3390
+            }
+          ]
         }
       ],
       "windows": [
         {
-          "wallLabel": "A",
+          "wallLabel": "A-B",
           "width": 1460,
           "height": 1500,
           "sillHeightFromScreed": 800,
           "revealWidthLeft": null,
           "revealWidthRight": null,
           "isFrenchDoor": false,
-          "pierWidthLeft": 1200,
-          "pierWidthRight": null,
           "_comment": "Кухонное окно на внешней стене"
         }
       ],
       "doors": [
         {
-          "wallLabel": "C",
+          "wallLabel": "C-D",
           "width": 870,
-          "heightFromScreed": 2100,
-          "pierWidthLeft": 110,
-          "pierWidthRight": null
+          "heightFromScreed": 2100
         }
       ],
       "elements": [],
-      "photos": []
+      "photos": [],
+      "angles": [
+        {"cornerLabel": "A", "angle": 90},
+        {"cornerLabel": "B", "angle": 90},
+        {"cornerLabel": "C", "angle": 90},
+        {"cornerLabel": "D", "angle": 90}
+      ]
     }
   ],
 
   "adjacencies": [
     {
       "roomA": "Большая комната",
-      "wallA": "D",
+      "wallA": "D-A",
       "roomB": "Коридор",
-      "wallB": "F",
-      "hasDoorBetween": true
+      "wallB": "F-A",
+      "hasDoorBetween": true,
+      "_doorOpeningRef": "Большая комната.doors[0]",
+      "_comment": "Дверь из Большой комнаты (D-A, 900мм) ведёт в Коридор"
     },
     {
       "roomA": "Маленькая комната",
-      "wallA": "D",
+      "wallA": "D-A",
       "roomB": "Коридор",
-      "wallB": "E",
-      "hasDoorBetween": true
-    },
-    {
-      "roomA": "Коридор",
-      "wallA": "A",
-      "roomB": "Санузел",
-      "wallB": "B",
-      "hasDoorBetween": true
-    },
-    {
-      "roomA": "Коридор",
-      "wallA": "D",
-      "roomB": "Кухня",
-      "wallB": "D",
+      "wallB": "E-F",
       "hasDoorBetween": true,
-      "_comment": "Коридор D (457) примыкает к Кухня D (3390). Коридор занимает часть стены кухни (частичное перекрытие). PlanAssembler использует длину меньшей стены для стыковки."
+      "_doorOpeningRef": "Маленькая комната.doors[0]",
+      "_comment": "Дверь из Маленькой комнаты (D-A, 800мм) ведёт в Коридор"
+    },
+    {
+      "roomA": "Коридор",
+      "wallA": "A-B",
+      "roomB": "Санузел",
+      "wallB": "B-C",
+      "hasDoorBetween": true,
+      "_doorOpeningRef": "Санузел.doors[0]",
+      "_comment": "wallA/wallB (Коридор.A-B ↔ Санузел.B-C) — геометрически смежные стены для позиционирования. Дверь физически находится на Санузел.C-D (710мм) — угловое расположение. PlanAssembler выравнивает по A-B↔B-C, дверной значок отрисовывается на C-D."
+    },
+    {
+      "roomA": "Коридор",
+      "wallA": "D-E",
+      "roomB": "Кухня",
+      "wallB": "D-A",
+      "hasDoorBetween": true,
+      "_doorOpeningRef": "Кухня.doors[0]",
+      "_comment": "wallA/wallB (Коридор.D-E ↔ Кухня.D-A) — геометрически смежные стены для позиционирования (частичное перекрытие: 725мм vs 3390мм, PlanAssembler стыкует по начальной точке D). Дверь физически находится на Кухня.C-D (870мм) — угловое расположение. Дверной значок отрисовывается на C-D."
     }
   ],
 
