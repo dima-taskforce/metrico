@@ -7,6 +7,7 @@ import { AppLayout } from './layouts/AppLayout';
 import { WizardLayout } from './layouts/WizardLayout';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlaceholderStep } from './pages/wizard/PlaceholderStep';
+import { ProjectInfoStep } from './pages/wizard/ProjectInfoStep';
 
 // Lazy imports for main pages (to be implemented in S1-08, S1-09, S1-11)
 import { LoginPage } from './pages/LoginPage';
@@ -53,7 +54,7 @@ function App() {
           {/* Wizard */}
           <Route path="/wizard/:projectId" element={<WizardLayout />}>
             <Route index element={<Navigate to="info" replace />} />
-            <Route path="info" element={<PlaceholderStep title="Общая информация" />} />
+            <Route path="info" element={<ProjectInfoStep />} />
             <Route path="rooms" element={<PlaceholderStep title="Комнаты" />} />
             <Route path="walls" element={<PlaceholderStep title="Стены" />} />
             <Route path="elements" element={<PlaceholderStep title="Элементы" />} />
