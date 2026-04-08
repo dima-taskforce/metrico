@@ -5,6 +5,12 @@ import { StorageModule } from './storage/storage.module';
 import { AuthModule } from './auth/auth.module';
 import { ProjectsModule } from './projects/projects.module';
 import { RoomsModule } from './rooms/rooms.module';
+import { WallsModule } from './walls/walls.module';
+import { OpeningsModule } from './openings/openings.module';
+import { ElementsModule } from './elements/elements.module';
+import { AnglesModule } from './angles/angles.module';
+import { SegmentsModule } from './segments/segments.module';
+import { PhotosModule } from './photos/photos.module';
 
 @Module({
   imports: [
@@ -14,6 +20,12 @@ import { RoomsModule } from './rooms/rooms.module';
     AuthModule,
     ProjectsModule,
     RoomsModule,
+    WallsModule,
+    OpeningsModule,
+    ElementsModule,
+    AnglesModule,
+    SegmentsModule,
+    PhotosModule,
   ],
   controllers: [],
   providers: [],

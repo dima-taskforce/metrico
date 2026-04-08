@@ -1,0 +1,293 @@
+{
+  "project": {
+    "name": "Тестовая квартира 2к",
+    "objectType": "APARTMENT",
+    "address": "ул. Тестовая, 1, кв. 1",
+    "defaultCeilingHeight": 2.68
+  },
+  "rooms": [
+    {
+      "name": "Гостиная",
+      "type": "LIVING",
+      "shape": "RECTANGLE",
+      "ceilingHeight1": 2.68,
+      "ceilingHeight2": 2.67,
+      "sortOrder": 0,
+      "expected": {
+        "perimeter": 13820,
+        "area": 11850600,
+        "volume": 31769208
+      },
+      "walls": [
+        {
+          "cornerFrom": "A",
+          "cornerTo": "B",
+          "length": 4020,
+          "material": "CONCRETE",
+          "wallType": "EXTERNAL",
+          "sortOrder": 0
+        },
+        {
+          "cornerFrom": "B",
+          "cornerTo": "C",
+          "length": 2890,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "sortOrder": 1
+        },
+        {
+          "cornerFrom": "C",
+          "cornerTo": "D",
+          "length": 4020,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "sortOrder": 2
+        },
+        {
+          "cornerFrom": "D",
+          "cornerTo": "A",
+          "length": 2890,
+          "material": "CONCRETE",
+          "wallType": "EXTERNAL",
+          "sortOrder": 3,
+          "windows": [
+            {
+              "width": 1500,
+              "height": 1400,
+              "sillHeightFromScreed": 850,
+              "revealWidthLeft": 100,
+              "revealWidthRight": 100
+            }
+          ],
+          "elements": [
+            {
+              "elementType": "RADIATOR",
+              "width": 800,
+              "height": 550,
+              "depth": 100,
+              "offsetFromWall": 80,
+              "offsetFromFloor": 100
+            }
+          ]
+        }
+      ],
+      "angles": [
+        { "cornerLabel": "A", "wallAIndex": 3, "wallBIndex": 0, "isRightAngle": true },
+        { "cornerLabel": "B", "wallAIndex": 0, "wallBIndex": 1, "isRightAngle": true },
+        { "cornerLabel": "C", "wallAIndex": 1, "wallBIndex": 2, "isRightAngle": true },
+        { "cornerLabel": "D", "wallAIndex": 2, "wallBIndex": 3, "isRightAngle": true }
+      ]
+    },
+    {
+      "name": "Спальня",
+      "type": "BEDROOM",
+      "shape": "RECTANGLE",
+      "ceilingHeight1": 2.69,
+      "ceilingHeight2": 2.69,
+      "sortOrder": 1,
+      "expected": {
+        "perimeter": 11060,
+        "area": 7590100,
+        "volume": 20437569
+      },
+      "walls": [
+        {
+          "cornerFrom": "A",
+          "cornerTo": "B",
+          "length": 3120,
+          "material": "CONCRETE",
+          "wallType": "EXTERNAL",
+          "sortOrder": 0
+        },
+        {
+          "cornerFrom": "B",
+          "cornerTo": "C",
+          "length": 2410,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "sortOrder": 1
+        },
+        {
+          "cornerFrom": "C",
+          "cornerTo": "D",
+          "length": 3120,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "sortOrder": 2
+        },
+        {
+          "cornerFrom": "D",
+          "cornerTo": "A",
+          "length": 2410,
+          "material": "CONCRETE",
+          "wallType": "EXTERNAL",
+          "sortOrder": 3,
+          "windows": [
+            {
+              "width": 1200,
+              "height": 1400,
+              "sillHeightFromScreed": 850,
+              "revealWidthLeft": 100,
+              "revealWidthRight": 100
+            }
+          ],
+          "elements": [
+            {
+              "elementType": "RADIATOR",
+              "width": 600,
+              "height": 500,
+              "depth": 100,
+              "offsetFromWall": 80,
+              "offsetFromFloor": 100
+            }
+          ]
+        }
+      ],
+      "angles": [
+        { "cornerLabel": "A", "wallAIndex": 3, "wallBIndex": 0, "isRightAngle": true },
+        { "cornerLabel": "B", "wallAIndex": 0, "wallBIndex": 1, "isRightAngle": true },
+        { "cornerLabel": "C", "wallAIndex": 1, "wallBIndex": 2, "isRightAngle": true },
+        { "cornerLabel": "D", "wallAIndex": 2, "wallBIndex": 3, "isRightAngle": true }
+      ]
+    },
+    {
+      "name": "Кухня",
+      "type": "KITCHEN",
+      "shape": "RECTANGLE",
+      "ceilingHeight1": 2.68,
+      "ceilingHeight2": 2.67,
+      "sortOrder": 2,
+      "expected": {
+        "perimeter": 10100,
+        "area": 6300000,
+        "volume": 16884000
+      },
+      "walls": [
+        {
+          "cornerFrom": "A",
+          "cornerTo": "B",
+          "length": 3000,
+          "material": "CONCRETE",
+          "wallType": "EXTERNAL",
+          "sortOrder": 0
+        },
+        {
+          "cornerFrom": "B",
+          "cornerTo": "C",
+          "length": 2100,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "sortOrder": 1
+        },
+        {
+          "cornerFrom": "C",
+          "cornerTo": "D",
+          "length": 3000,
+          "material": "CONCRETE",
+          "wallType": "INTERNAL",
+          "sortOrder": 2
+        },
+        {
+          "cornerFrom": "D",
+          "cornerTo": "A",
+          "length": 2100,
+          "material": "CONCRETE",
+          "wallType": "EXTERNAL",
+          "sortOrder": 3,
+          "windows": [
+            {
+              "width": 1100,
+              "height": 1100,
+              "sillHeightFromScreed": 950,
+              "revealWidthLeft": 80,
+              "revealWidthRight": 80
+            }
+          ],
+          "elements": [
+            {
+              "elementType": "PIPE",
+              "width": 30,
+              "height": 2680,
+              "depth": 30,
+              "offsetFromWall": 0,
+              "offsetFromFloor": 0,
+              "description": "Стояк D30"
+            }
+          ]
+        }
+      ],
+      "angles": [
+        { "cornerLabel": "A", "wallAIndex": 3, "wallBIndex": 0, "isRightAngle": true },
+        { "cornerLabel": "B", "wallAIndex": 0, "wallBIndex": 1, "isRightAngle": true },
+        { "cornerLabel": "C", "wallAIndex": 1, "wallBIndex": 2, "isRightAngle": true },
+        { "cornerLabel": "D", "wallAIndex": 2, "wallBIndex": 3, "isRightAngle": true }
+      ]
+    },
+    {
+      "name": "Коридор",
+      "type": "CORRIDOR",
+      "shape": "L_SHAPE",
+      "ceilingHeight1": 2.65,
+      "sortOrder": 3,
+      "expected": {
+        "perimeter": 13400,
+        "area": 5850000,
+        "volume": 15502500
+      },
+      "walls": [
+        { "cornerFrom": "A", "cornerTo": "B", "length": 2800, "material": "CONCRETE", "wallType": "INTERNAL", "sortOrder": 0 },
+        { "cornerFrom": "B", "cornerTo": "C", "length": 900,  "material": "CONCRETE", "wallType": "INTERNAL", "sortOrder": 1 },
+        { "cornerFrom": "C", "cornerTo": "D", "length": 1500, "material": "CONCRETE", "wallType": "INTERNAL", "sortOrder": 2 },
+        { "cornerFrom": "D", "cornerTo": "E", "length": 1900, "material": "CONCRETE", "wallType": "INTERNAL", "sortOrder": 3 },
+        { "cornerFrom": "E", "cornerTo": "F", "length": 1300, "material": "CONCRETE", "wallType": "INTERNAL", "sortOrder": 4 },
+        { "cornerFrom": "F", "cornerTo": "A", "length": 1000, "material": "CONCRETE", "wallType": "INTERNAL", "sortOrder": 5,
+          "doors": [
+            { "width": 900, "heightFromScreed": 2100 }
+          ]
+        }
+      ],
+      "angles": [
+        { "cornerLabel": "A", "wallAIndex": 5, "wallBIndex": 0, "isRightAngle": true },
+        { "cornerLabel": "B", "wallAIndex": 0, "wallBIndex": 1, "isRightAngle": true },
+        { "cornerLabel": "C", "wallAIndex": 1, "wallBIndex": 2, "isRightAngle": true },
+        { "cornerLabel": "D", "wallAIndex": 2, "wallBIndex": 3, "isRightAngle": true },
+        { "cornerLabel": "E", "wallAIndex": 3, "wallBIndex": 4, "isRightAngle": true },
+        { "cornerLabel": "F", "wallAIndex": 4, "wallBIndex": 5, "isRightAngle": true }
+      ]
+    },
+    {
+      "name": "Санузел",
+      "type": "BATHROOM",
+      "shape": "RECTANGLE",
+      "ceilingHeight1": 2.60,
+      "sortOrder": 4,
+      "expected": {
+        "perimeter": 7680,
+        "area": 3584400,
+        "volume": 9319440
+      },
+      "walls": [
+        { "cornerFrom": "A", "cornerTo": "B", "length": 2180, "material": "CONCRETE", "wallType": "INTERNAL", "sortOrder": 0 },
+        { "cornerFrom": "B", "cornerTo": "C", "length": 1660, "material": "CONCRETE", "wallType": "INTERNAL", "sortOrder": 1 },
+        { "cornerFrom": "C", "cornerTo": "D", "length": 2180, "material": "CONCRETE", "wallType": "INTERNAL", "sortOrder": 2 },
+        { "cornerFrom": "D", "cornerTo": "A", "length": 1660, "material": "CONCRETE", "wallType": "INTERNAL", "sortOrder": 3,
+          "elements": [
+            {
+              "elementType": "VENT_SHAFT",
+              "width": 400,
+              "height": 2600,
+              "depth": 200,
+              "cornerLabel": "A"
+            }
+          ]
+        }
+      ],
+      "angles": [
+        { "cornerLabel": "A", "wallAIndex": 3, "wallBIndex": 0, "isRightAngle": true },
+        { "cornerLabel": "B", "wallAIndex": 0, "wallBIndex": 1, "isRightAngle": true },
+        { "cornerLabel": "C", "wallAIndex": 1, "wallBIndex": 2, "isRightAngle": true },
+        { "cornerLabel": "D", "wallAIndex": 2, "wallBIndex": 3, "isRightAngle": true }
+      ]
+    }
+  ]
+}

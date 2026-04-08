@@ -8,6 +8,7 @@
     "build": "nest build",
     "lint": "eslint src --ext .ts",
     "prisma:generate": "prisma generate",
+    "seed": "ts-node --project tsconfig.json -e \"require('tsconfig-paths/register')\" ../../seed/seed.ts",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
