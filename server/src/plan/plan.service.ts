@@ -23,8 +23,6 @@ export class PlanService {
             walls: {
               include: {
                 segments: true,
-                windows: true,
-                doors: true,
               },
             },
             elements: true,
@@ -53,7 +51,7 @@ export class PlanService {
 
     return this.assembler.assembleFloorPlan(
       project.id,
-      project.label,
+      project.name,
       project.rooms,
       angles,
       adjacencies,

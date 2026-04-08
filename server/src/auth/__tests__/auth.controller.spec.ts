@@ -162,7 +162,7 @@ describe('AuthController', () => {
 
       const result = await controller.refresh(mockRequest as any, mockResponse as any);
 
-      expect(result.message).toBe('Tokens refreshed');
+      expect(result?.message).toBe('Tokens refreshed');
       expect(service.refresh).toHaveBeenCalledWith('test-refresh-token');
       expect(mockResponse.cookie).toHaveBeenCalled();
     });

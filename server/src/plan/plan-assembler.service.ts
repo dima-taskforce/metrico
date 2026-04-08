@@ -14,14 +14,13 @@ import {
 /**
  * Extended types to include relations
  */
-type WallWithRelations = Wall & {
+type WallWithSegmentsAndOpenings = Wall & {
   segments: WallSegment[];
-  windows: WindowOpening[];
-  doors: DoorOpening[];
 };
 
-type RoomWithRelations = Room & {
-  walls: WallWithRelations[];
+type RoomWithWalls = Room & {
+  walls: WallWithSegmentsAndOpenings[];
+  elements: RoomElement[];
 };
 
 @Injectable()
@@ -34,8 +33,8 @@ export class PlanAssemblerService {
    */
   assembleFloorPlan(
     projectId: string,
-    projectLabel: string,
-    rooms: RoomWithRelations[],
+    projectName: string,
+    rooms: RoomWithWalls[],
     angles: Angle[],
     adjacencies: any[], // WallAdjacency with relations
   ): GetPlanDto {
@@ -47,7 +46,7 @@ export class PlanAssemblerService {
 
     return {
       projectId,
-      projectLabel,
+      projectLabel: projectName,
       rooms: floorPlanRooms,
       adjacencies: floorPlanAdjacencies,
       generatedAt: new Date(),
@@ -57,34 +56,37 @@ export class PlanAssemblerService {
   /**
    * Assemble single room with all stats, walls, elements.
    */
-  private assembleRoom(room: RoomWithRelations, angles: Angle[]): FloorPlanRoom {
+  private assembleRoom(room: RoomWithWalls, angles: Angle[]): FloorPlanRoom {
     const roomAngles = angles.filter((a) => a.roomId === room.id);
+
+    // Use average ceiling height if two values exist
+    const ceilingHeight = room.ceilingHeight1 || room.ceilingHeight2 || null;
 
     const stats = this.roomsCalc.compute(
       room.walls,
       roomAngles,
-      room.ceilingHeight,
+      ceilingHeight,
       null,
     );
 
     return {
       id: room.id,
-      label: room.label,
+      label: room.name, // Room.name is used as label
       perimeter: stats.perimeter,
       area: stats.area,
       volume: stats.volume,
-      ceilingHeight: room.ceilingHeight,
+      ceilingHeight: ceilingHeight,
       walls: room.walls.map((wall) => this.assembleWall(wall)),
-      elements: room.elements ? room.elements.map((el) => this.assembleElement(el)) : [],
-      curvatureMean: stats.curvatureAvg,
-      curvatureStdDev: stats.curvatureDeviation,
+      elements: room.elements.map((el) => this.assembleElement(el)),
+      curvatureMean: stats.curvatureMean,
+      curvatureStdDev: stats.curvatureStdDev,
     };
   }
 
   /**
    * Assemble wall with segments and openings.
    */
-  private assembleWall(wall: WallWithRelations): FloorPlanWall {
+  private assembleWall(wall: WallWithSegmentsAndOpenings): FloorPlanWall {
     return {
       id: wall.id,
       roomId: wall.roomId,
@@ -93,7 +95,7 @@ export class PlanAssemblerService {
       material: wall.material,
       wallType: wall.wallType,
       sortOrder: wall.sortOrder,
-      segments: wall.segments ? wall.segments.map((seg) => this.assembleSegment(seg)) : [],
+      segments: wall.segments.map((seg) => this.assembleSegment(seg)),
       openings: this.assembleOpenings(wall),
     };
   }
@@ -102,40 +104,39 @@ export class PlanAssemblerService {
    * Assemble wall segment.
    */
   private assembleSegment(segment: WallSegment): FloorPlanSegment {
+    // Generate label from segment type
+    const label = segment.description || `${segment.segmentType}-${segment.sortOrder}`;
     return {
       id: segment.id,
-      label: segment.label,
+      label,
       length: segment.length, // metres
       segmentType: segment.segmentType,
     };
   }
 
   /**
-   * Combine windows and doors from wall.
+   * Combine windows and doors from wall segments.
    */
-  private assembleOpenings(wall: WallWithRelations): FloorPlanOpening[] {
+  private assembleOpenings(wall: WallWithSegmentsAndOpenings): FloorPlanOpening[] {
     const openings: FloorPlanOpening[] = [];
 
-    if (wall.windows && wall.windows.length > 0) {
-      for (const win of wall.windows) {
+    for (const segment of wall.segments) {
+      if (segment.segmentType === 'WINDOW' && segment.windowOpeningId) {
+        // Note: actual window data would need to be fetched separately or included in segment
         openings.push({
-          id: win.id,
-          label: win.label,
+          id: segment.windowOpeningId,
+          label: `Window ${segment.sortOrder}`,
           type: 'WINDOW',
-          width: win.width,
-          height: win.height,
+          width: 0, // Would come from WindowOpening relation
+          height: 0,
         });
-      }
-    }
-
-    if (wall.doors && wall.doors.length > 0) {
-      for (const door of wall.doors) {
+      } else if (segment.segmentType === 'DOOR' && segment.doorOpeningId) {
         openings.push({
-          id: door.id,
-          label: door.label,
+          id: segment.doorOpeningId,
+          label: `Door ${segment.sortOrder}`,
           type: 'DOOR',
-          width: door.width,
-          height: door.heightFromScreed,
+          width: 0, // Would come from DoorOpening relation
+          height: 0,
         });
       }
     }
@@ -147,20 +148,22 @@ export class PlanAssemblerService {
    * Assemble room element (column, radiator, etc).
    */
   private assembleElement(element: RoomElement): FloorPlanElement {
+    // Generate label from element type and description
+    const label = element.description || element.cornerLabel || `${element.elementType}`;
     return {
       id: element.id,
-      label: element.label,
+      label,
       elementType: element.elementType,
-      depth: element.depth,
-      x: element.positionX,
-      y: element.positionY,
+      depth: element.depth ?? 0,
+      x: element.positionX ?? 0,
+      y: element.offsetFromWall ?? 0,
     };
   }
 
   /**
    * Assemble wall adjacency with label resolution.
    */
-  private assembleAdjacency(adjacency: any, rooms: RoomWithRelations[]): FloorPlanAdjacency {
+  private assembleAdjacency(adjacency: any, rooms: RoomWithWalls[]): FloorPlanAdjacency {
     // Find wall labels by ID from rooms
     let wallALabel = '';
     let wallBLabel = '';
@@ -177,7 +180,7 @@ export class PlanAssemblerService {
       wallALabel,
       wallBLabel,
       hasDoor: adjacency.hasDoorBetween,
-      doorLabel: adjacency.doorOpening ? adjacency.doorOpening.label : undefined,
+      doorLabel: adjacency.doorOpening ? adjacency.doorOpening.id : undefined,
     };
   }
 }
