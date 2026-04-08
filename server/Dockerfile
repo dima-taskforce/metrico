@@ -16,8 +16,11 @@ RUN npm ci --workspace=server
 COPY server/ ./server/
 COPY tsconfig.base.json ./
 
-# Build
+# Generate Prisma client
 WORKDIR /app/server
+RUN npx prisma generate
+
+# Build
 RUN npx nest build
 
 # Stage 2: Production
