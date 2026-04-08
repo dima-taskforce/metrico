@@ -1,0 +1,113 @@
+services:
+  app:
+    image: ${REGISTRY:-ghcr.io/metrico}/server:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: file:/app/data/metrico.db
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
+      CORS_ORIGINS: https://metrico.n1tr0.space
+      CLIENT_URL: https://metrico.n1tr0.space
+      UPLOADS_DIR: /app/data/uploads
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-10}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: https://metrico.n1tr0.space/api/auth/google/callback
+      YANDEX_CLIENT_ID: ${YANDEX_CLIENT_ID}
+      YANDEX_CLIENT_SECRET: ${YANDEX_CLIENT_SECRET}
+      YANDEX_CALLBACK_URL: https://metrico.n1tr0.space/api/auth/yandex/callback
+    volumes:
+      - data:/app/data
+    networks:
+      - metrico
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - client_dist:/usr/share/nginx/html:ro
+      - data:/app/data:ro
+      - certbot_www:/var/www/certbot:ro
+      - certbot_conf:/etc/letsencrypt:ro
+    networks:
+      - metrico
+    depends_on:
+      app:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  certbot:
+    image: certbot/certbot:latest
+    restart: "no"
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done'"
+
+  # Build client SPA and copy to shared volume (runs once, then exits)
+  client-builder:
+    image: node:20-alpine
+    restart: "no"
+    working_dir: /build
+    volumes:
+      - ./client:/build/client:ro
+      - ./package.json:/build/package.json:ro
+      - ./package-lock.json:/build/package-lock.json:ro
+      - ./tsconfig.base.json:/build/tsconfig.base.json:ro
+      - client_dist:/dist
+    command: >
+      sh -c "
+        cd /build &&
+        echo '{\"name\":\"@metrico/server\",\"version\":\"1.0.0\",\"private\":true}' > server/package.json &&
+        npm ci --workspace=client --ignore-scripts &&
+        cd client &&
+        NODE_ENV=production npx vite build --outDir /dist
+      "
+
+volumes:
+  data:
+  client_dist:
+  certbot_www:
+  certbot_conf:
+
+networks:
+  metrico:
+    driver: bridge
