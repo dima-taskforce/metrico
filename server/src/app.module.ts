@@ -13,6 +13,7 @@ import { SegmentsModule } from './segments/segments.module';
 import { PhotosModule } from './photos/photos.module';
 import { AdjacencyModule } from './adjacency/adjacency.module';
 import { PlanModule } from './plan/plan.module';
+import { PdfModule } from './pdf/pdf.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { PlanModule } from './plan/plan.module';
     PhotosModule,
     AdjacencyModule,
     PlanModule,
+    PdfModule,
   ],
   controllers: [],
   providers: [],
