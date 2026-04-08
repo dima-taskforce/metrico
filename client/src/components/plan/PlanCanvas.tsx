@@ -1,8 +1,15 @@
 import { useRef, useEffect, useState } from 'react';
-import { Stage, Layer, Group, Rect, Text, Circle } from 'react-konva';
+import { Stage, Layer, Group, Rect, Text, Circle, Line, Arc, Shape } from 'react-konva';
 import Konva from 'konva';
-import type { FloorPlanRoom, FloorPlanWall } from '../../types/api';
+import type { FloorPlanRoom, FloorPlanWall, FloorPlanElement, FloorPlanSegment } from '../../types/api';
 import type { KonvaEventObject } from 'konva/lib/Node';
+
+/** 1 pixel = 10 mm at scale=1 */
+export const MM_TO_PX = 0.1;
+
+/** Minimum rendered room dimensions in pixels */
+const MIN_W = 80;
+const MIN_H = 60;
 
 interface RoomCanvasProps {
   rooms: FloorPlanRoom[];
@@ -26,6 +33,376 @@ function getColorForRoom(index: number): string {
   return ROOM_COLORS[index % ROOM_COLORS.length] ?? '#E8F4F8';
 }
 
+/** Compute room rect dimensions in px from walls */
+export function computeRoomDimensions(walls: FloorPlanWall[]): { w: number; h: number } {
+  if (walls.length === 0) return { w: 200, h: 150 };
+  const w = Math.max(MIN_W, Math.round((walls[0]?.length ?? 2000) * MM_TO_PX));
+  const h = Math.max(MIN_H, Math.round((walls[1]?.length ?? 1500) * MM_TO_PX));
+  return { w, h };
+}
+
+/**
+ * Compute cumulative segment start offsets along a wall (in px).
+ * Returns array of length segments.length + 1 (start offsets + end).
+ */
+export function computeSegmentOffsets(segments: FloorPlanSegment[]): number[] {
+  const offsets: number[] = [0];
+  for (const seg of segments) {
+    offsets.push(offsets[offsets.length - 1]! + seg.length * MM_TO_PX);
+  }
+  return offsets;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Segment rendering on walls
+// ──────────────────────────────────────────────────────────────────────────────
+
+interface WallSegmentsProps {
+  wall: FloorPlanWall;
+  wallIndex: number;
+  roomW: number;
+  roomH: number;
+}
+
+/**
+ * Renders visual markers for wall segments (door arc, window double line).
+ * Walls are laid out clockwise:
+ *   0 = top (left→right, y=0)
+ *   1 = right (top→bottom, x=w)
+ *   2 = bottom (right→left, y=h)
+ *   3 = left (bottom→top, x=0)
+ */
+function WallSegments({ wall, wallIndex, roomW, roomH }: WallSegmentsProps) {
+  const offsets = computeSegmentOffsets(wall.segments);
+  const isHorizontal = wallIndex % 2 === 0;
+  const wallLen = wall.length * MM_TO_PX;
+
+  return (
+    <>
+      {wall.segments.map((seg, i) => {
+        const startOffset = offsets[i] ?? 0;
+        const endOffset = offsets[i + 1] ?? 0;
+        const segLenPx = endOffset - startOffset;
+        const midOffset = startOffset + segLenPx / 2;
+
+        // Map wall index to actual coordinates
+        const getCoords = (offset: number) => {
+          switch (wallIndex % 4) {
+            case 0: return { x: offset, y: 0 };
+            case 1: return { x: roomW, y: offset };
+            case 2: return { x: roomW - offset, y: roomH };
+            case 3: return { x: 0, y: roomH - offset };
+            default: return { x: 0, y: 0 };
+          }
+        };
+
+        const start = getCoords(startOffset);
+        const end = getCoords(endOffset);
+        const mid = getCoords(midOffset);
+
+        if (seg.segmentType === 'WINDOW') {
+          // Double line indicator — two parallel lines across the opening
+          const OFFSET = isHorizontal ? { dx: 0, dy: -4 } : { dx: 4, dy: 0 };
+          const OFFSET2 = isHorizontal ? { dx: 0, dy: -8 } : { dx: 8, dy: 0 };
+          return (
+            <Group key={seg.id}>
+              <Line
+                points={[
+                  start.x + OFFSET.dx, start.y + OFFSET.dy,
+                  end.x + OFFSET.dx, end.y + OFFSET.dy,
+                ]}
+                stroke="#3b82f6"
+                strokeWidth={1.5}
+              />
+              <Line
+                points={[
+                  start.x + OFFSET2.dx, start.y + OFFSET2.dy,
+                  end.x + OFFSET2.dx, end.y + OFFSET2.dy,
+                ]}
+                stroke="#3b82f6"
+                strokeWidth={1.5}
+              />
+            </Group>
+          );
+        }
+
+        if (seg.segmentType === 'DOOR') {
+          // Dashed opening line + arc sweep indicator
+          const arcRadius = segLenPx;
+          const hingeX = start.x;
+          const hingeY = start.y;
+          const angleDeg = isHorizontal
+            ? (wallIndex === 0 ? -90 : 90)
+            : (wallIndex === 1 ? 0 : 180);
+
+          return (
+            <Group key={seg.id}>
+              {/* Opening width dashed line */}
+              <Line
+                points={[start.x, start.y, end.x, end.y]}
+                stroke="#6b7280"
+                strokeWidth={1}
+                dash={[3, 2]}
+              />
+              {/* Door leaf arc */}
+              <Arc
+                x={hingeX}
+                y={hingeY}
+                innerRadius={0}
+                outerRadius={arcRadius}
+                angle={90}
+                rotation={angleDeg}
+                stroke="#374151"
+                strokeWidth={1}
+                fill="transparent"
+              />
+              {/* Door leaf line */}
+              <Line
+                points={[
+                  hingeX, hingeY,
+                  hingeX + (isHorizontal ? 0 : arcRadius * Math.cos((angleDeg * Math.PI) / 180)),
+                  hingeY + (isHorizontal ? arcRadius * (wallIndex === 0 ? -1 : 1) : 0),
+                ]}
+                stroke="#374151"
+                strokeWidth={1.5}
+              />
+            </Group>
+          );
+        }
+
+        // PROTRUSION / NICHE — subtle marker
+        if (seg.segmentType === 'PROTRUSION' || seg.segmentType === 'NICHE') {
+          const sign = seg.segmentType === 'PROTRUSION' ? -1 : 1;
+          const depthPx = (seg as FloorPlanSegment & { depth?: number }).depth
+            ? ((seg as FloorPlanSegment & { depth?: number }).depth ?? 0) * MM_TO_PX
+            : 6;
+          return (
+            <Group key={seg.id}>
+              <Line
+                points={isHorizontal
+                  ? [start.x, start.y, start.x, start.y + sign * depthPx, end.x, end.y + sign * depthPx, end.x, end.y]
+                  : [start.x, start.y, start.x + sign * depthPx, start.y, end.x + sign * depthPx, end.y, end.x, end.y]
+                }
+                stroke="#9ca3af"
+                strokeWidth={1}
+              />
+            </Group>
+          );
+        }
+
+        // Avoid unused vars warning
+        void mid;
+        void wallLen;
+        return null;
+      })}
+    </>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Element rendering
+// ──────────────────────────────────────────────────────────────────────────────
+
+interface ElementIconProps {
+  element: FloorPlanElement;
+  roomW: number;
+  roomH: number;
+}
+
+/**
+ * Renders a single floor-plan element icon at its (x, y) position (in mm).
+ */
+function ElementIcon({ element, roomW, roomH }: ElementIconProps) {
+  const px = Math.min(element.x * MM_TO_PX, roomW);
+  const py = Math.min(element.y * MM_TO_PX, roomH);
+  const SIZE = 14;
+
+  switch (element.elementType) {
+    case 'COLUMN':
+      return (
+        <Group x={px} y={py}>
+          <Rect
+            x={-SIZE / 2} y={-SIZE / 2}
+            width={SIZE} height={SIZE}
+            fill="#94a3b8"
+            stroke="#475569"
+            strokeWidth={1}
+          />
+        </Group>
+      );
+
+    case 'VENT_SHAFT':
+      // Hatched square
+      return (
+        <Group x={px} y={py}>
+          <Rect
+            x={-SIZE / 2} y={-SIZE / 2}
+            width={SIZE} height={SIZE}
+            fill="white"
+            stroke="#6b7280"
+            strokeWidth={1}
+          />
+          <Shape
+            sceneFunc={(ctx, shape) => {
+              ctx.beginPath();
+              for (let i = -SIZE; i <= SIZE; i += 4) {
+                ctx.moveTo(-SIZE / 2 + i, -SIZE / 2);
+                ctx.lineTo(-SIZE / 2 + i + SIZE, SIZE / 2);
+              }
+              ctx.strokeShape(shape);
+            }}
+            stroke="#6b7280"
+            strokeWidth={0.75}
+            listening={false}
+          />
+        </Group>
+      );
+
+    case 'RADIATOR':
+      // Horizontal lines (grill)
+      return (
+        <Group x={px} y={py}>
+          <Rect
+            x={-SIZE / 2} y={-SIZE / 4}
+            width={SIZE} height={SIZE / 2}
+            fill="white"
+            stroke="#6b7280"
+            strokeWidth={1}
+          />
+          {[-2, 0, 2].map((offset) => (
+            <Line
+              key={offset}
+              points={[-SIZE / 2 + 2, offset, SIZE / 2 - 2, offset]}
+              stroke="#6b7280"
+              strokeWidth={0.75}
+            />
+          ))}
+        </Group>
+      );
+
+    case 'ELECTRICAL_PANEL':
+      // Square with X
+      return (
+        <Group x={px} y={py}>
+          <Rect
+            x={-SIZE / 2} y={-SIZE / 2}
+            width={SIZE} height={SIZE}
+            fill="white"
+            stroke="#374151"
+            strokeWidth={1}
+          />
+          <Line points={[-SIZE / 2, -SIZE / 2, SIZE / 2, SIZE / 2]} stroke="#374151" strokeWidth={1} />
+          <Line points={[SIZE / 2, -SIZE / 2, -SIZE / 2, SIZE / 2]} stroke="#374151" strokeWidth={1} />
+        </Group>
+      );
+
+    case 'LOW_VOLTAGE_PANEL':
+      // Square with horizontal lines
+      return (
+        <Group x={px} y={py}>
+          <Rect
+            x={-SIZE / 2} y={-SIZE / 2}
+            width={SIZE} height={SIZE}
+            fill="white"
+            stroke="#374151"
+            strokeWidth={1}
+          />
+          {[-4, 0, 4].map((offset) => (
+            <Line
+              key={offset}
+              points={[-SIZE / 2 + 2, offset, SIZE / 2 - 2, offset]}
+              stroke="#374151"
+              strokeWidth={1}
+            />
+          ))}
+        </Group>
+      );
+
+    case 'PIPE':
+      // Circle with D label
+      return (
+        <Group x={px} y={py}>
+          <Circle radius={SIZE / 2} fill="white" stroke="#374151" strokeWidth={1} />
+          <Text
+            text="D"
+            x={-SIZE / 4}
+            y={-SIZE / 4}
+            fontSize={7}
+            fill="#374151"
+            fontFamily="Arial"
+          />
+        </Group>
+      );
+
+    default:
+      return null;
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Dimension line component
+// ──────────────────────────────────────────────────────────────────────────────
+
+interface DimLineProps {
+  x1: number; y1: number;
+  x2: number; y2: number;
+  label: string;
+  offset?: number; // pixels away from wall
+  horizontal?: boolean;
+}
+
+/** Professional dimension line with tick marks */
+function DimLine({ x1, y1, x2, y2, label, offset = -18, horizontal = true }: DimLineProps) {
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  const ox = horizontal ? 0 : offset;
+  const oy = horizontal ? offset : 0;
+
+  return (
+    <Group>
+      {/* Extension lines */}
+      <Line points={[x1, y1, x1 + ox, y1 + oy]} stroke="#374151" strokeWidth={0.5} />
+      <Line points={[x2, y2, x2 + ox, y2 + oy]} stroke="#374151" strokeWidth={0.5} />
+      {/* Dimension line */}
+      <Line
+        points={[x1 + ox, y1 + oy, x2 + ox, y2 + oy]}
+        stroke="#374151"
+        strokeWidth={0.5}
+      />
+      {/* Tick marks at ends */}
+      <Line
+        points={horizontal
+          ? [x1 + ox - 3, y1 + oy - 3, x1 + ox + 3, y1 + oy + 3]
+          : [x1 + ox - 3, y1 + oy - 3, x1 + ox + 3, y1 + oy + 3]}
+        stroke="#374151"
+        strokeWidth={1}
+      />
+      <Line
+        points={horizontal
+          ? [x2 + ox - 3, y2 + oy - 3, x2 + ox + 3, y2 + oy + 3]
+          : [x2 + ox - 3, y2 + oy - 3, x2 + ox + 3, y2 + oy + 3]}
+        stroke="#374151"
+        strokeWidth={1}
+      />
+      {/* Dimension label */}
+      <Text
+        x={mx + ox - 20}
+        y={my + oy - 7}
+        text={label}
+        fontSize={9}
+        fontFamily="Arial"
+        fill="#1e3a5f"
+        width={40}
+        align="center"
+      />
+    </Group>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Room group — main renderable unit
+// ──────────────────────────────────────────────────────────────────────────────
+
 interface RoomGroupProps {
   room: FloorPlanRoom;
   index: number;
@@ -46,13 +423,7 @@ function RoomGroup({
   const groupRef = useRef<Konva.Group>(null);
   const isDragging = useRef(false);
 
-  // Simple polygon from room perimeter (approximation)
-  const polygonPoints = [
-    0, 0,
-    300, 0,
-    300, 200,
-    0, 200,
-  ];
+  const { w, h } = computeRoomDimensions(room.walls);
 
   const handleDragStart = () => {
     isDragging.current = true;
@@ -72,6 +443,11 @@ function RoomGroup({
     onSelect(room.id);
   };
 
+  // Dimension labels in meters
+  const wallLabels = room.walls.slice(0, 4).map((wall) =>
+    (wall.length / 1000).toFixed(2) + ' м'
+  );
+
   return (
     <Group
       ref={groupRef}
@@ -84,78 +460,110 @@ function RoomGroup({
       onClick={handleClick}
       onTap={handleClick}
     >
-      {/* Room background */}
+      {/* Room fill */}
       <Rect
-        width={300}
-        height={200}
+        width={w}
+        height={h}
         fill={getColorForRoom(index)}
-        stroke={isSelected ? '#0066cc' : '#999'}
-        strokeWidth={isSelected ? 3 : 1}
-        cornerRadius={4}
+        stroke={isSelected ? '#1d4ed8' : '#6b7280'}
+        strokeWidth={isSelected ? 2 : 1.5}
       />
 
       {/* Room label */}
       <Text
-        x={10}
-        y={10}
+        x={8}
+        y={8}
         text={room.label}
-        fontSize={16}
-        fontFamily="Arial"
-        fontStyle="bold"
-        fill={isSelected ? '#0066cc' : '#333'}
-      />
-
-      {/* Perimeter info */}
-      <Text
-        x={10}
-        y={35}
-        text={`${(room.perimeter / 1000).toFixed(2)} м`}
         fontSize={12}
         fontFamily="Arial"
-        fill="#666"
+        fontStyle="bold"
+        fill={isSelected ? '#1d4ed8' : '#1f2937'}
       />
 
-      {/* Selection indicator */}
+      {/* Area label */}
+      {room.area != null && (
+        <Text
+          x={8}
+          y={24}
+          text={`${room.area.toFixed(1)} м²`}
+          fontSize={9}
+          fontFamily="Arial"
+          fill="#6b7280"
+        />
+      )}
+
+      {/* Wall segments overlay */}
+      {room.walls.slice(0, 4).map((wall, wallIdx) => (
+        <WallSegments
+          key={wall.id}
+          wall={wall}
+          wallIndex={wallIdx}
+          roomW={w}
+          roomH={h}
+        />
+      ))}
+
+      {/* Room elements */}
+      {room.elements.map((el) => (
+        <ElementIcon key={el.id} element={el} roomW={w} roomH={h} />
+      ))}
+
+      {/* Selection handles */}
       {isSelected && (
         <>
-          {/* Corner handles for rotation */}
-          <Circle x={300} y={200} radius={6} fill="#0066cc" />
-          <Circle x={0} y={0} radius={6} fill="#0066cc" />
+          <Circle x={w} y={h} radius={5} fill="#1d4ed8" />
+          <Circle x={0} y={0} radius={5} fill="#1d4ed8" />
         </>
       )}
 
-      {/* Wall labels */}
-      {room.walls.map((wall, idx) => {
-        let labelX = 150;
-        let labelY = -20;
+      {/* ── Dimension lines (professional style) ── */}
 
-        if (idx === 1) {
-          labelX = 320;
-          labelY = 100;
-        } else if (idx === 2) {
-          labelX = 150;
-          labelY = 220;
-        } else if (idx === 3) {
-          labelX = -40;
-          labelY = 100;
-        }
+      {/* Top wall dimension */}
+      {room.walls[0] && (
+        <DimLine
+          x1={0} y1={0} x2={w} y2={0}
+          label={wallLabels[0] ?? ''}
+          offset={-18}
+          horizontal
+        />
+      )}
 
-        return (
-          <Text
-            key={wall.id}
-            x={labelX}
-            y={labelY}
-            text={wall.label}
-            fontSize={10}
-            fontFamily="Arial"
-            fill="#666"
-            dataId={wall.id}
-          />
-        );
-      })}
+      {/* Right wall dimension */}
+      {room.walls[1] && (
+        <DimLine
+          x1={w} y1={0} x2={w} y2={h}
+          label={wallLabels[1] ?? ''}
+          offset={18}
+          horizontal={false}
+        />
+      )}
+
+      {/* Bottom wall dimension */}
+      {room.walls[2] && (
+        <DimLine
+          x1={0} y1={h} x2={w} y2={h}
+          label={wallLabels[2] ?? ''}
+          offset={18}
+          horizontal
+        />
+      )}
+
+      {/* Left wall dimension */}
+      {room.walls[3] && (
+        <DimLine
+          x1={0} y1={0} x2={0} y2={h}
+          label={wallLabels[3] ?? ''}
+          offset={-18}
+          horizontal={false}
+        />
+      )}
     </Group>
   );
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// PlanCanvas
+// ──────────────────────────────────────────────────────────────────────────────
 
 export function PlanCanvas({
   rooms,
@@ -224,7 +632,7 @@ export function PlanCanvas({
       lastDistance = 0;
     };
 
-    stage.on('contentTouchMove', handleTouchMove as any);
+    stage.on('contentTouchMove', handleTouchMove as Parameters<typeof stage.on>[1]);
     stage.on('contentTouchEnd', handleTouchEnd);
 
     return () => {

@@ -9,8 +9,11 @@ vi.mock('react-konva', () => ({
   Layer: () => null,
   Group: () => null,
   Rect: () => null,
-  Text: () => null,
+  Text: ({ text }: { text?: string }) => <span>{text}</span>,
   Circle: () => null,
+  Line: () => null,
+  Arc: () => null,
+  Shape: () => null,
 }));
 
 const mockRoom = (id: string, label: string): FloorPlanRoom => ({
