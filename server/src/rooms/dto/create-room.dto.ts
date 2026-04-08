@@ -4,13 +4,13 @@ import { RoomType, RoomShape } from '@prisma/client';
 export class CreateRoomDto {
   @IsString()
   @MaxLength(200)
-  name: string;
+  name!: string;
 
   @IsEnum(RoomType)
-  type: RoomType;
+  type!: RoomType;
 
   @IsEnum(RoomShape)
-  shape: RoomShape;
+  shape!: RoomShape;
 
   @IsOptional()
   @IsNumber()
@@ -26,5 +26,5 @@ export class CreateRoomDto {
 
   @IsInt()
   @Min(0)
-  sortOrder: number;
+  sortOrder!: number;
 }

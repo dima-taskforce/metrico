@@ -4,7 +4,7 @@ import { ObjectType } from '@prisma/client';
 export class CreateProjectDto {
   @IsString()
   @MaxLength(200)
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
@@ -12,7 +12,7 @@ export class CreateProjectDto {
   address?: string;
 
   @IsEnum(ObjectType)
-  objectType: ObjectType;
+  objectType!: ObjectType;
 
   @IsOptional()
   @IsNumber()

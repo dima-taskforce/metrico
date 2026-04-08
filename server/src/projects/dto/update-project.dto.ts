@@ -1,9 +1,27 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateProjectDto } from './create-project.dto';
-import { IsOptional, IsEnum } from 'class-validator';
-import { ProjectStatus } from '@prisma/client';
+import { IsString, IsOptional, IsEnum, IsNumber, Min, Max, MaxLength } from 'class-validator';
+import { ObjectType, ProjectStatus } from '@prisma/client';
 
-export class UpdateProjectDto extends PartialType(CreateProjectDto) {
+export class UpdateProjectDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  address?: string;
+
+  @IsOptional()
+  @IsEnum(ObjectType)
+  objectType?: ObjectType;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1.5)
+  @Max(10)
+  defaultCeilingHeight?: number;
+
   @IsOptional()
   @IsEnum(ProjectStatus)
   status?: ProjectStatus;

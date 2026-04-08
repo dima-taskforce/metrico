@@ -4,5 +4,5 @@ export class ReorderRoomsDto {
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
-  orderedIds: string[];
+  orderedIds!: string[];
 }
