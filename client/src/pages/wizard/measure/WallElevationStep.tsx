@@ -231,9 +231,9 @@ const elementSchema = z.object({
     'LOW_VOLTAGE_PANEL',
     'PIPE',
   ] as const),
-  positionX: z.coerce.number().min(0, '≥ 0').optional(),
-  offsetFromFloor: z.coerce.number().min(0, '≥ 0').optional(),
-  width: z.coerce.number().positive().optional(),
+  positionX: z.preprocess((v) => v === '' ? undefined : v, z.coerce.number().min(0, '≥ 0').optional()),
+  offsetFromFloor: z.preprocess((v) => v === '' ? undefined : v, z.coerce.number().min(0, '≥ 0').optional()),
+  width: z.preprocess((v) => v === '' ? undefined : v, z.coerce.number().positive().optional()),
   description: z.string().optional(),
 });
 type ElementForm = z.infer<typeof elementSchema>;

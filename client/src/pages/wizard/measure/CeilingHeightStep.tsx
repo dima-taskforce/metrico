@@ -9,7 +9,7 @@ import { Button } from '../../../components/ui/Button';
 
 const schema = z.object({
   ceilingHeight1: z.coerce.number().min(1.5, 'Минимум 1.5 м').max(10, 'Максимум 10 м'),
-  ceilingHeight2: z.coerce.number().min(1.5, 'Минимум 1.5 м').max(10, 'Максимум 10 м').optional(),
+  ceilingHeight2: z.preprocess((v) => v === '' ? undefined : v, z.coerce.number().min(1.5, 'Минимум 1.5 м').max(10, 'Максимум 10 м').optional()),
 });
 
 type CeilingForm = z.infer<typeof schema>;
