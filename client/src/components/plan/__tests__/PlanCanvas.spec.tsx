@@ -4,6 +4,15 @@ import userEvent from '@testing-library/user-event';
 import { PlanCanvas } from '../PlanCanvas';
 import type { FloorPlanRoom } from '../../../types/api';
 
+vi.mock('react-konva', () => ({
+  Stage: (_props: Record<string, unknown>) => <canvas role="img" aria-hidden="true" />,
+  Layer: () => null,
+  Group: () => null,
+  Rect: () => null,
+  Text: () => null,
+  Circle: () => null,
+}));
+
 const mockRoom = (id: string, label: string): FloorPlanRoom => ({
   id,
   label,

@@ -292,6 +292,7 @@ export function PlanCanvas({
       {/* Controls */}
       <div className="absolute bottom-4 right-4 flex gap-2">
         <button
+          aria-label="Уменьшить"
           className="px-3 py-2 bg-white border border-gray-300 rounded text-sm hover:bg-gray-50"
           onClick={() => onScaleChange(Math.max(0.5, scale - 0.1))}
           title="Уменьшить"
@@ -302,6 +303,7 @@ export function PlanCanvas({
           {(scale * 100).toFixed(0)}%
         </span>
         <button
+          aria-label="Увеличить"
           className="px-3 py-2 bg-white border border-gray-300 rounded text-sm hover:bg-gray-50"
           onClick={() => onScaleChange(Math.min(3, scale + 0.1))}
           title="Увеличить"

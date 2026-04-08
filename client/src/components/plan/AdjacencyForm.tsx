@@ -3,18 +3,23 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import type { FloorPlanRoom, FloorPlanWall } from '../../types/api';
+import type { FloorPlanRoom } from '../../types/api';
 
 const createAdjacencySchema = z.object({
-  roomAId: z.string().min(1, 'Выберите комнату A'),
-  wallAId: z.string().min(1, 'Выберите стену A'),
-  roomBId: z.string().min(1, 'Выберите комнату B'),
-  wallBId: z.string().min(1, 'Выберите стену B'),
+  roomAId: z.string().min(1, 'Выберите комнату 1'),
+  wallAId: z.string().min(1, 'Выберите стену 1'),
+  roomBId: z.string().min(1, 'Выберите комнату 2'),
+  wallBId: z.string().min(1, 'Выберите стену 2'),
   hasDoorBetween: z.boolean(),
 });
 
-export type AdjacencyFormData = z.infer<typeof createAdjacencySchema>;
+export type AdjacencyFormData = {
+  wallAId: string;
+  wallBId: string;
+  hasDoorBetween: boolean;
+};
+
+type InternalFormData = z.infer<typeof createAdjacencySchema>;
 
 interface AdjacencyFormProps {
   rooms: FloorPlanRoom[];
@@ -32,7 +37,7 @@ export function AdjacencyForm({ rooms, onSubmit, isLoading = false }: AdjacencyF
     watch,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<AdjacencyFormData>({
+  } = useForm<InternalFormData>({
     resolver: zodResolver(createAdjacencySchema),
     defaultValues: {
       hasDoorBetween: false,
@@ -45,9 +50,9 @@ export function AdjacencyForm({ rooms, onSubmit, isLoading = false }: AdjacencyF
   const roomA = rooms.find((r) => r.id === roomAId);
   const roomB = rooms.find((r) => r.id === roomBId);
 
-  const handleFormSubmit = async (data: AdjacencyFormData) => {
+  const handleFormSubmit = async (data: InternalFormData) => {
     try {
-      await onSubmit(data);
+      await onSubmit({ wallAId: data.wallAId, wallBId: data.wallBId, hasDoorBetween: data.hasDoorBetween });
       reset();
       setSelectedRoomAId('');
       setSelectedRoomBId('');
@@ -61,7 +66,7 @@ export function AdjacencyForm({ rooms, onSubmit, isLoading = false }: AdjacencyF
       <div className="grid grid-cols-2 gap-4">
         {/* Room A */}
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Комната A</label>
+          <label className="text-sm font-medium text-gray-700">Комната 1</label>
           <select
             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
             {...register('roomAId', {
@@ -82,7 +87,7 @@ export function AdjacencyForm({ rooms, onSubmit, isLoading = false }: AdjacencyF
 
         {/* Wall A */}
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Стена A</label>
+          <label className="text-sm font-medium text-gray-700">Стена комнаты 1</label>
           <select
             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
             disabled={!roomA}
@@ -104,7 +109,7 @@ export function AdjacencyForm({ rooms, onSubmit, isLoading = false }: AdjacencyF
       <div className="grid grid-cols-2 gap-4">
         {/* Room B */}
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Комната B</label>
+          <label className="text-sm font-medium text-gray-700">Комната 2</label>
           <select
             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
             {...register('roomBId', {
@@ -125,7 +130,7 @@ export function AdjacencyForm({ rooms, onSubmit, isLoading = false }: AdjacencyF
 
         {/* Wall B */}
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Стена B</label>
+          <label className="text-sm font-medium text-gray-700">Стена комнаты 2</label>
           <select
             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
             disabled={!roomB}

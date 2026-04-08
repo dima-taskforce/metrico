@@ -212,7 +212,7 @@ export function PlanStep() {
                       {adj.wallALabel} ↔ {adj.wallBLabel}
                     </p>
                     {adj.hasDoor && (
-                      <p className="text-xs text-gray-600 mt-1">🚪 С дверью</p>
+                      <p className="text-xs text-gray-600 mt-1"><span>🚪</span> С дверью</p>
                     )}
                     {selectedAdjacencyId === adj.id && (
                       <button
