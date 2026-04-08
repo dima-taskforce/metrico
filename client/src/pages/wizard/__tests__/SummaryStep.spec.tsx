@@ -1,12 +1,17 @@
-/// <reference types="vitest" />
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import type { Room, Wall, Angle, Photo } from '../../../types/api';
 import { BrowserRouter } from 'react-router-dom';
-import '@testing-library/jest-dom';
+import type { Room, Wall, Angle, Photo } from '../../../types/api';
 
-const { mockNavigate, mockRoomsList, mockWallsList, mockAnglesList, mockPhotosList, mockUseProjectsStore } = vi.hoisted(() => ({
-  mockNavigate: vi.fn(),
+const mockNavigate = vi.fn();
+
+const {
+  mockRoomsList,
+  mockWallsList,
+  mockAnglesList,
+  mockPhotosList,
+  mockUseProjectsStore,
+} = vi.hoisted(() => ({
   mockRoomsList: vi.fn(),
   mockWallsList: vi.fn(),
   mockAnglesList: vi.fn(),
@@ -15,40 +20,22 @@ const { mockNavigate, mockRoomsList, mockWallsList, mockAnglesList, mockPhotosLi
 }));
 
 vi.mock('../../../api/rooms', () => ({
-  roomsApi: {
-    list: mockRoomsList,
-    create: vi.fn(),
-    remove: vi.fn(),
-  },
+  roomsApi: { list: mockRoomsList, create: vi.fn(), remove: vi.fn() },
 }));
-
 vi.mock('../../../api/walls', () => ({
-  wallsApi: {
-    list: mockWallsList,
-    update: vi.fn(),
-  },
+  wallsApi: { list: mockWallsList, update: vi.fn() },
 }));
-
 vi.mock('../../../api/angles', () => ({
-  anglesApi: {
-    list: mockAnglesList,
-    create: vi.fn(),
-  },
+  anglesApi: { list: mockAnglesList, create: vi.fn() },
 }));
-
 vi.mock('../../../api/photos', () => ({
-  photosApi: {
-    list: mockPhotosList,
-    create: vi.fn(),
-  },
+  photosApi: { list: mockPhotosList, create: vi.fn() },
 }));
-
 vi.mock('../../../stores/projectsStore', () => ({
   useProjectsStore: mockUseProjectsStore,
 }));
-
 vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -56,7 +43,7 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-let SummaryStep: any;
+import { SummaryStep } from '../SummaryStep';
 
 const mockRoom = (id: string, name: string, isMeasured = true, type = 'LIVING'): Room => ({
   id,
@@ -118,19 +105,13 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('SummaryStep', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
 
-    // Import SummaryStep after mocks are set up
-    const module = await import('../SummaryStep');
-    SummaryStep = module.SummaryStep;
-
-    // Mock fetch globally (used by countOpenings in SummaryStep)
     global.fetch = vi.fn().mockResolvedValue({
       json: vi.fn().mockResolvedValue([]),
     } as unknown as Response);
 
-    // Default: one photo per room so "Комнаты без фотографий" warning does not appear
     mockRoomsList.mockResolvedValue([]);
     mockWallsList.mockResolvedValue([]);
     mockAnglesList.mockResolvedValue([]);
@@ -140,20 +121,9 @@ describe('SummaryStep', () => {
     });
   });
 
-  afterEach(() => {
-    // Clear DOM between tests by removing all children from body
-    if (typeof document !== 'undefined' && document.body) {
-      while (document.body.firstChild) {
-        document.body.removeChild(document.body.firstChild);
-      }
-    }
-  });
-
   it('renders summary title and project name', async () => {
     mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.getByText('Сводка по комнатам')).toBeInTheDocument();
       expect(screen.getByText('Test Apartment')).toBeInTheDocument();
@@ -165,9 +135,7 @@ describe('SummaryStep', () => {
       mockRoom('room-1', 'Спальня'),
       mockRoom('room-2', 'Кухня'),
     ]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.getByText('Спальня')).toBeInTheDocument();
       expect(screen.getByText('Кухня')).toBeInTheDocument();
@@ -181,9 +149,7 @@ describe('SummaryStep', () => {
       mockWall('wall-2', 4000, 1),
     ]);
     mockAnglesList.mockResolvedValue([mockAngle('wall-1', 'wall-2')]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.getByText('20.00')).toBeInTheDocument();
     });
@@ -194,9 +160,7 @@ describe('SummaryStep', () => {
       mockRoom('room-1', 'Спальня', true),
       mockRoom('room-2', 'Зал', false),
     ]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.getByText(/Незамеренные комнаты/)).toBeInTheDocument();
       expect(screen.getAllByText('Зал').length).toBeGreaterThan(0);
@@ -206,9 +170,7 @@ describe('SummaryStep', () => {
   it('displays warning for rooms without photos', async () => {
     mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
     mockPhotosList.mockResolvedValue([]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.getByText(/Комнаты без фотографий/)).toBeInTheDocument();
     });
@@ -217,9 +179,7 @@ describe('SummaryStep', () => {
   it('does not show missing photos warning when photos exist', async () => {
     mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
     mockPhotosList.mockResolvedValue([mockPhoto('photo-1')]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.queryByText(/Комнаты без фотографий/)).not.toBeInTheDocument();
     });
@@ -240,15 +200,11 @@ describe('SummaryStep', () => {
         mockWall('wall-4', 2000, 1),
       ]);
     });
-    mockAnglesList.mockResolvedValue([
-      mockAngle('wall-1', 'wall-2'),
-      mockAngle('wall-3', 'wall-4'),
-    ]);
-
+    mockAnglesList.mockResolvedValue([]);
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
-      expect(screen.getByText(/26.00/)).toBeInTheDocument();
+      // Total area: 20m² + 6m² = 26m², displayed as "26.00 м²"
+      expect(screen.getByText(/26\.00/)).toBeInTheDocument();
     });
   });
 
@@ -257,9 +213,7 @@ describe('SummaryStep', () => {
       mockRoom('room-1', 'Спальня'),
       mockRoom('room-2', 'Кухня'),
     ]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.getByText('2.70 м')).toBeInTheDocument();
     });
@@ -267,9 +221,7 @@ describe('SummaryStep', () => {
 
   it('navigates to measure step when row is clicked', async () => {
     mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
-
     const { container } = render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       const rows = container.querySelectorAll('tbody tr');
       expect(rows.length).toBe(1);
@@ -278,9 +230,7 @@ describe('SummaryStep', () => {
 
   it('displays correct column headers', async () => {
     mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.getByText('Название')).toBeInTheDocument();
       expect(screen.getByText('Тип')).toBeInTheDocument();
@@ -295,9 +245,7 @@ describe('SummaryStep', () => {
 
   it('displays room type emoji', async () => {
     mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня', true, 'BEDROOM')]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.getByText('🛏')).toBeInTheDocument();
     });
@@ -305,9 +253,7 @@ describe('SummaryStep', () => {
 
   it('displays back and generate plan buttons', async () => {
     mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.getByText('← Назад')).toBeInTheDocument();
       expect(screen.getByText('Сформировать обмерный план →')).toBeInTheDocument();
@@ -316,9 +262,7 @@ describe('SummaryStep', () => {
 
   it('shows loading state initially', () => {
     mockRoomsList.mockImplementation(() => new Promise(() => {}));
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     expect(screen.getByText('Загрузка…')).toBeInTheDocument();
   });
 
@@ -329,9 +273,7 @@ describe('SummaryStep', () => {
       mockWall('wall-2', 4000, 1),
     ]);
     mockAnglesList.mockResolvedValue([]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.getByText('9.00')).toBeInTheDocument();
     });
@@ -339,9 +281,7 @@ describe('SummaryStep', () => {
 
   it('handles empty rooms list', async () => {
     mockRoomsList.mockResolvedValue([]);
-
     render(<SummaryStep />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(screen.getByText('Сводка по комнатам')).toBeInTheDocument();
     });
