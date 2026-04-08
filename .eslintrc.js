@@ -32,5 +32,5 @@ module.exports = {
       typescript: {},
     },
   },
-  ignorePatterns: ['dist/', 'node_modules/', '*.js', '*.cjs', '*.mjs'],
+  ignorePatterns: ['dist/', 'node_modules/', '*.js', '*.cjs', '*.mjs', '**/__tests__/**'],
 };

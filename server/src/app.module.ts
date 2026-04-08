@@ -11,6 +11,7 @@ import { ElementsModule } from './elements/elements.module';
 import { AnglesModule } from './angles/angles.module';
 import { SegmentsModule } from './segments/segments.module';
 import { PhotosModule } from './photos/photos.module';
+import { AdjacencyModule } from './adjacency/adjacency.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { PhotosModule } from './photos/photos.module';
     AnglesModule,
     SegmentsModule,
     PhotosModule,
+    AdjacencyModule,
   ],
   controllers: [],
   providers: [],
