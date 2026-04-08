@@ -2,10 +2,13 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import { AuthProvider } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -168,6 +171,47 @@ export class AuthService {
         data: { revokedAt: new Date() },
       }),
     ]);
+  }
+
+  async validateOAuthUser(
+    email: string,
+    provider: 'GOOGLE' | 'YANDEX',
+    name?: string,
+  ): Promise<{ id: string; email: string }> {
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+
+    if (existing) {
+      if (existing.authProvider !== (provider as AuthProvider)) {
+        throw new HttpException(
+          {
+            code: 'EMAIL_PROVIDER_CONFLICT',
+            provider: existing.authProvider.toLowerCase(),
+            message: existing.authProvider === 'LOCAL'
+              ? 'Аккаунт зарегистрирован через email/пароль.'
+              : `Аккаунт зарегистрирован через ${existing.authProvider.toLowerCase()}.`,
+          },
+          HttpStatus.CONFLICT,
+        );
+      }
+      return { id: existing.id, email: existing.email };
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        name: name ?? (email.split('@')[0] as string),
+        authProvider: provider as AuthProvider,
+      },
+    });
+
+    return { id: user.id, email: user.email };
+  }
+
+  async issueTokensPublic(
+    userId: string,
+    email: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    return this.issueTokens(userId, email);
   }
 
   async revokeAllRefreshTokens(userId: string): Promise<void> {

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -271,6 +271,69 @@ describe('AuthService', () => {
         where: { userId: 'u1', revokedAt: null },
         data: { revokedAt: expect.any(Date) },
       });
+    });
+  });
+
+  describe('validateOAuthUser', () => {
+    it('returns existing user when provider matches', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        email: 'a@b.com',
+        authProvider: 'GOOGLE',
+      });
+
+      const result = await service.validateOAuthUser('a@b.com', 'GOOGLE');
+      expect(result).toEqual({ id: 'u1', email: 'a@b.com' });
+      expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('throws 409 HttpException when email exists with different provider', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        email: 'a@b.com',
+        authProvider: 'LOCAL',
+      });
+
+      await expect(
+        service.validateOAuthUser('a@b.com', 'GOOGLE'),
+      ).rejects.toBeInstanceOf(HttpException);
+    });
+
+    it('creates new user when email not found', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue({ id: 'u2', email: 'new@b.com' });
+      prisma.refreshToken.create.mockResolvedValue({});
+
+      const result = await service.validateOAuthUser('new@b.com', 'GOOGLE', 'New User');
+      expect(result).toEqual({ id: 'u2', email: 'new@b.com' });
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ email: 'new@b.com', authProvider: 'GOOGLE' }),
+        }),
+      );
+    });
+
+    it('uses email prefix as name when displayName not provided', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue({ id: 'u3', email: 'john@b.com' });
+      prisma.refreshToken.create.mockResolvedValue({});
+
+      await service.validateOAuthUser('john@b.com', 'YANDEX');
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ name: 'john' }),
+        }),
+      );
+    });
+  });
+
+  describe('issueTokensPublic', () => {
+    it('returns tokens for valid user', async () => {
+      prisma.refreshToken.create.mockResolvedValue({});
+
+      const result = await service.issueTokensPublic('u1', 'a@b.com');
+      expect(result.accessToken).toBe('access-token');
+      expect(typeof result.refreshToken).toBe('string');
     });
   });
 });

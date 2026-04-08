@@ -4,6 +4,8 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
+import { YandexStrategy } from './strategies/yandex.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Module({
@@ -11,7 +13,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     PassportModule,
     JwtModule.register({}),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, GoogleStrategy, YandexStrategy],
   controllers: [AuthController],
   exports: [JwtAuthGuard],
 })
