@@ -106,12 +106,12 @@ describe('ElementsService', () => {
       expect(result.cornerLabel).toBe('A');
     });
 
-    it('creates a NICHE element with depth', async () => {
+    it('creates a VENT_SHAFT element with depth', async () => {
       prisma.room.findUnique.mockResolvedValue(makeRoomWithAccess());
-      const el = makeElement({ elementType: ElementType.NICHE, depth: 300 });
+      const el = makeElement({ elementType: ElementType.VENT_SHAFT, depth: 300 });
       prisma.roomElement.create.mockResolvedValue(el);
 
-      const dto = { elementType: ElementType.NICHE, depth: 300 };
+      const dto = { elementType: ElementType.VENT_SHAFT, depth: 300 };
       const result = await service.create('r1', 'u1', dto);
 
       expect(result.depth).toBe(300);

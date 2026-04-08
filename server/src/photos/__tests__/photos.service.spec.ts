@@ -25,7 +25,7 @@ jest.mock('fs/promises', () => ({
 const makePhoto = (overrides = {}) => ({
   id: 'ph1',
   roomId: 'r1',
-  photoType: PhotoType.GENERAL,
+  photoType: PhotoType.OVERVIEW_BEFORE,
   filePath: 'uploads/photos/u1/p1/r1/abc.jpg',
   createdAt: NOW,
   updatedAt: NOW,
@@ -44,7 +44,7 @@ const makeFile = (mimetype = 'image/jpeg', size = 1024 * 1024): Express.Multer.F
   mimetype,
   size,
   buffer: Buffer.from('fake-image-data'),
-  stream: null as unknown as NodeJS.ReadableStream,
+  stream: null as unknown as import('stream').Readable,
   destination: '',
   filename: '',
   path: '',
@@ -107,12 +107,12 @@ describe('PhotosService', () => {
       prisma.roomPhoto.create.mockResolvedValue(makePhoto());
 
       const file = makeFile('image/jpeg');
-      const result = await service.upload('r1', 'u1', file, PhotoType.GENERAL);
+      const result = await service.upload('r1', 'u1', file, PhotoType.OVERVIEW_BEFORE);
 
-      expect(result.photoType).toBe(PhotoType.GENERAL);
+      expect(result.photoType).toBe(PhotoType.OVERVIEW_BEFORE);
       expect(prisma.roomPhoto.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ roomId: 'r1', photoType: PhotoType.GENERAL }),
+          data: expect.objectContaining({ roomId: 'r1', photoType: PhotoType.OVERVIEW_BEFORE }),
         }),
       );
     });
@@ -122,23 +122,23 @@ describe('PhotosService', () => {
       prisma.roomPhoto.create.mockResolvedValue(makePhoto());
 
       const file = makeFile('image/png');
-      await expect(service.upload('r1', 'u1', file, PhotoType.GENERAL)).resolves.toBeDefined();
+      await expect(service.upload('r1', 'u1', file, PhotoType.OVERVIEW_BEFORE)).resolves.toBeDefined();
     });
 
     it('throws BadRequestException for unsupported MIME type', async () => {
       const file = makeFile('image/gif');
-      await expect(service.upload('r1', 'u1', file, PhotoType.GENERAL)).rejects.toThrow(BadRequestException);
+      await expect(service.upload('r1', 'u1', file, PhotoType.OVERVIEW_BEFORE)).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException for PDF file', async () => {
       const file = makeFile('application/pdf');
-      await expect(service.upload('r1', 'u1', file, PhotoType.GENERAL)).rejects.toThrow(BadRequestException);
+      await expect(service.upload('r1', 'u1', file, PhotoType.OVERVIEW_BEFORE)).rejects.toThrow(BadRequestException);
     });
 
     it('throws ForbiddenException for wrong user', async () => {
       prisma.room.findUnique.mockResolvedValue(makeRoomWithAccess('other'));
       const file = makeFile('image/jpeg');
-      await expect(service.upload('r1', 'u1', file, PhotoType.GENERAL)).rejects.toThrow(ForbiddenException);
+      await expect(service.upload('r1', 'u1', file, PhotoType.OVERVIEW_BEFORE)).rejects.toThrow(ForbiddenException);
     });
 
     it('calls sharp to process the image (EXIF strip + auto-orient)', async () => {
@@ -146,7 +146,7 @@ describe('PhotosService', () => {
       prisma.roomPhoto.create.mockResolvedValue(makePhoto());
 
       const file = makeFile('image/jpeg');
-      await service.upload('r1', 'u1', file, PhotoType.GENERAL);
+      await service.upload('r1', 'u1', file, PhotoType.OVERVIEW_BEFORE);
 
       expect(mockSharpInstance.rotate).toHaveBeenCalled();
       expect(mockSharpInstance.withMetadata).toHaveBeenCalledWith({ exif: {} });
@@ -158,7 +158,7 @@ describe('PhotosService', () => {
       prisma.roomPhoto.create.mockResolvedValue(makePhoto());
 
       const file = makeFile('image/jpeg');
-      await service.upload('r1', 'u1', file, PhotoType.GENERAL);
+      await service.upload('r1', 'u1', file, PhotoType.OVERVIEW_BEFORE);
 
       expect(mockSharpInstance.resize).toHaveBeenCalledWith(400);
     });

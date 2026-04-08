@@ -10,7 +10,7 @@ const makeSegment = (overrides = {}) => ({
   id: 'seg1',
   wallId: 'w1',
   sortOrder: 0,
-  segmentType: SegmentType.SOLID,
+  segmentType: SegmentType.PLAIN,
   length: 2.0,
   depth: null,
   description: null,
@@ -82,14 +82,14 @@ describe('SegmentsService', () => {
   // ── create ──────────────────────────────────────────────────────────────
 
   describe('create', () => {
-    it('creates a SOLID segment', async () => {
+    it('creates a PLAIN segment', async () => {
       prisma.wall.findUnique.mockResolvedValue(makeWallWithAccess());
       prisma.wallSegment.create.mockResolvedValue(makeSegment());
 
-      const dto = { sortOrder: 0, segmentType: SegmentType.SOLID, length: 2.0 };
+      const dto = { sortOrder: 0, segmentType: SegmentType.PLAIN, length: 2.0 };
       const result = await service.create('w1', 'u1', dto);
 
-      expect(result.segmentType).toBe(SegmentType.SOLID);
+      expect(result.segmentType).toBe(SegmentType.PLAIN);
       expect(prisma.wallSegment.create).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ wallId: 'w1' }) }),
       );
