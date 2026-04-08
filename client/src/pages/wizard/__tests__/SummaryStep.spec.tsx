@@ -1,32 +1,68 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+/// <reference types="vitest" />
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import type { Room, Wall, Angle, Photo } from '../../../types/api';
 import { BrowserRouter } from 'react-router-dom';
-import { SummaryStep } from '../SummaryStep';
-import * as roomsApi from '../../../api/rooms';
-import * as wallsApi from '../../../api/walls';
-import * as anglesApi from '../../../api/angles';
-import * as photosApi from '../../../api/photos';
-import * as projectsStore from '../../../stores/projectsStore';
+import '@testing-library/jest-dom';
 
-const mockNavigate = vi.fn();
-
-vi.mock('../../../api/rooms');
-vi.mock('../../../api/walls');
-vi.mock('../../../api/angles');
-vi.mock('../../../api/photos');
-vi.mock('../../../stores/projectsStore');
-vi.mock('react-router-dom', async () => ({
-  ...(await vi.importActual('react-router-dom')),
-  useNavigate: () => mockNavigate,
-  useParams: () => ({ projectId: 'test-project' }),
+const { mockNavigate, mockRoomsList, mockWallsList, mockAnglesList, mockPhotosList, mockUseProjectsStore } = vi.hoisted(() => ({
+  mockNavigate: vi.fn(),
+  mockRoomsList: vi.fn(),
+  mockWallsList: vi.fn(),
+  mockAnglesList: vi.fn(),
+  mockPhotosList: vi.fn(),
+  mockUseProjectsStore: vi.fn(),
 }));
 
-const mockRoom = (id: string, name: string, isMeasured = true, type = 'LIVING') => ({
+vi.mock('../../../api/rooms', () => ({
+  roomsApi: {
+    list: mockRoomsList,
+    create: vi.fn(),
+    remove: vi.fn(),
+  },
+}));
+
+vi.mock('../../../api/walls', () => ({
+  wallsApi: {
+    list: mockWallsList,
+    update: vi.fn(),
+  },
+}));
+
+vi.mock('../../../api/angles', () => ({
+  anglesApi: {
+    list: mockAnglesList,
+    create: vi.fn(),
+  },
+}));
+
+vi.mock('../../../api/photos', () => ({
+  photosApi: {
+    list: mockPhotosList,
+    create: vi.fn(),
+  },
+}));
+
+vi.mock('../../../stores/projectsStore', () => ({
+  useProjectsStore: mockUseProjectsStore,
+}));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    useParams: () => ({ projectId: 'test-project' }),
+  };
+});
+
+let SummaryStep: any;
+
+const mockRoom = (id: string, name: string, isMeasured = true, type = 'LIVING'): Room => ({
   id,
   projectId: 'test-project',
   name,
-  type: type as any,
+  type: type as Room['type'],
   shape: 'RECTANGLE' as const,
   ceilingHeight1: 2.7,
   ceilingHeight2: null,
@@ -36,10 +72,10 @@ const mockRoom = (id: string, name: string, isMeasured = true, type = 'LIVING') 
   updatedAt: '2026-04-08T00:00:00Z',
 });
 
-const mockWall = (id: string, length: number, sortOrder = 0) => ({
+const mockWall = (id: string, length: number, sortOrder = 0): Wall => ({
   id,
   roomId: 'room-1',
-  label: `Wall ${id}`,
+  label: 'Wall ' + id,
   cornerFrom: 'A',
   cornerTo: 'B',
   length,
@@ -53,8 +89,8 @@ const mockWall = (id: string, length: number, sortOrder = 0) => ({
   updatedAt: '2026-04-08T00:00:00Z',
 });
 
-const mockAngle = (wallAId: string, wallBId: string) => ({
-  id: `angle-${wallAId}-${wallBId}`,
+const mockAngle = (wallAId: string, wallBId: string): Angle => ({
+  id: 'angle-' + wallAId + '-' + wallBId,
   roomId: 'room-1',
   cornerLabel: 'A',
   wallAId,
@@ -66,13 +102,13 @@ const mockAngle = (wallAId: string, wallBId: string) => ({
   updatedAt: '2026-04-08T00:00:00Z',
 });
 
-const mockPhoto = (id: string, photoType = 'OVERVIEW_BEFORE') => ({
+const mockPhoto = (id: string, photoType = 'OVERVIEW_BEFORE'): Photo => ({
   id,
   userId: 'user-1',
   roomId: 'room-1',
-  photoType: photoType as any,
-  originalPath: `/photos/${id}.jpg`,
-  thumbPath: `/photos/${id}-thumb.jpg`,
+  photoType: photoType as Photo['photoType'],
+  originalPath: '/photos/' + id + '.jpg',
+  thumbPath: '/photos/' + id + '-thumb.jpg',
   createdAt: '2026-04-08T00:00:00Z',
   updatedAt: '2026-04-08T00:00:00Z',
 });
@@ -82,46 +118,39 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('SummaryStep', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    mockNavigate.mockClear();
 
-    // Setup API mocks as plain objects with vi.fn() methods
-    Object.assign(roomsApi.roomsApi, {
-      list: vi.fn(),
-      create: vi.fn(),
-      remove: vi.fn(),
+    // Import SummaryStep after mocks are set up
+    const module = await import('../SummaryStep');
+    SummaryStep = module.SummaryStep;
+
+    // Mock fetch globally (used by countOpenings in SummaryStep)
+    global.fetch = vi.fn().mockResolvedValue({
+      json: vi.fn().mockResolvedValue([]),
+    } as unknown as Response);
+
+    // Default: one photo per room so "Комнаты без фотографий" warning does not appear
+    mockRoomsList.mockResolvedValue([]);
+    mockWallsList.mockResolvedValue([]);
+    mockAnglesList.mockResolvedValue([]);
+    mockPhotosList.mockResolvedValue([mockPhoto('default-photo')]);
+    mockUseProjectsStore.mockReturnValue({
+      currentProject: { id: 'test-project', name: 'Test Apartment' },
     });
+  });
 
-    Object.assign(wallsApi.wallsApi, {
-      list: vi.fn(),
-      update: vi.fn(),
-    });
-
-    Object.assign(anglesApi.anglesApi, {
-      list: vi.fn(),
-      create: vi.fn(),
-    });
-
-    Object.assign(photosApi.photosApi, {
-      list: vi.fn(),
-      create: vi.fn(),
-    });
-
-    // Setup projects store mock
-    vi.mocked(projectsStore.useProjectsStore).mockReturnValue({
-      currentProject: { id: 'test-project', name: 'Test Apartment' } as any,
-    } as any);
-
-    // Setup default mocks
-    vi.mocked(wallsApi.wallsApi.list).mockResolvedValue([]);
-    vi.mocked(anglesApi.anglesApi.list).mockResolvedValue([]);
-    vi.mocked(photosApi.photosApi.list).mockResolvedValue([]);
+  afterEach(() => {
+    // Clear DOM between tests by removing all children from body
+    if (typeof document !== 'undefined' && document.body) {
+      while (document.body.firstChild) {
+        document.body.removeChild(document.body.firstChild);
+      }
+    }
   });
 
   it('renders summary title and project name', async () => {
-    const rooms = [mockRoom('room-1', 'Спальня')];
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
+    mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
@@ -132,11 +161,10 @@ describe('SummaryStep', () => {
   });
 
   it('renders table with room data', async () => {
-    const rooms = [
+    mockRoomsList.mockResolvedValue([
       mockRoom('room-1', 'Спальня'),
       mockRoom('room-2', 'Кухня'),
-    ];
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
+    ]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
@@ -147,45 +175,37 @@ describe('SummaryStep', () => {
   });
 
   it('calculates area correctly for rectangle', async () => {
-    const rooms = [mockRoom('room-1', 'Спальня')];
-    const walls = [
-      mockWall('wall-1', 5000000, 0), // 5m in mm
-      mockWall('wall-2', 4000000, 1), // 4m in mm
-    ];
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
-    vi.mocked(wallsApi.wallsApi.list).mockResolvedValue(walls);
-    vi.mocked(anglesApi.anglesApi.list).mockResolvedValue([
-      mockAngle('wall-1', 'wall-2'),
+    mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
+    mockWallsList.mockResolvedValue([
+      mockWall('wall-1', 5000, 0),
+      mockWall('wall-2', 4000, 1),
     ]);
+    mockAnglesList.mockResolvedValue([mockAngle('wall-1', 'wall-2')]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
     await waitFor(() => {
-      // Area = 5m * 4m = 20 m²
-      // 5000000 mm * 4000000 mm / 1_000_000 = 20.00 m²
       expect(screen.getByText('20.00')).toBeInTheDocument();
     });
   });
 
   it('displays unmeasured room warning', async () => {
-    const rooms = [
+    mockRoomsList.mockResolvedValue([
       mockRoom('room-1', 'Спальня', true),
-      mockRoom('room-2', 'Кухня', false), // Unmeasured
-    ];
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
+      mockRoom('room-2', 'Зал', false),
+    ]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
     await waitFor(() => {
       expect(screen.getByText(/Незамеренные комнаты/)).toBeInTheDocument();
-      expect(screen.getByText('Кухня')).toBeInTheDocument();
+      expect(screen.getAllByText('Зал').length).toBeGreaterThan(0);
     });
   });
 
   it('displays warning for rooms without photos', async () => {
-    const rooms = [mockRoom('room-1', 'Спальня')];
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
-    (photosApi.photosApi.list as any).mockResolvedValue([]); // No photos
+    mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
+    mockPhotosList.mockResolvedValue([]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
@@ -195,41 +215,32 @@ describe('SummaryStep', () => {
   });
 
   it('does not show missing photos warning when photos exist', async () => {
-    const rooms = [mockRoom('room-1', 'Спальня')];
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
-    (photosApi.photosApi.list as any).mockResolvedValue([
-      mockPhoto('photo-1'),
-    ]);
+    mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
+    mockPhotosList.mockResolvedValue([mockPhoto('photo-1')]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
     await waitFor(() => {
-      expect(
-        screen.queryByText(/Комнаты без фотографий/)
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/Комнаты без фотографий/)).not.toBeInTheDocument();
     });
   });
 
   it('calculates total area correctly', async () => {
-    const rooms = [
+    mockRoomsList.mockResolvedValue([
       mockRoom('room-1', 'Спальня'),
       mockRoom('room-2', 'Кухня'),
-    ];
-    const walls1 = [
-      mockWall('wall-1', 5000000, 0), // 5m
-      mockWall('wall-2', 4000000, 1), // 4m
-    ];
-    const walls2 = [
-      mockWall('wall-3', 3000000, 0), // 3m
-      mockWall('wall-4', 2000000, 1), // 2m
-    ];
-
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
-    vi.mocked(wallsApi.wallsApi.list).mockImplementation((roomId: string) => {
-      if (roomId === 'room-1') return Promise.resolve(walls1);
-      return Promise.resolve(walls2);
+    ]);
+    mockWallsList.mockImplementation((roomId: string) => {
+      if (roomId === 'room-1') return Promise.resolve([
+        mockWall('wall-1', 5000, 0),
+        mockWall('wall-2', 4000, 1),
+      ]);
+      return Promise.resolve([
+        mockWall('wall-3', 3000, 0),
+        mockWall('wall-4', 2000, 1),
+      ]);
     });
-    vi.mocked(anglesApi.anglesApi.list).mockResolvedValue([
+    mockAnglesList.mockResolvedValue([
       mockAngle('wall-1', 'wall-2'),
       mockAngle('wall-3', 'wall-4'),
     ]);
@@ -237,31 +248,25 @@ describe('SummaryStep', () => {
     render(<SummaryStep />, { wrapper: Wrapper });
 
     await waitFor(() => {
-      // Total = 20 + 6 = 26 m²
-      expect(screen.getByText('26.00')).toBeInTheDocument();
+      expect(screen.getByText(/26.00/)).toBeInTheDocument();
     });
   });
 
   it('displays average ceiling height', async () => {
-    const rooms = [
+    mockRoomsList.mockResolvedValue([
       mockRoom('room-1', 'Спальня'),
       mockRoom('room-2', 'Кухня'),
-    ];
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
+    ]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
     await waitFor(() => {
-      // Both rooms have ceilingHeight1 = 2.7
-      // Average = 2.7
       expect(screen.getByText('2.70 м')).toBeInTheDocument();
     });
   });
 
   it('navigates to measure step when row is clicked', async () => {
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue([
-      mockRoom('room-1', 'Спальня'),
-    ]);
+    mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
 
     const { container } = render(<SummaryStep />, { wrapper: Wrapper });
 
@@ -272,8 +277,7 @@ describe('SummaryStep', () => {
   });
 
   it('displays correct column headers', async () => {
-    const rooms = [mockRoom('room-1', 'Спальня')];
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
+    mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
@@ -290,8 +294,7 @@ describe('SummaryStep', () => {
   });
 
   it('displays room type emoji', async () => {
-    const rooms = [mockRoom('room-1', 'Спальня', true, 'BEDROOM')];
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
+    mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня', true, 'BEDROOM')]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
@@ -301,8 +304,7 @@ describe('SummaryStep', () => {
   });
 
   it('displays back and generate plan buttons', async () => {
-    const rooms = [mockRoom('room-1', 'Спальня')];
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
+    mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
@@ -313,9 +315,7 @@ describe('SummaryStep', () => {
   });
 
   it('shows loading state initially', () => {
-    vi.mocked(roomsApi.roomsApi.list).mockImplementation(
-      () => new Promise(() => {}) // Never resolves
-    );
+    mockRoomsList.mockImplementation(() => new Promise(() => {}));
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
@@ -323,30 +323,26 @@ describe('SummaryStep', () => {
   });
 
   it('formats perimeter in meters', async () => {
-    const rooms = [mockRoom('room-1', 'Спальня')];
-    const walls = [
-      mockWall('wall-1', 5000000, 0), // 5m
-      mockWall('wall-2', 4000000, 1), // 4m
-    ];
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
-    vi.mocked(wallsApi.wallsApi.list).mockResolvedValue(walls);
-    vi.mocked(anglesApi.anglesApi.list).mockResolvedValue([]);
+    mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня')]);
+    mockWallsList.mockResolvedValue([
+      mockWall('wall-1', 5000, 0),
+      mockWall('wall-2', 4000, 1),
+    ]);
+    mockAnglesList.mockResolvedValue([]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
     await waitFor(() => {
-      // Perimeter = 5000000 + 4000000 = 9000000 mm = 9 m
       expect(screen.getByText('9.00')).toBeInTheDocument();
     });
   });
 
   it('handles empty rooms list', async () => {
-    vi.mocked(roomsApi.roomsApi.list).mockResolvedValue([]);
+    mockRoomsList.mockResolvedValue([]);
 
     render(<SummaryStep />, { wrapper: Wrapper });
 
     await waitFor(() => {
-      // Should render but with empty table
       expect(screen.getByText('Сводка по комнатам')).toBeInTheDocument();
     });
   });
