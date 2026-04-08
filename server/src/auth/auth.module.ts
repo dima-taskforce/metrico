@@ -13,7 +13,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     PassportModule,
     JwtModule.register({}),
   ],
-  providers: [AuthService, JwtStrategy, GoogleStrategy, YandexStrategy],
+  providers: [AuthService, JwtStrategy, GoogleStrategy, YandexStrategy, JwtAuthGuard],
   controllers: [AuthController],
   exports: [JwtAuthGuard],
 })

@@ -3,7 +3,7 @@ import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PdfGeneratorService } from './pdf.service';
 
-@Controller('api/projects')
+@Controller('projects')
 @UseGuards(JwtAuthGuard)
 export class PdfController {
   constructor(private pdfService: PdfGeneratorService) {}

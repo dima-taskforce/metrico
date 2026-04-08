@@ -12,7 +12,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdjacencyService } from './adjacency.service';
 import { CreateAdjacencyDto } from './dto/create-adjacency.dto';
 
-@Controller('api/projects/:projectId/adjacencies')
+@Controller('projects/:projectId/adjacencies')
 @UseGuards(JwtAuthGuard)
 export class AdjacencyController {
   constructor(private readonly adjacencyService: AdjacencyService) {}

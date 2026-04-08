@@ -13,7 +13,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlanService } from './plan.service';
 import { GetPlanDto } from './dto/get-plan.dto';
 
-@Controller('api/projects')
+@Controller('projects')
 @UseGuards(JwtAuthGuard)
 export class PlanController {
   constructor(private planService: PlanService) {}
