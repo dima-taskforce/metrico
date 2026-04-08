@@ -27,4 +27,64 @@ export class FileStorageService {
     const fullPath = path.join(process.cwd(), relativePath);
     await fs.unlink(fullPath).catch(() => undefined);
   }
+
+  /**
+   * Copy blueprint file from one project to another.
+   * Returns new relative file path.
+   */
+  async copyBlueprintFile(
+    srcProjectId: string,
+    dstProjectId: string,
+    srcRelPath: string,
+  ): Promise<string> {
+    const filename = path.basename(srcRelPath);
+    const dstSubDir = `projects/${dstProjectId}/blueprint`;
+    const dstDir = path.join(this.uploadsDir, dstSubDir);
+    await fs.mkdir(dstDir, { recursive: true });
+    await fs.copyFile(
+      path.join(process.cwd(), srcRelPath),
+      path.join(dstDir, filename),
+    );
+    return path.join('uploads', dstSubDir, filename).replace(/\\/g, '/');
+  }
+
+  /**
+   * Copy all room photo files from source project to destination project.
+   * roomIdMap: oldRoomId → newRoomId
+   * Returns: oldFilePath → newFilePath (relative paths)
+   */
+  async copyProjectFiles(
+    srcProjectId: string,
+    dstProjectId: string,
+    userId: string,
+    roomIdMap: Record<string, string>,
+  ): Promise<Record<string, string>> {
+    const filePathMap: Record<string, string> = {};
+
+    for (const [srcRoomId, dstRoomId] of Object.entries(roomIdMap)) {
+      const srcRoomDir = path.join(this.uploadsDir, 'photos', userId, srcProjectId, srcRoomId);
+      const dstRoomDir = path.join(this.uploadsDir, 'photos', userId, dstProjectId, dstRoomId);
+
+      let files: string[];
+      try {
+        files = await fs.readdir(srcRoomDir);
+      } catch {
+        continue; // directory doesn't exist — room has no photos
+      }
+
+      await fs.mkdir(dstRoomDir, { recursive: true });
+
+      for (const filename of files) {
+        await fs.copyFile(
+          path.join(srcRoomDir, filename),
+          path.join(dstRoomDir, filename),
+        );
+        const srcRel = `uploads/photos/${userId}/${srcProjectId}/${srcRoomId}/${filename}`;
+        const dstRel = `uploads/photos/${userId}/${dstProjectId}/${dstRoomId}/${filename}`;
+        filePathMap[srcRel] = dstRel;
+      }
+    }
+
+    return filePathMap;
+  }
 }

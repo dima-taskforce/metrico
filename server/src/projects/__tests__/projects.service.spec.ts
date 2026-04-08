@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ObjectType, ProjectStatus } from '@prisma/client';
 import { ProjectsService } from '../projects.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -29,11 +29,14 @@ const makePrisma = () => ({
     update: jest.fn(),
     delete: jest.fn(),
   },
+  $transaction: jest.fn(),
 });
 
 const makeStorage = () => ({
   save: jest.fn(),
   delete: jest.fn(),
+  copyBlueprintFile: jest.fn(),
+  copyProjectFiles: jest.fn().mockResolvedValue({}),
 });
 
 describe('ProjectsService', () => {
@@ -109,12 +112,88 @@ describe('ProjectsService', () => {
     });
   });
 
+  describe('updateStatus', () => {
+    it('updates project status', async () => {
+      prisma.project.update.mockResolvedValue(makeProject({ status: ProjectStatus.COMPLETED }));
+      await service.updateStatus('p1', ProjectStatus.COMPLETED);
+      expect(prisma.project.update).toHaveBeenCalledWith({
+        where: { id: 'p1' },
+        data: { status: ProjectStatus.COMPLETED },
+      });
+    });
+  });
+
+  describe('findOneWithDetails', () => {
+    it('returns project with nested relations', async () => {
+      const projectWithDetails = { ...makeProject(), rooms: [], adjacencies: [], floorPlanLayout: null };
+      prisma.project.findUnique.mockResolvedValue(projectWithDetails);
+      const result = await service.findOneWithDetails('p1', 'u1');
+      expect(result).toEqual(projectWithDetails);
+    });
+
+    it('throws NotFoundException when not found', async () => {
+      prisma.project.findUnique.mockResolvedValue(null);
+      await expect(service.findOneWithDetails('p1', 'u1')).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('throws ForbiddenException for wrong user', async () => {
+      prisma.project.findUnique.mockResolvedValue({ ...makeProject(), userId: 'u2', rooms: [] });
+      await expect(service.findOneWithDetails('p1', 'u1')).rejects.toBeInstanceOf(ForbiddenException);
+    });
+  });
+
   describe('duplicate', () => {
-    it('creates a copy with "(копия)" suffix', async () => {
-      prisma.project.findUnique.mockResolvedValue(makeProject({ name: 'Квартира' }));
-      prisma.project.create.mockResolvedValue(makeProject({ name: 'Квартира (копия)' }));
+    it('creates a deep copy with "(копия)" suffix via transaction', async () => {
+      const sourceProject = {
+        ...makeProject({ name: 'Квартира' }),
+        rooms: [],
+        adjacencies: [],
+        floorPlanLayout: null,
+      };
+      prisma.project.findUnique.mockResolvedValue(sourceProject);
+      const newProject = makeProject({ id: 'p2', name: 'Квартира (копия)' });
+      prisma.$transaction.mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
+        const tx = {
+          project: { create: jest.fn().mockResolvedValue(newProject) },
+          room: { create: jest.fn() },
+          wall: { create: jest.fn() },
+          windowOpening: { create: jest.fn() },
+          doorOpening: { create: jest.fn() },
+          wallSegment: { create: jest.fn() },
+          roomElement: { create: jest.fn() },
+          angle: { create: jest.fn() },
+          wallAdjacency: { create: jest.fn() },
+          floorPlanLayout: { create: jest.fn() },
+        };
+        return cb(tx);
+      });
+
       const result = await service.duplicate('p1', 'u1');
       expect(result.name).toContain('копия');
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when source project not found', async () => {
+      prisma.project.findUnique.mockResolvedValue(null);
+      await expect(service.duplicate('p1', 'u1')).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('reopen', () => {
+    it('sets COMPLETED project back to DRAFT', async () => {
+      prisma.project.findUnique.mockResolvedValue(makeProject({ status: ProjectStatus.COMPLETED }));
+      prisma.project.update.mockResolvedValue(makeProject({ status: ProjectStatus.DRAFT }));
+      const result = await service.reopen('p1', 'u1');
+      expect(prisma.project.update).toHaveBeenCalledWith({
+        where: { id: 'p1' },
+        data: { status: ProjectStatus.DRAFT },
+      });
+      expect(result.status).toBe(ProjectStatus.DRAFT);
+    });
+
+    it('throws BadRequestException for DRAFT project', async () => {
+      prisma.project.findUnique.mockResolvedValue(makeProject({ status: ProjectStatus.DRAFT }));
+      await expect(service.reopen('p1', 'u1')).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 });

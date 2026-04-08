@@ -3,11 +3,13 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { PlanService } from '../plan.service';
 import { PlanAssemblerService } from '../plan-assembler.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ProjectsService } from '../../projects/projects.service';
 
 describe('PlanService', () => {
   let service: PlanService;
   let prisma: PrismaService;
   let assembler: PlanAssemblerService;
+  let projectsService: { updateStatus: jest.Mock };
 
   const mockProject = {
     id: 'proj-1',
@@ -75,12 +77,19 @@ describe('PlanService', () => {
             assembleFloorPlan: jest.fn(),
           },
         },
+        {
+          provide: ProjectsService,
+          useValue: {
+            updateStatus: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<PlanService>(PlanService);
     prisma = module.get<PrismaService>(PrismaService);
     assembler = module.get<PlanAssemblerService>(PlanAssemblerService);
+    projectsService = module.get(ProjectsService);
   });
 
   it('should be defined', () => {
@@ -118,6 +127,25 @@ describe('PlanService', () => {
       await expect(service.getFloorPlan('nonexistent')).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    it('should set project status to COMPLETED after successful assembly', async () => {
+      const mockFloorPlan = {
+        projectId: 'proj-1',
+        projectLabel: 'Demo Apartment',
+        rooms: [],
+        adjacencies: [],
+        generatedAt: new Date(),
+      };
+
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject);
+      (prisma.angle.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.wallAdjacency.findMany as jest.Mock).mockResolvedValue([]);
+      (assembler.assembleFloorPlan as jest.Mock).mockReturnValue(mockFloorPlan);
+
+      await service.getFloorPlan('proj-1');
+
+      expect(projectsService.updateStatus).toHaveBeenCalledWith('proj-1', 'COMPLETED');
     });
 
     it('should include angles and adjacencies in assembly', async () => {

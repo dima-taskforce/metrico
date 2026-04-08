@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ProjectStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanAssemblerService } from './plan-assembler.service';
+import { ProjectsService } from '../projects/projects.service';
 import { GetPlanDto } from './dto/get-plan.dto';
 
 @Injectable()
@@ -8,6 +10,7 @@ export class PlanService {
   constructor(
     private prisma: PrismaService,
     private assembler: PlanAssemblerService,
+    private projectsService: ProjectsService,
   ) {}
 
   /**
@@ -49,13 +52,18 @@ export class PlanService {
       },
     });
 
-    return this.assembler.assembleFloorPlan(
+    const plan = this.assembler.assembleFloorPlan(
       project.id,
       project.name,
       project.rooms,
       angles,
       adjacencies,
     );
+
+    // Mark project COMPLETED after successful assembly
+    await this.projectsService.updateStatus(projectId, ProjectStatus.COMPLETED);
+
+    return plan;
   }
 
   /**

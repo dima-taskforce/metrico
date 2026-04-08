@@ -37,7 +37,7 @@ export class ProjectsController {
 
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.projectsService.findOne(id, user.sub);
+    return this.projectsService.findOneWithDetails(id, user.sub);
   }
 
   @Post()
@@ -63,6 +63,11 @@ export class ProjectsController {
   @Post(':id/duplicate')
   duplicate(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.projectsService.duplicate(id, user.sub);
+  }
+
+  @Patch(':id/reopen')
+  reopen(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.projectsService.reopen(id, user.sub);
   }
 
   @Post(':id/blueprint')

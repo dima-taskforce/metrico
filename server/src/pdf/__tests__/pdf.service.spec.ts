@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { PdfGeneratorService } from '../pdf.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PlanService } from '../../plan/plan.service';
@@ -79,6 +79,7 @@ const mockProject = {
   id: 'proj-1',
   name: 'Тестовый проект',
   address: 'ул. Тестовая, д. 1',
+  status: 'COMPLETED',
 };
 
 describe('PdfGeneratorService', () => {
@@ -145,5 +146,10 @@ describe('PdfGeneratorService', () => {
     const buffer = await service.generateProjectPdf('proj-1');
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(0);
+  });
+
+  it('throws BadRequestException for DRAFT project', async () => {
+    prisma.project.findUnique.mockResolvedValue({ ...mockProject, status: 'DRAFT' });
+    await expect(service.generateProjectPdf('proj-1')).rejects.toThrow(BadRequestException);
   });
 });

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import React from 'react';
 import {
   Document,
@@ -382,11 +382,15 @@ export class PdfGeneratorService {
   async generateProjectPdf(projectId: string): Promise<Buffer> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      select: { id: true, name: true, address: true },
+      select: { id: true, name: true, address: true, status: true },
     });
 
     if (!project) {
       throw new NotFoundException(`Project ${projectId} not found`);
+    }
+
+    if (project.status !== 'COMPLETED') {
+      throw new BadRequestException('PDF can only be generated for completed projects');
     }
 
     const plan = await this.planService.getFloorPlan(projectId);
