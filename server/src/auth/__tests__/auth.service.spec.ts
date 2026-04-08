@@ -10,6 +10,7 @@ const makePrisma = () => ({
     findUnique: jest.fn(),
     create: jest.fn(),
     findUniqueOrThrow: jest.fn(),
+    update: jest.fn(),
   },
   refreshToken: {
     create: jest.fn(),
@@ -17,6 +18,12 @@ const makePrisma = () => ({
     update: jest.fn(),
     updateMany: jest.fn(),
   },
+  passwordResetToken: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+  },
+  $transaction: jest.fn(),
 });
 
 describe('AuthService', () => {
@@ -123,6 +130,147 @@ describe('AuthService', () => {
       expect(prisma.refreshToken.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { revokedAt: expect.any(Date) } }),
       );
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('returns early if email does not exist', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      const result = await service.forgotPassword('nonexistent@b.com');
+
+      expect(result).toBeUndefined();
+      expect(prisma.passwordResetToken.create).not.toHaveBeenCalled();
+    });
+
+    it('creates password reset token for existing user', async () => {
+      prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'a@b.com' });
+      prisma.passwordResetToken.create.mockResolvedValue({
+        id: 'token1',
+        userId: 'u1',
+        tokenHash: 'hash',
+        expiresAt: new Date(),
+      });
+
+      await service.forgotPassword('a@b.com');
+
+      expect(prisma.passwordResetToken.create).toHaveBeenCalledWith({
+        data: {
+          userId: 'u1',
+          tokenHash: expect.any(String),
+          expiresAt: expect.any(Date),
+        },
+      });
+    });
+
+    it('sets token expiration to 1 hour', async () => {
+      prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'a@b.com' });
+      prisma.passwordResetToken.create.mockResolvedValue({});
+
+      const beforeCall = new Date();
+      await service.forgotPassword('a@b.com');
+      const afterCall = new Date();
+
+      const callArgs = prisma.passwordResetToken.create.mock.calls[0][0];
+      const expiresAt = callArgs.data.expiresAt as Date;
+
+      // Should be ~1 hour in future
+      const diffMs = expiresAt.getTime() - beforeCall.getTime();
+      expect(diffMs).toBeGreaterThan(59 * 60 * 1000); // At least 59 minutes
+      expect(diffMs).toBeLessThan(61 * 60 * 1000); // Less than 61 minutes
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('throws UnauthorizedException if token not found', async () => {
+      prisma.passwordResetToken.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.resetPassword('bad-token', 'newpass1234'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException if token expired', async () => {
+      prisma.passwordResetToken.findUnique.mockResolvedValue({
+        id: 'token1',
+        userId: 'u1',
+        expiresAt: new Date(Date.now() - 1000), // Expired
+        usedAt: null,
+        user: { id: 'u1' },
+      });
+
+      await expect(
+        service.resetPassword('valid-token', 'newpass1234'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException if token already used', async () => {
+      prisma.passwordResetToken.findUnique.mockResolvedValue({
+        id: 'token1',
+        userId: 'u1',
+        expiresAt: new Date(Date.now() + 3600000), // Not expired
+        usedAt: new Date(), // Already used
+        user: { id: 'u1' },
+      });
+
+      await expect(
+        service.resetPassword('used-token', 'newpass1234'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('resets password and marks token as used', async () => {
+      const expiresAt = new Date(Date.now() + 3600000); // 1 hour in future
+      prisma.passwordResetToken.findUnique.mockResolvedValue({
+        id: 'token1',
+        userId: 'u1',
+        expiresAt,
+        usedAt: null,
+        user: { id: 'u1' },
+      });
+
+      prisma.$transaction.mockResolvedValue([{}, {}, {}]);
+
+      await service.resetPassword('valid-token', 'newpass1234');
+
+      expect(prisma.$transaction).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            where: { id: 'u1' },
+            data: { passwordHash: expect.any(String) },
+          }),
+        ]),
+      );
+    });
+
+    it('revokes all refresh tokens on successful reset', async () => {
+      const expiresAt = new Date(Date.now() + 3600000);
+      prisma.passwordResetToken.findUnique.mockResolvedValue({
+        id: 'token1',
+        userId: 'u1',
+        expiresAt,
+        usedAt: null,
+        user: { id: 'u1' },
+      });
+
+      prisma.$transaction.mockResolvedValue([{}, {}, {}]);
+
+      await service.resetPassword('valid-token', 'newpass1234');
+
+      // Verify $transaction was called (which contains refresh token revocation)
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+  });
+
+  describe('revokeAllRefreshTokens', () => {
+    it('revokes all non-revoked refresh tokens for user', async () => {
+      prisma.refreshToken.updateMany.mockResolvedValue({ count: 2 });
+
+      await service.revokeAllRefreshTokens('u1');
+
+      expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'u1', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
     });
   });
 });

@@ -100,6 +100,83 @@ export class AuthService {
     return { accessToken, refreshToken: rawRefresh };
   }
 
+  async forgotPassword(email: string): Promise<void> {
+    // Do not reveal if email exists (security best practice)
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return; // Return 200 even if user not found
+    }
+
+    // Generate reset token
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = this.hashToken(rawToken);
+
+    // Token expires in 1 hour
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1);
+
+    await this.prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+      },
+    });
+
+    // TODO: Send email with reset link (requires MailerService)
+    // Email would contain: reset-link?token={rawToken}
+  }
+
+  async resetPassword(rawToken: string, newPassword: string): Promise<void> {
+    const tokenHash = this.hashToken(rawToken);
+
+    const resetToken = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+
+    if (!resetToken) {
+      throw new UnauthorizedException('Invalid reset token');
+    }
+
+    // Check TTL (1 hour)
+    if (new Date() > resetToken.expiresAt) {
+      throw new UnauthorizedException('Reset token expired');
+    }
+
+    // Check if already used
+    if (resetToken.usedAt) {
+      throw new UnauthorizedException('Reset token already used');
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    // Update user password and mark token as used in transaction
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: resetToken.userId },
+        data: { passwordHash },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { id: resetToken.id },
+        data: { usedAt: new Date() },
+      }),
+      // Revoke all refresh tokens for this user
+      this.prisma.refreshToken.updateMany({
+        where: { userId: resetToken.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+  }
+
+  async revokeAllRefreshTokens(userId: string): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
   private hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
