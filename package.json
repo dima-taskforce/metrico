@@ -26,5 +26,9 @@
   "engines": {
     "node": ">=20.0.0",
     "npm": ">=10.0.0"
+  },
+  "dependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "whatwg-url": "^14.2.0"
   }
 }

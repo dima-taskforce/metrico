@@ -33,4 +33,12 @@ export const planApi = {
 
   deleteFloorPlanLayout: (projectId: string) =>
     api.delete<void>(`/projects/${projectId}/plan`),
+
+  downloadPdf: async (projectId: string): Promise<Blob> => {
+    const res = await fetch(`/api/projects/${projectId}/plan/pdf`, {
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Не удалось загрузить PDF');
+    return res.blob();
+  },
 };

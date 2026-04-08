@@ -17,6 +17,7 @@ import { PlanStep } from './pages/wizard/PlanStep';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { PlanDashboardPage } from './pages/PlanDashboardPage';
 
 function AppBootstrap() {
   const { setUser, setLoading } = useAuthStore();
@@ -53,6 +54,7 @@ function App() {
           <Route element={<AppLayout />}>
             <Route index element={<Navigate to="/projects" replace />} />
             <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/projects/:id/plan" element={<PlanDashboardPage />} />
           </Route>
 
           {/* Wizard */}
