@@ -40,10 +40,17 @@ RUN npm ci --omit=dev
 # Copy built application
 COPY --from=builder /app/server/dist ./server/dist
 COPY --from=builder /app/server/prisma ./server/prisma
+COPY tsconfig.base.json ./
 
-# Create uploads directory
+# Generate Prisma client in production stage
+WORKDIR /app/server
+RUN npx prisma generate
+
+WORKDIR /app
+
+# Create uploads directory and run migrations, then start
 RUN mkdir -p /app/data/uploads
 
 EXPOSE 3000
 
-CMD ["node", "server/dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=server/prisma/schema.prisma 2>/dev/null || true && node server/dist/main"]
