@@ -7,6 +7,7 @@ import { openingsApi } from '../../../api/openings';
 import { useRoomMeasureStore } from '../../../stores/roomMeasureStore';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { WallMiniMap } from '../../../components/WallMiniMap';
 import type { SegmentType, WallSegment } from '../../../types/api';
 
 const SEGMENT_TYPE_LABELS: Record<SegmentType, string> = {
@@ -56,9 +57,25 @@ const segmentSchema = z.discriminatedUnion('segmentType', [
 
 type SegmentForm = z.infer<typeof segmentSchema>;
 
+function calcRemainder(wallLength: number, segs: WallSegment[]): number {
+  const sum = segs.reduce((acc, s) => acc + s.length, 0);
+  return Math.max(0, +(wallLength - sum).toFixed(3));
+}
+
 export function PerimeterWalkStep() {
-  const { walls, segments, setSegments, upsertSegment, removeSegment, upsertWindow, upsertDoor, setSubstep, setActiveWallId } =
-    useRoomMeasureStore();
+  const {
+    currentRoom,
+    shapeOrientation,
+    walls,
+    segments,
+    setSegments,
+    upsertSegment,
+    removeSegment,
+    upsertWindow,
+    upsertDoor,
+    setSubstep,
+    setActiveWallId,
+  } = useRoomMeasureStore();
 
   const [wallIdx, setWallIdx] = useState(0);
   const [validationResult, setValidationResult] = useState<{
@@ -79,13 +96,16 @@ export function PerimeterWalkStep() {
   // Load segments for current wall if not yet loaded
   useEffect(() => {
     if (!currentWall) return;
-    if (segments[currentWall.id]) return; // already loaded
+    if (segments[currentWall.id]) return;
     segmentsApi
       .list(currentWall.id)
       .then((list) => setSegments(currentWall.id, list))
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWall?.id]);
+
+  const wallLength = currentWall ? currentWall.length : 0;
+  const remainder = calcRemainder(wallLength, currentSegments);
 
   const {
     register,
@@ -96,11 +116,24 @@ export function PerimeterWalkStep() {
     formState: { errors, isSubmitting },
   } = useForm<SegmentForm>({
     resolver: zodResolver(segmentSchema),
-    defaultValues: { segmentType: 'PLAIN' },
+    defaultValues: { segmentType: 'PLAIN', length: remainder || ('' as unknown as number) },
   });
+
+  // Re-sync default length when wall changes or segments load
+  useEffect(() => {
+    const r = calcRemainder(wallLength, currentSegments);
+    reset({ segmentType: 'PLAIN', length: r || ('' as unknown as number) });
+    setValidationResult(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentWall?.id, segments[currentWall?.id ?? '']?.length]);
 
   const segmentType = watch('segmentType');
   const needsDepth = segmentType === 'PROTRUSION' || segmentType === 'NICHE' || segmentType === 'PARTITION';
+
+  const goToWall = (idx: number) => {
+    setWallIdx(idx);
+    setValidationResult(null);
+  };
 
   const onAddSegment = async (data: SegmentForm) => {
     if (!currentWall) return;
@@ -114,7 +147,6 @@ export function PerimeterWalkStep() {
       });
       upsertSegment(currentWall.id, created);
 
-      // Auto-create window/door opening placeholders
       if (data.segmentType === 'WINDOW') {
         const win = await openingsApi.windows.create(currentWall.id, {
           width: Math.round(data.length * 1000),
@@ -131,7 +163,9 @@ export function PerimeterWalkStep() {
         upsertDoor(currentWall.id, door);
       }
 
-      reset({ segmentType: 'PLAIN' });
+      const newSegs = [...currentSegments, created];
+      const newRemainder = calcRemainder(wallLength, newSegs);
+      reset({ segmentType: 'PLAIN', length: newRemainder || ('' as unknown as number) });
       setValidationResult(null);
     } catch (err) {
       setError('root', { message: err instanceof Error ? err.message : 'Ошибка' });
@@ -152,7 +186,6 @@ export function PerimeterWalkStep() {
   };
 
   const segmentsSum = currentSegments.reduce((acc, s) => acc + s.length, 0);
-  const wallLength = currentWall ? currentWall.length : 0;
   const progress = wallLength > 0 ? Math.min((segmentsSum / wallLength) * 100, 100) : 0;
   const diffMm = Math.abs(wallLength - segmentsSum) * 1000;
 
@@ -167,26 +200,47 @@ export function PerimeterWalkStep() {
 
   return (
     <div className="p-6 max-w-xl pb-20 sm:pb-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">3.4 Обход периметра</h3>
+      {/* Header with mini-map */}
+      <div className="flex items-start gap-4 mb-4">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">3.4 Детализация стен</h3>
+          <p className="text-sm text-gray-500">
+            Разбейте стену на участки: просто стена, окно, дверь, выступ. Если особых участков нет — нажмите «Далее».
+          </p>
+        </div>
+        {currentRoom && (
+          <div className="w-24 h-20 shrink-0 text-primary-400">
+            <WallMiniMap
+              shape={currentRoom.shape}
+              orientation={shapeOrientation}
+              cornerFrom={currentWall.cornerFrom}
+              cornerTo={currentWall.cornerTo}
+            />
+          </div>
+        )}
+      </div>
 
-      {/* Wall tabs */}
-      <div className="flex gap-1 mb-4 flex-wrap">
+      {/* Wall navigation */}
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm font-medium text-gray-700">
+          Стена {wallIdx + 1} из {walls.length}
+          {' '}
+          <span className="text-primary-600 font-semibold">
+            {currentWall.cornerFrom}–{currentWall.cornerTo}
+          </span>
+        </span>
+        <span className="text-xs text-gray-400">{currentWall.label}</span>
+      </div>
+      <div className="flex gap-1.5 mb-4">
         {walls.map((wall, idx) => (
           <button
             key={wall.id}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              idx === wallIdx
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            aria-label={`Стена ${wall.cornerFrom}–${wall.cornerTo}`}
+            className={`h-1.5 flex-1 rounded-full transition-colors ${
+              idx === wallIdx ? 'bg-primary-600' : 'bg-gray-200'
             }`}
-            onClick={() => {
-              setWallIdx(idx);
-              setValidationResult(null);
-              reset({ segmentType: 'PLAIN' });
-            }}
-          >
-            {wall.label}
-          </button>
+            onClick={() => goToWall(idx)}
+          />
         ))}
       </div>
 
@@ -194,10 +248,10 @@ export function PerimeterWalkStep() {
       <div className="mb-4">
         <div className="flex justify-between text-xs text-gray-500 mb-1">
           <span>
-            Сумма сегментов: <strong>{segmentsSum.toFixed(3)}</strong> м
+            Сумма: <strong>{segmentsSum.toFixed(3)}</strong> м
           </span>
           <span>
-            Длина стены: <strong>{wallLength.toFixed(3)}</strong> м
+            Стена: <strong>{wallLength.toFixed(3)}</strong> м
           </span>
         </div>
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -208,7 +262,7 @@ export function PerimeterWalkStep() {
             style={{ width: `${Math.min(progress, 100)}%` }}
           />
         </div>
-        {diffMm > 20 && (
+        {diffMm > 20 && currentSegments.length > 0 && (
           <p className="text-xs text-amber-700 mt-1">
             Расхождение {diffMm.toFixed(0)}&nbsp;мм — рекомендуется перемерить.
           </p>
@@ -313,10 +367,14 @@ export function PerimeterWalkStep() {
 
       {/* Navigation */}
       <div className="sticky bottom-0 bg-white border-t border-gray-100 -mx-6 px-6 py-3 flex justify-between mt-4">
-        <Button variant="secondary" onClick={() => setSubstep(3)}>← Назад</Button>
+        {wallIdx > 0 ? (
+          <Button variant="secondary" onClick={() => goToWall(wallIdx - 1)}>← Назад</Button>
+        ) : (
+          <Button variant="secondary" onClick={() => setSubstep(3)}>← Назад</Button>
+        )}
         <div className="flex gap-2">
           {wallIdx < walls.length - 1 ? (
-            <Button onClick={() => setWallIdx((i) => i + 1)}>
+            <Button onClick={() => goToWall(wallIdx + 1)}>
               Следующая стена →
             </Button>
           ) : (

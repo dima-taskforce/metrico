@@ -25,6 +25,11 @@ vi.mock('../../../../api/openings', () => ({
   },
 }));
 
+// WallMiniMap relies on currentRoom being non-null; mock it to avoid SVG complexity in tests
+vi.mock('../../../../components/WallMiniMap', () => ({
+  WallMiniMap: () => <div data-testid="wall-mini-map" />,
+}));
+
 import { segmentsApi } from '../../../../api/segments';
 import { openingsApi } from '../../../../api/openings';
 
@@ -35,6 +40,20 @@ const mockRemoveSegment = vi.fn();
 const mockUpsertWindow = vi.fn();
 const mockUpsertDoor = vi.fn();
 const mockSetActiveWallId = vi.fn();
+
+const makeRoom = () => ({
+  id: 'r1',
+  projectId: 'p1',
+  name: 'Гостиная',
+  type: 'LIVING_ROOM' as const,
+  shape: 'RECTANGLE' as const,
+  ceilingHeight1: null,
+  ceilingHeight2: null,
+  sortOrder: 0,
+  isMeasured: false,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+});
 
 const makeWall = (overrides = {}) => ({
   id: 'w1',
@@ -71,6 +90,8 @@ const makeSegment = (overrides = {}) => ({
 
 const setupStore = (walls = [makeWall()], segments: Record<string, ReturnType<typeof makeSegment>[]> = {}) => {
   vi.mocked(useRoomMeasureStore).mockReturnValue({
+    currentRoom: makeRoom(),
+    shapeOrientation: 0 as const,
     walls,
     segments,
     setSegments: mockSetSegments,
@@ -98,21 +119,34 @@ describe('PerimeterWalkStep', () => {
     expect(screen.getByRole('button', { name: /назад/i })).toBeInTheDocument();
   });
 
-  it('renders wall tab for each wall', () => {
-    setupStore([makeWall(), makeWall({ id: 'w2', label: 'B-C', sortOrder: 1 })]);
+  it('renders progress dot for each wall', () => {
+    setupStore([makeWall(), makeWall({ id: 'w2', label: 'B-C', cornerFrom: 'B', cornerTo: 'C', sortOrder: 1 })]);
     render(<PerimeterWalkStep />);
-    expect(screen.getByRole('button', { name: 'A-B' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'B-C' })).toBeInTheDocument();
+    const dots = screen.getAllByRole('button', { name: /Стена [A-Z]–[A-Z]/i });
+    expect(dots).toHaveLength(2);
   });
 
-  it('shows progress bar', () => {
+  it('shows wall index and corner label', () => {
+    setupStore([makeWall()]);
+    render(<PerimeterWalkStep />);
+    expect(screen.getByText(/Стена 1 из 1/i)).toBeInTheDocument();
+    expect(screen.getByText(/A–B/)).toBeInTheDocument();
+  });
+
+  it('renders WallMiniMap', () => {
+    setupStore([makeWall()]);
+    render(<PerimeterWalkStep />);
+    expect(screen.getByTestId('wall-mini-map')).toBeInTheDocument();
+  });
+
+  it('shows progress bar with segment sum and wall length', () => {
     setupStore([makeWall()], { w1: [makeSegment({ length: 2.0 })] });
     render(<PerimeterWalkStep />);
-    expect(screen.getByText(/Сумма сегментов/i)).toBeInTheDocument();
-    expect(screen.getByText(/Длина стены/i)).toBeInTheDocument();
+    expect(screen.getByText(/Сумма:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Стена:/i)).toBeInTheDocument();
   });
 
-  it('shows warning when diff > 20mm', () => {
+  it('shows warning when diff > 20mm and segments exist', () => {
     // wall = 4.02m, segments sum = 3.95m → diff = 70mm
     setupStore([makeWall()], { w1: [makeSegment({ length: 3.95 })] });
     render(<PerimeterWalkStep />);
@@ -126,12 +160,34 @@ describe('PerimeterWalkStep', () => {
     expect(screen.queryByText(/рекомендуется перемерить/i)).not.toBeInTheDocument();
   });
 
+  it('does not show warning when no segments yet', () => {
+    setupStore([makeWall()]);
+    render(<PerimeterWalkStep />);
+    expect(screen.queryByText(/рекомендуется перемерить/i)).not.toBeInTheDocument();
+  });
+
   it('renders existing segments list', () => {
     setupStore([makeWall()], {
       w1: [makeSegment({ id: 's1', segmentType: 'WINDOW', length: 1.5 })],
     });
     render(<PerimeterWalkStep />);
     expect(screen.getAllByText(/Окно/i).length).toBeGreaterThan(0);
+  });
+
+  it('pre-fills length field with remainder (wall - segments sum)', () => {
+    // wall = 4.02m, existing segments = 2.0m → remainder = 2.02
+    setupStore([makeWall()], { w1: [makeSegment({ length: 2.0 })] });
+    render(<PerimeterWalkStep />);
+    const input = screen.getByLabelText(/Длина, м/i) as HTMLInputElement;
+    expect(Number(input.value)).toBeCloseTo(2.02, 3);
+  });
+
+  it('pre-fills with 0 remainder when segments cover full wall', () => {
+    // wall = 4.02m, segments = 4.02m → remainder = 0 → empty field
+    setupStore([makeWall()], { w1: [makeSegment({ length: 4.02 })] });
+    render(<PerimeterWalkStep />);
+    const input = screen.getByLabelText(/Длина, м/i) as HTMLInputElement;
+    expect(Number(input.value)).toBe(0);
   });
 
   it('adds a plain segment on form submit', async () => {
@@ -162,7 +218,6 @@ describe('PerimeterWalkStep', () => {
     setupStore([makeWall()]);
     render(<PerimeterWalkStep />);
 
-    // Change type to WINDOW
     fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'WINDOW' } });
     fireEvent.change(screen.getByLabelText(/Длина, м/i), { target: { value: '1.2' } });
     fireEvent.click(screen.getByRole('button', { name: /добавить/i }));
@@ -231,7 +286,7 @@ describe('PerimeterWalkStep', () => {
   it('shows "Следующая стена" when not on last wall', () => {
     setupStore([
       makeWall(),
-      makeWall({ id: 'w2', label: 'B-C', sortOrder: 1 }),
+      makeWall({ id: 'w2', label: 'B-C', cornerFrom: 'B', cornerTo: 'C', sortOrder: 1 }),
     ]);
     render(<PerimeterWalkStep />);
     expect(screen.getByRole('button', { name: /Следующая стена/i })).toBeInTheDocument();
@@ -243,17 +298,37 @@ describe('PerimeterWalkStep', () => {
     expect(screen.getByRole('button', { name: /Проёмы/i })).toBeInTheDocument();
   });
 
-  it('navigates to substep 5 on last wall next click', () => {
+  it('navigates to substep 5 on last wall next click without requiring segments', () => {
+    // Skip is valid — no segments needed
     setupStore([makeWall()]);
     render(<PerimeterWalkStep />);
     fireEvent.click(screen.getByRole('button', { name: /Проёмы/i }));
     expect(mockSetSubstep).toHaveBeenCalledWith(5);
   });
 
-  it('navigates back to substep 3 on back click', () => {
+  it('navigates back to substep 3 on first wall back click', () => {
     setupStore([makeWall()]);
     render(<PerimeterWalkStep />);
     fireEvent.click(screen.getByRole('button', { name: /назад/i }));
     expect(mockSetSubstep).toHaveBeenCalledWith(3);
+  });
+
+  it('shows "← Назад" to go to previous wall when not on first wall', () => {
+    setupStore([
+      makeWall(),
+      makeWall({ id: 'w2', label: 'B-C', cornerFrom: 'B', cornerTo: 'C', sortOrder: 1 }),
+    ]);
+    render(<PerimeterWalkStep />);
+    // Click "Следующая стена" to go to wall 2
+    fireEvent.click(screen.getByRole('button', { name: /Следующая стена/i }));
+    // Now "← Назад" should NOT call setSubstep(3) but go to wall 1
+    fireEvent.click(screen.getByRole('button', { name: /назад/i }));
+    expect(mockSetSubstep).not.toHaveBeenCalled();
+  });
+
+  it('shows heading "3.4 Детализация стен"', () => {
+    setupStore([makeWall()]);
+    render(<PerimeterWalkStep />);
+    expect(screen.getByText(/3\.4 Детализация стен/i)).toBeInTheDocument();
   });
 });
