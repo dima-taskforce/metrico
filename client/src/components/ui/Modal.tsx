@@ -14,9 +14,9 @@ export function Modal({ title, isOpen, onClose, children }: ModalProps) {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (isOpen) {
-      dialog.showModal();
+      dialog.showModal?.();
     } else {
-      dialog.close();
+      dialog.close?.();
     }
   }, [isOpen]);
 
@@ -31,8 +31,6 @@ export function Modal({ title, isOpen, onClose, children }: ModalProps) {
     return () => dialog.removeEventListener('cancel', handleCancel);
   }, [onClose]);
 
-  if (!isOpen) return null;
-
   return (
     <dialog
       ref={dialogRef}
@@ -41,17 +39,21 @@ export function Modal({ title, isOpen, onClose, children }: ModalProps) {
         if (e.target === dialogRef.current) onClose();
       }}
     >
-      <div className="flex items-center justify-between border-b px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-          aria-label="Закрыть"
-        >
-          &times;
-        </button>
-      </div>
-      <div className="px-6 py-4">{children}</div>
+      {isOpen && (
+        <>
+          <div className="flex items-center justify-between border-b px-6 py-4">
+            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+              aria-label="Закрыть"
+            >
+              &times;
+            </button>
+          </div>
+          <div className="px-6 py-4">{children}</div>
+        </>
+      )}
     </dialog>
   );
 }
