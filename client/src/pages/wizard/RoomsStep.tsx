@@ -9,6 +9,7 @@ import { useRoomMeasureStore } from '../../stores/roomMeasureStore';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { ShapePicker } from '../../components/ui/ShapePicker';
 import { RoomTypeIcon } from '../../components/RoomTypeIcon';
 import type { Room, RoomType, RoomShape } from '../../types/api';
@@ -105,6 +106,7 @@ export function RoomsStep() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [deleteRoomId, setDeleteRoomId] = useState<string | null>(null);
   const [draggedRoom, setDraggedRoom] = useState<string | null>(null);
   const [pickerOrientation, setPickerOrientation] = useState<0 | 1 | 2 | 3>(0);
 
@@ -156,11 +158,11 @@ export function RoomsStep() {
     }
   };
 
-  const handleDelete = async (roomId: string) => {
-    if (!projectId) return;
-    if (!confirm('Удалить комнату? Все данные будут потеряны.')) return;
-    await roomsApi.remove(projectId, roomId).catch(() => {});
-    setRooms((prev) => prev.filter((r) => r.id !== roomId));
+  const handleDeleteConfirm = async () => {
+    if (!projectId || !deleteRoomId) return;
+    await roomsApi.remove(projectId, deleteRoomId).catch(() => {});
+    setRooms((prev) => prev.filter((r) => r.id !== deleteRoomId));
+    setDeleteRoomId(null);
   };
 
   const handleMeasure = (roomId: string) => {
@@ -245,7 +247,7 @@ export function RoomsStep() {
               <RoomCard
                 room={room}
                 onMeasure={handleMeasure}
-                onDelete={handleDelete}
+                onDelete={(id) => setDeleteRoomId(id)}
                 isDragging={draggedRoom === room.id}
               />
             </div>
@@ -264,6 +266,17 @@ export function RoomsStep() {
           Далее →
         </Button>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteRoomId !== null}
+        title="Удалить комнату?"
+        message="Все данные комнаты будут удалены без возможности восстановления."
+        confirmLabel="Удалить"
+        cancelLabel="Отмена"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteRoomId(null)}
+      />
 
       <Modal isOpen={showModal} onClose={() => { setShowModal(false); reset(); setPickerOrientation(0); }} title="Новая комната">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>

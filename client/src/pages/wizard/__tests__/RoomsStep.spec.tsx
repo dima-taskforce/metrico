@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { RoomsStep } from '../RoomsStep';
@@ -132,7 +132,6 @@ describe('RoomsStep', () => {
     const rooms = [mockRoom('1')];
     vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
     vi.mocked(roomsApi.roomsApi.remove).mockResolvedValue(undefined as any);
-    window.confirm = vi.fn(() => true);
 
     render(<RoomsStep />, { wrapper: Wrapper });
 
@@ -140,8 +139,14 @@ describe('RoomsStep', () => {
       expect(screen.getByText('Room 1')).toBeInTheDocument();
     });
 
+    // Click delete — opens confirm dialog
     const deleteBtn = screen.getByLabelText('Удалить');
     await userEvent.click(deleteBtn);
+
+    // Confirm dialog should appear; click the confirm button inside the dialog
+    const dialog = await screen.findByRole('dialog');
+    const confirmBtn = within(dialog).getByRole('button', { name: /^Удалить$/i });
+    await userEvent.click(confirmBtn);
 
     await waitFor(() => {
       expect(roomsApi.roomsApi.remove).toHaveBeenCalled();

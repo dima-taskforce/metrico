@@ -26,6 +26,7 @@ const SEGMENT_FILL: Record<SegmentType, string> = {
   PROTRUSION: '#ede9fe',
   NICHE: '#dcfce7',
   PARTITION: '#fee2e2',
+  STEP: '#fce7f3',
 };
 
 const SEGMENT_STROKE: Record<SegmentType, string> = {
@@ -35,6 +36,7 @@ const SEGMENT_STROKE: Record<SegmentType, string> = {
   PROTRUSION: '#c4b5fd',
   NICHE: '#86efac',
   PARTITION: '#fca5a5',
+  STEP: '#f9a8d4',
 };
 
 const SEGMENT_LABELS: Partial<Record<SegmentType, string>> = {

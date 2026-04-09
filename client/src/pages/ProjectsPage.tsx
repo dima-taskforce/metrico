@@ -4,11 +4,13 @@ import { useProjectsStore } from '../stores/projectsStore';
 import { ProjectCard } from '../components/projects/ProjectCard';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
 import { Button } from '../components/ui/Button';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export function ProjectsPage() {
   const { projects, isLoading, error, setProjects, setLoading, setError, upsertProject, removeProject } =
     useProjectsStore();
   const [isModalOpen, setModalOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -24,10 +26,11 @@ export function ProjectsPage() {
     upsertProject(project);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить проект?')) return;
-    await projectsApi.delete(id);
-    removeProject(id);
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    await projectsApi.delete(deleteId);
+    removeProject(deleteId);
+    setDeleteId(null);
   };
 
   const handleDuplicate = async (id: string) => {
@@ -63,7 +66,7 @@ export function ProjectsPage() {
             <ProjectCard
               key={project.id}
               project={project}
-              onDelete={handleDelete}
+              onDelete={(id) => setDeleteId(id)}
               onDuplicate={handleDuplicate}
             />
           ))}
@@ -74,6 +77,17 @@ export function ProjectsPage() {
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleCreate}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteId !== null}
+        title="Удалить проект?"
+        message="Все данные проекта будут удалены без возможности восстановления."
+        confirmLabel="Удалить"
+        cancelLabel="Отмена"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteId(null)}
       />
     </div>
   );
