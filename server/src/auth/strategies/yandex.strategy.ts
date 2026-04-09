@@ -6,9 +6,15 @@ import { AuthService } from '../auth.service';
 @Injectable()
 export class YandexStrategy extends PassportStrategy(Strategy, 'yandex') {
   constructor(private readonly authService: AuthService) {
+    const clientID = process.env['YANDEX_CLIENT_ID'];
+    const clientSecret = process.env['YANDEX_CLIENT_SECRET'];
+    if (!clientID || !clientSecret) {
+      super({ clientID: 'disabled', clientSecret: 'disabled', callbackURL: '/api/auth/yandex/callback' });
+      return;
+    }
     super({
-      clientID: process.env['YANDEX_CLIENT_ID'] ?? '',
-      clientSecret: process.env['YANDEX_CLIENT_SECRET'] ?? '',
+      clientID,
+      clientSecret,
       callbackURL: process.env['YANDEX_CALLBACK_URL'] ?? '/api/auth/yandex/callback',
     });
   }
