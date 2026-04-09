@@ -130,6 +130,21 @@ export function PerimeterWalkStep() {
   const segmentType = watch('segmentType');
   const needsDepth = segmentType === 'PROTRUSION' || segmentType === 'NICHE' || segmentType === 'PARTITION';
 
+  const lengthLabel: Record<SegmentType, string> = {
+    PLAIN: 'Длина участка, м',
+    WINDOW: 'Ширина проёма, м',
+    DOOR: 'Ширина проёма, м',
+    PROTRUSION: 'Длина выступа, м',
+    NICHE: 'Длина ниши, м',
+    PARTITION: 'Длина перегородки, м',
+  };
+
+  const depthLabel: Partial<Record<SegmentType, string>> = {
+    PROTRUSION: 'Глубина выступа, м',
+    NICHE: 'Глубина ниши, м',
+    PARTITION: 'Толщина, м',
+  };
+
   const goToWall = (idx: number) => {
     setWallIdx(idx);
     setValidationResult(null);
@@ -307,7 +322,7 @@ export function PerimeterWalkStep() {
             </select>
           </div>
           <Input
-            label="Длина, м"
+            label={lengthLabel[segmentType]}
             type="number"
             step="0.001"
             min="0.001"
@@ -319,7 +334,7 @@ export function PerimeterWalkStep() {
         {needsDepth && (
           <div className="mb-3">
             <Input
-              label={segmentType === 'PARTITION' ? 'Толщина, м' : 'Глубина, м'}
+              label={depthLabel[segmentType] ?? 'Глубина, м'}
               type="number"
               step="0.001"
               min="0.001"
