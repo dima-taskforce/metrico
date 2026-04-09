@@ -182,6 +182,7 @@ export function PerimeterWalkStep() {
             onClick={() => {
               setWallIdx(idx);
               setValidationResult(null);
+              reset({ segmentType: 'PLAIN' });
             }}
           >
             {wall.label}
