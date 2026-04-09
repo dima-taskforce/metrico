@@ -19,10 +19,12 @@ interface RoomMeasureState {
   // UI state
   activeWallId: string | null;
   isDirty: boolean;
+  shapeOrientation: 0 | 1 | 2 | 3;
 
   // Setters
   setCurrentRoom: (room: Room | null) => void;
   setSubstep: (step: MeasureSubstep) => void;
+  setShapeOrientation: (o: 0 | 1 | 2 | 3) => void;
   setWalls: (walls: Wall[]) => void;
   setWindows: (wallId: string, windows: WindowOpening[]) => void;
   setDoors: (wallId: string, doors: DoorOpening[]) => void;
@@ -60,6 +62,7 @@ const initialState = {
   angles: [],
   activeWallId: null,
   isDirty: false,
+  shapeOrientation: 0 as 0 | 1 | 2 | 3,
 };
 
 export const useRoomMeasureStore = create<RoomMeasureState>((set) => ({
@@ -67,6 +70,7 @@ export const useRoomMeasureStore = create<RoomMeasureState>((set) => ({
 
   setCurrentRoom: (room) => set({ currentRoom: room }),
   setSubstep: (step) => set({ currentSubstep: step }),
+  setShapeOrientation: (o) => set({ shapeOrientation: o }),
   setWalls: (walls) => set({ walls, isDirty: true }),
   setWindows: (wallId, windows) =>
     set((s) => ({ windows: { ...s.windows, [wallId]: windows }, isDirty: true })),

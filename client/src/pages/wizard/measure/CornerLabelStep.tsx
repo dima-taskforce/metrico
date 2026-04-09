@@ -2,6 +2,8 @@ import { useRoomMeasureStore } from '../../../stores/roomMeasureStore';
 import { Button } from '../../../components/ui/Button';
 import type { RoomShape } from '../../../types/api';
 
+const ROTATION_DEG: Record<0 | 1 | 2 | 3, number> = { 0: 0, 1: 90, 2: 180, 3: 270 };
+
 const CORNER_COUNT: Record<RoomShape, number> = {
   RECTANGLE: 4,
   L_SHAPE: 6,
@@ -86,12 +88,13 @@ const SHAPE_SVG: Record<RoomShape, React.ReactNode> = {
 const CORNER_LETTERS = 'ABCDEFGH';
 
 export function CornerLabelStep() {
-  const { currentRoom, setSubstep } = useRoomMeasureStore();
+  const { currentRoom, setSubstep, shapeOrientation } = useRoomMeasureStore();
 
   if (!currentRoom) return null;
 
   const cornerCount = CORNER_COUNT[currentRoom.shape];
   const corners = CORNER_LETTERS.slice(0, cornerCount).split('');
+  const rotateDeg = ROTATION_DEG[shapeOrientation];
 
   return (
     <div className="p-6 max-w-xl pb-20 sm:pb-6">
@@ -103,7 +106,9 @@ export function CornerLabelStep() {
 
       {/* Shape diagram */}
       <div className="bg-primary-50 rounded-xl p-4 mb-6 h-48 flex items-center justify-center">
-        {SHAPE_SVG[currentRoom.shape]}
+        <div style={{ transform: `rotate(${rotateDeg}deg)`, transition: 'transform 0.2s', width: '100%', height: '100%' }}>
+          {SHAPE_SVG[currentRoom.shape]}
+        </div>
       </div>
 
       {/* Corner list */}

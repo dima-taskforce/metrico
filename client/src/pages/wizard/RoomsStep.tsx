@@ -5,9 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { roomsApi } from '../../api/rooms';
 import { useProjectsStore } from '../../stores/projectsStore';
+import { useRoomMeasureStore } from '../../stores/roomMeasureStore';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
+import { ShapePicker } from '../../components/ui/ShapePicker';
 import type { Room, RoomType, RoomShape } from '../../types/api';
 
 const ROOM_TYPE_LABELS: Record<RoomType, string> = {
@@ -30,13 +32,6 @@ const ROOM_TYPE_EMOJIS: Record<RoomType, string> = {
   BALCONY: '🌿',
   STORAGE: '📦',
   OTHER: '🏠',
-};
-
-const ROOM_SHAPE_LABELS: Record<RoomShape, string> = {
-  RECTANGLE: 'Прямоугольник',
-  L_SHAPE: 'Г-образная',
-  U_SHAPE: 'П-образная',
-  CUSTOM: 'Сложная форма',
 };
 
 const SHAPE_CORNER_COUNT: Record<RoomShape, number> = {
@@ -114,21 +109,27 @@ export function RoomsStep() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { currentProject } = useProjectsStore();
+  const { setShapeOrientation } = useRoomMeasureStore();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [draggedRoom, setDraggedRoom] = useState<string | null>(null);
+  const [pickerOrientation, setPickerOrientation] = useState<0 | 1 | 2 | 3>(0);
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateRoomForm>({
     resolver: zodResolver(createRoomSchema),
     defaultValues: { type: 'LIVING', shape: 'RECTANGLE' },
   });
+
+  const selectedShape = watch('shape');
 
   useEffect(() => {
     if (!projectId) return;
@@ -139,6 +140,11 @@ export function RoomsStep() {
       .finally(() => setIsLoading(false));
   }, [projectId]);
 
+  const handleShapeChange = (shape: RoomShape, orientation: 0 | 1 | 2 | 3) => {
+    setValue('shape', shape, { shouldValidate: true });
+    setPickerOrientation(orientation);
+  };
+
   const onSubmit = async (data: CreateRoomForm) => {
     if (!projectId) return;
     try {
@@ -146,9 +152,11 @@ export function RoomsStep() {
         ...data,
         sortOrder: rooms.length,
       });
+      setShapeOrientation(pickerOrientation);
       setRooms((prev) => [...prev, room]);
       setShowModal(false);
       reset();
+      setPickerOrientation(0);
     } catch (err) {
       setError('root', {
         message: err instanceof Error ? err.message : 'Ошибка создания',
@@ -265,7 +273,7 @@ export function RoomsStep() {
         </Button>
       </div>
 
-      <Modal isOpen={showModal} onClose={() => { setShowModal(false); reset(); }} title="Новая комната">
+      <Modal isOpen={showModal} onClose={() => { setShowModal(false); reset(); setPickerOrientation(0); }} title="Новая комната">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
           <Input label="Название" error={errors.name?.message} {...register('name')} />
 
@@ -283,20 +291,18 @@ export function RoomsStep() {
 
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Форма комнаты</label>
-            <select
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
-              {...register('shape')}
-            >
-              {(Object.entries(ROOM_SHAPE_LABELS) as [RoomShape, string][]).map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
-              ))}
-            </select>
+            <input type="hidden" {...register('shape')} />
+            <ShapePicker
+              value={selectedShape}
+              orientation={pickerOrientation}
+              onChange={handleShapeChange}
+            />
           </div>
 
           {errors.root && <p className="text-sm text-red-500">{errors.root.message}</p>}
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => { setShowModal(false); reset(); }}>
+            <Button type="button" variant="secondary" onClick={() => { setShowModal(false); reset(); setPickerOrientation(0); }}>
               Отмена
             </Button>
             <Button type="submit" disabled={isSubmitting}>
