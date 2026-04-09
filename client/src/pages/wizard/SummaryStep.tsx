@@ -6,6 +6,7 @@ import { anglesApi } from '../../api/angles';
 import { photosApi } from '../../api/photos';
 import { useProjectsStore } from '../../stores/projectsStore';
 import { Button } from '../../components/ui/Button';
+import { RoomTypeIcon } from '../../components/RoomTypeIcon';
 import type { Room, Wall, Angle, Photo } from '../../types/api';
 
 const ROOM_TYPE_LABELS: Record<string, string> = {
@@ -19,16 +20,6 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
   OTHER: 'Другое',
 };
 
-const ROOM_TYPE_EMOJIS: Record<string, string> = {
-  LIVING: '🛋',
-  BEDROOM: '🛏',
-  KITCHEN: '🍳',
-  BATHROOM: '🚿',
-  CORRIDOR: '🚪',
-  BALCONY: '🌿',
-  STORAGE: '📦',
-  OTHER: '🏠',
-};
 
 interface RoomStats {
   area: number | null; // mm²
@@ -228,7 +219,6 @@ function RoomRow({
   stats: RoomStats;
   onRowClick: (roomId: string) => void;
 }) {
-  const emoji = ROOM_TYPE_EMOJIS[room.type] || '🏠';
   const typeName = ROOM_TYPE_LABELS[room.type] || room.type;
 
   const areaM2 = stats.area !== null ? (stats.area / 1_000_000).toFixed(2) : '—';
@@ -242,7 +232,7 @@ function RoomRow({
     >
       <td className="px-4 py-3 whitespace-nowrap">
         <div className="flex items-center gap-2">
-          <span className="text-lg">{emoji}</span>
+          <span className="text-primary-500" aria-label={`icon-${room.type}`}><RoomTypeIcon type={room.type} size={18} /></span>
           <span className="font-medium text-gray-900">{room.name}</span>
         </div>
       </td>

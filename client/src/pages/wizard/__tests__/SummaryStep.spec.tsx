@@ -243,11 +243,11 @@ describe('SummaryStep', () => {
     });
   });
 
-  it('displays room type emoji', async () => {
+  it('displays room type icon', async () => {
     mockRoomsList.mockResolvedValue([mockRoom('room-1', 'Спальня', true, 'BEDROOM')]);
     render(<SummaryStep />, { wrapper: Wrapper });
     await waitFor(() => {
-      expect(screen.getByText('🛏')).toBeInTheDocument();
+      expect(screen.getByLabelText('icon-BEDROOM')).toBeInTheDocument();
     });
   });
 

@@ -1,4 +1,4 @@
-import { Outlet, useParams, NavLink } from 'react-router-dom';
+import { Outlet, useParams, NavLink, Link } from 'react-router-dom';
 
 const STEPS = [
   { step: 1, label: 'Общая информация', path: 'info' },
@@ -16,6 +16,14 @@ export function WizardLayout() {
     <div className="flex h-[calc(100vh-57px)]">
       {/* Sidebar */}
       <aside className="w-56 bg-white border-r border-gray-200 flex flex-col">
+        <div className="px-4 py-3 border-b border-gray-100">
+          <Link
+            to="/projects"
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600 transition-colors"
+          >
+            ← Проекты
+          </Link>
+        </div>
         <nav className="flex-1 py-4">
           {STEPS.map(({ step, label, path }) => (
             <NavLink

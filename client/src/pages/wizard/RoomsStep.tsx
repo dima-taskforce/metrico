@@ -10,6 +10,7 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { ShapePicker } from '../../components/ui/ShapePicker';
+import { RoomTypeIcon } from '../../components/RoomTypeIcon';
 import type { Room, RoomType, RoomShape } from '../../types/api';
 
 const ROOM_TYPE_LABELS: Record<RoomType, string> = {
@@ -21,17 +22,6 @@ const ROOM_TYPE_LABELS: Record<RoomType, string> = {
   BALCONY: 'Балкон / Лоджия',
   STORAGE: 'Кладовая',
   OTHER: 'Другое',
-};
-
-const ROOM_TYPE_EMOJIS: Record<RoomType, string> = {
-  LIVING: '🛋',
-  BEDROOM: '🛏',
-  KITCHEN: '🍳',
-  BATHROOM: '🚿',
-  CORRIDOR: '🚪',
-  BALCONY: '🌿',
-  STORAGE: '📦',
-  OTHER: '🏠',
 };
 
 const SHAPE_CORNER_COUNT: Record<RoomShape, number> = {
@@ -69,7 +59,6 @@ function RoomCard({
   isDragging: boolean;
 }) {
   const status = getRoomStatus(room);
-  const emoji = ROOM_TYPE_EMOJIS[room.type];
 
   return (
     <div
@@ -79,7 +68,9 @@ function RoomCard({
       draggable
       data-room-id={room.id}
     >
-      <div className="text-2xl">{emoji}</div>
+      <div className="w-8 h-8 flex items-center justify-center text-primary-500" aria-label={`icon-${room.type}`}>
+        <RoomTypeIcon type={room.type} size={24} />
+      </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-gray-900 truncate">{room.name}</p>
         <p className="text-xs text-gray-500 truncate">

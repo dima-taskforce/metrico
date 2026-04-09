@@ -96,15 +96,15 @@ describe('RoomsStep', () => {
     });
   });
 
-  it('renders room emojis', async () => {
+  it('renders room type icons', async () => {
     const rooms = [mockRoom('1', 'KITCHEN'), mockRoom('2', 'BEDROOM')];
     vi.mocked(roomsApi.roomsApi.list).mockResolvedValue(rooms);
 
     render(<RoomsStep />, { wrapper: Wrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('🍳')).toBeInTheDocument();
-      expect(screen.getByText('🛏')).toBeInTheDocument();
+      expect(screen.getByLabelText('icon-KITCHEN')).toBeInTheDocument();
+      expect(screen.getByLabelText('icon-BEDROOM')).toBeInTheDocument();
     });
   });
 
