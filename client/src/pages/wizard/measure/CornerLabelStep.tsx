@@ -285,7 +285,7 @@ const SHAPE_VARIANTS: Record<string, ShapeVariant> = {
 };
 
 const DOT_R = 6;
-const LABEL_OFFSET = 10;
+const LABEL_OFFSET = 16;
 
 function getVariantKey(shape: RoomShape, orientation: 0 | 1 | 2 | 3): string {
   return `${shape}_${orientation}`;
@@ -324,7 +324,7 @@ export function CornerLabelStep() {
   };
 
   return (
-    <div className="p-6 max-w-lg">
+    <div className="p-6 max-w-lg pb-20 sm:pb-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-1">
         3.1 Определение углов
       </h3>
@@ -370,13 +370,22 @@ export function CornerLabelStep() {
                   stroke="white"
                   strokeWidth="1.5"
                 />
+                <rect
+                  x={labelPos.x - 6}
+                  y={labelPos.y - 6}
+                  width="12"
+                  height="12"
+                  rx="2"
+                  fill="white"
+                  fillOpacity="0.85"
+                />
                 <text
                   x={labelPos.x}
                   y={labelPos.y}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fontSize="9"
-                  fontWeight="bold"
+                  fontWeight="500"
                   fill={isActive ? '#0284c7' : '#374151'}
                 >
                   {corner.label}

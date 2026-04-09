@@ -233,11 +233,11 @@ describe('PerimeterWalkStep', () => {
   it('shows offsetFromPrev field for non-PLAIN types', () => {
     setupStore([makeWall()]);
     render(<PerimeterWalkStep />);
-    // Initially PLAIN — no offset field
-    expect(screen.queryByLabelText(/Расстояние от угла/i)).not.toBeInTheDocument();
-    // Switch to WINDOW
+    // Offset field is always visible regardless of type
+    expect(screen.getByLabelText(/Отступ от начала/i)).toBeInTheDocument();
+    // Still visible after switching to WINDOW
     fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'WINDOW' } });
-    expect(screen.getByLabelText(/Расстояние от угла/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Отступ от начала/i)).toBeInTheDocument();
   });
 
   it('shows inner/outer toggle only for STEP type', () => {
@@ -264,7 +264,7 @@ describe('PerimeterWalkStep', () => {
     render(<PerimeterWalkStep />);
 
     fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'WINDOW' } });
-    fireEvent.change(screen.getByLabelText(/Расстояние от угла/i), { target: { value: '0.5' } });
+    fireEvent.change(screen.getByLabelText(/Отступ от начала/i), { target: { value: '0.5' } });
     fireEvent.change(screen.getByLabelText(/Ширина проёма, м/i), { target: { value: '1.2' } });
     fireEvent.click(screen.getByRole('button', { name: /добавить/i }));
 

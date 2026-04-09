@@ -9,6 +9,10 @@ vi.mock('../../../../stores/roomMeasureStore', () => ({
   useRoomMeasureStore: vi.fn(),
 }));
 
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}));
+
 const mockSetSubstep = vi.fn();
 
 const makeRoom = (shape: 'RECTANGLE' | 'L_SHAPE' | 'U_SHAPE' | 'T_SHAPE' | 'CUSTOM' = 'RECTANGLE') => ({
@@ -41,43 +45,46 @@ describe('CornerLabelStep', () => {
     setupStore();
   });
 
-  it('renders nothing when currentRoom is null', () => {
+  it('renders RECTANGLE fallback when currentRoom is null', () => {
     vi.mocked(useRoomMeasureStore).mockReturnValue({
       currentRoom: null,
       setSubstep: mockSetSubstep,
+      shapeOrientation: 0,
     } as ReturnType<typeof useRoomMeasureStore>);
-    const { container } = render(<CornerLabelStep />);
-    expect(container).toBeEmptyDOMElement();
+    render(<CornerLabelStep />);
+    // Component renders with RECTANGLE fallback — shows corner A
+    expect(screen.getAllByText('A').length).toBeGreaterThan(0);
   });
 
   it('renders 4 corners for RECTANGLE shape', () => {
     setupStore(makeRoom('RECTANGLE'));
     render(<CornerLabelStep />);
-    expect(screen.getByText(/Угол A/)).toBeInTheDocument();
-    expect(screen.getByText(/Угол B/)).toBeInTheDocument();
-    expect(screen.getByText(/Угол C/)).toBeInTheDocument();
-    expect(screen.getByText(/Угол D/)).toBeInTheDocument();
-    expect(screen.queryByText(/Угол E/)).not.toBeInTheDocument();
+    // Corners render as single letters in spans
+    expect(screen.getAllByText('A').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('B').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('C').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('D').length).toBeGreaterThan(0);
+    expect(screen.queryByText('E')).not.toBeInTheDocument();
   });
 
   it('renders 6 corners for L_SHAPE', () => {
     setupStore(makeRoom('L_SHAPE'));
     render(<CornerLabelStep />);
-    expect(screen.getByText(/Угол F/)).toBeInTheDocument();
-    expect(screen.queryByText(/Угол G/)).not.toBeInTheDocument();
+    expect(screen.getAllByText('F').length).toBeGreaterThan(0);
+    expect(screen.queryByText('G')).not.toBeInTheDocument();
   });
 
   it('renders 8 corners for U_SHAPE', () => {
     setupStore(makeRoom('U_SHAPE'));
     render(<CornerLabelStep />);
-    expect(screen.getByText(/Угол H/)).toBeInTheDocument();
+    expect(screen.getAllByText('H').length).toBeGreaterThan(0);
   });
 
   it('renders 8 corners for T_SHAPE', () => {
     setupStore(makeRoom('T_SHAPE'));
     render(<CornerLabelStep />);
-    expect(screen.getByText(/Угол H/)).toBeInTheDocument();
-    expect(screen.queryByText(/Угол I/)).not.toBeInTheDocument();
+    expect(screen.getAllByText('H').length).toBeGreaterThan(0);
+    expect(screen.queryByText('I')).not.toBeInTheDocument();
   });
 
   it('marks corner A as "левый нижний"', () => {
@@ -87,7 +94,7 @@ describe('CornerLabelStep', () => {
 
   it('navigates to substep 2 on button click', () => {
     render(<CornerLabelStep />);
-    fireEvent.click(screen.getByRole('button', { name: /высота потолка/i }));
+    fireEvent.click(screen.getByRole('button', { name: /далее/i }));
     expect(mockSetSubstep).toHaveBeenCalledWith(2);
   });
 
