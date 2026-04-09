@@ -13,7 +13,16 @@ const infoSchema = z.object({
   name: z.string().min(1, 'Введите название'),
   objectType: z.enum(['APARTMENT', 'STUDIO', 'APARTMENTS', 'HOUSE'] as const),
   address: z.string().optional(),
-  defaultCeilingHeight: z.coerce.number().min(1.5, 'Минимум 1.5 м').max(10, 'Максимум 10 м').optional().or(z.literal('')),
+  defaultCeilingHeight: z.preprocess(
+    (val) => {
+      if (val === '' || val === null || val === undefined) return '';
+      return typeof val === 'string' ? val.replace(',', '.') : val;
+    },
+    z.union([
+      z.literal(''),
+      z.coerce.number().min(1.5, 'Минимум 1.5 м').max(10, 'Максимум 10 м'),
+    ]),
+  ),
 });
 
 type InfoForm = z.infer<typeof infoSchema>;
@@ -67,6 +76,10 @@ export function ProjectInfoStep() {
 
   const onSubmit = async (data: InfoForm) => {
     if (!projectId) return;
+    if (!isDirty) {
+      navigate(`/wizard/${projectId}/rooms`);
+      return;
+    }
     try {
       const updated = await projectsApi.update(projectId, {
         name: data.name,
@@ -119,10 +132,9 @@ export function ProjectInfoStep() {
 
         <Input
           label="Высота потолков, м (необязательно)"
-          type="number"
-          step="0.01"
-          min="1.5"
-          max="10"
+          type="text"
+          inputMode="decimal"
+          placeholder="2.7"
           error={errors.defaultCeilingHeight?.message}
           {...register('defaultCeilingHeight')}
         />
@@ -139,7 +151,7 @@ export function ProjectInfoStep() {
           >
             Назад к проектам
           </Button>
-          <Button type="submit" disabled={isSubmitting || !isDirty}>
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Сохранение…' : 'Далее →'}
           </Button>
         </div>
