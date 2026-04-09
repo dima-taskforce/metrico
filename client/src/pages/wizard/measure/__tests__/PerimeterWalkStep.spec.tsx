@@ -178,7 +178,7 @@ describe('PerimeterWalkStep', () => {
     // wall = 4.02m, existing segments = 2.0m → remainder = 2.02
     setupStore([makeWall()], { w1: [makeSegment({ length: 2.0 })] });
     render(<PerimeterWalkStep />);
-    const input = screen.getByLabelText(/длина/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/Длина, м/i) as HTMLInputElement;
     expect(Number(input.value)).toBeCloseTo(2.02, 3);
   });
 
@@ -186,7 +186,7 @@ describe('PerimeterWalkStep', () => {
     // wall = 4.02m, segments = 4.02m → remainder = 0 → empty field
     setupStore([makeWall()], { w1: [makeSegment({ length: 4.02 })] });
     render(<PerimeterWalkStep />);
-    const input = screen.getByLabelText(/длина/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/Длина, м/i) as HTMLInputElement;
     expect(Number(input.value)).toBe(0);
   });
 
@@ -197,7 +197,7 @@ describe('PerimeterWalkStep', () => {
     setupStore([makeWall()]);
     render(<PerimeterWalkStep />);
 
-    fireEvent.change(screen.getByLabelText(/длина/i), { target: { value: '2.0' } });
+    fireEvent.change(screen.getByLabelText(/Длина, м/i), { target: { value: '2.0' } });
     fireEvent.click(screen.getByRole('button', { name: /добавить/i }));
 
     await waitFor(() => {
@@ -219,7 +219,7 @@ describe('PerimeterWalkStep', () => {
     render(<PerimeterWalkStep />);
 
     fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'WINDOW' } });
-    fireEvent.change(screen.getByLabelText(/ширина проёма/i), { target: { value: '1.2' } });
+    fireEvent.change(screen.getByLabelText(/Длина, м/i), { target: { value: '1.2' } });
     fireEvent.click(screen.getByRole('button', { name: /добавить/i }));
 
     await waitFor(() => {
