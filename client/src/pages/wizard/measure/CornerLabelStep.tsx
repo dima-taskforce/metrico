@@ -20,10 +20,10 @@ const SHAPE_SVG: Record<RoomShape, React.ReactNode> = {
       <circle cx="110" cy="12" r="3" className="fill-primary-500" />
       <circle cx="110" cy="72" r="3" className="fill-primary-500" />
       {/* labels: outside corners */}
-      <text x="2"   y="86"  fontSize="11" className="fill-primary-700 font-bold">A</text>
-      <text x="2"   y="9"   fontSize="11" className="fill-primary-700 font-bold">B</text>
-      <text x="114" y="9"   fontSize="11" className="fill-primary-700 font-bold">C</text>
-      <text x="114" y="86"  fontSize="11" className="fill-primary-700 font-bold">D</text>
+      <text x="2"   y="86"  fontSize="11" className="fill-primary-700">A</text>
+      <text x="2"   y="9"   fontSize="11" className="fill-primary-700">B</text>
+      <text x="114" y="9"   fontSize="11" className="fill-primary-700">C</text>
+      <text x="114" y="86"  fontSize="11" className="fill-primary-700">D</text>
     </svg>
   ),
   L_SHAPE: (
@@ -35,12 +35,12 @@ const SHAPE_SVG: Record<RoomShape, React.ReactNode> = {
       <circle cx="72"  cy="50"  r="3" className="fill-primary-500" />
       <circle cx="112" cy="50"  r="3" className="fill-primary-500" />
       <circle cx="112" cy="100" r="3" className="fill-primary-500" />
-      <text x="0"   y="111" fontSize="10" className="fill-primary-700 font-bold">A</text>
-      <text x="0"   y="7"   fontSize="10" className="fill-primary-700 font-bold">B</text>
-      <text x="74"  y="7"   fontSize="10" className="fill-primary-700 font-bold">C</text>
-      <text x="55"  y="62"  fontSize="10" className="fill-primary-700 font-bold">D</text>
-      <text x="115" y="62"  fontSize="10" className="fill-primary-700 font-bold">E</text>
-      <text x="115" y="111" fontSize="10" className="fill-primary-700 font-bold">F</text>
+      <text x="0"   y="111" fontSize="10" className="fill-primary-700">A</text>
+      <text x="0"   y="7"   fontSize="10" className="fill-primary-700">B</text>
+      <text x="74"  y="7"   fontSize="10" className="fill-primary-700">C</text>
+      <text x="55"  y="62"  fontSize="10" className="fill-primary-700">D</text>
+      <text x="115" y="62"  fontSize="10" className="fill-primary-700">E</text>
+      <text x="115" y="111" fontSize="10" className="fill-primary-700">F</text>
     </svg>
   ),
   U_SHAPE: (
@@ -56,14 +56,14 @@ const SHAPE_SVG: Record<RoomShape, React.ReactNode> = {
       <circle cx="120" cy="10" r="3" className="fill-primary-500" />
       <circle cx="120" cy="90" r="3" className="fill-primary-500" />
       {/* labels outside shape */}
-      <text x="0"   y="103" fontSize="9" className="fill-primary-700 font-bold">A</text>
-      <text x="0"   y="7"   fontSize="9" className="fill-primary-700 font-bold">B</text>
-      <text x="32"  y="7"   fontSize="9" className="fill-primary-700 font-bold">C</text>
-      <text x="32"  y="43"  fontSize="9" className="fill-primary-700 font-bold">D</text>
-      <text x="87"  y="43"  fontSize="9" className="fill-primary-700 font-bold">E</text>
-      <text x="87"  y="7"   fontSize="9" className="fill-primary-700 font-bold">F</text>
-      <text x="123" y="7"   fontSize="9" className="fill-primary-700 font-bold">G</text>
-      <text x="123" y="103" fontSize="9" className="fill-primary-700 font-bold">H</text>
+      <text x="0"   y="103" fontSize="9" className="fill-primary-700">A</text>
+      <text x="0"   y="7"   fontSize="9" className="fill-primary-700">B</text>
+      <text x="32"  y="7"   fontSize="9" className="fill-primary-700">C</text>
+      <text x="32"  y="43"  fontSize="9" className="fill-primary-700">D</text>
+      <text x="87"  y="43"  fontSize="9" className="fill-primary-700">E</text>
+      <text x="87"  y="7"   fontSize="9" className="fill-primary-700">F</text>
+      <text x="123" y="7"   fontSize="9" className="fill-primary-700">G</text>
+      <text x="123" y="103" fontSize="9" className="fill-primary-700">H</text>
     </svg>
   ),
   CUSTOM: (
@@ -74,11 +74,11 @@ const SHAPE_SVG: Record<RoomShape, React.ReactNode> = {
       <circle cx="82"  cy="10" r="3" className="fill-primary-500" />
       <circle cx="112" cy="40" r="3" className="fill-primary-500" />
       <circle cx="112" cy="72" r="3" className="fill-primary-500" />
-      <text x="0"   y="86"  fontSize="10" className="fill-primary-700 font-bold">A</text>
-      <text x="0"   y="7"   fontSize="10" className="fill-primary-700 font-bold">B</text>
-      <text x="84"  y="7"   fontSize="10" className="fill-primary-700 font-bold">C</text>
-      <text x="115" y="44"  fontSize="10" className="fill-primary-700 font-bold">D</text>
-      <text x="115" y="86"  fontSize="10" className="fill-primary-700 font-bold">E</text>
+      <text x="0"   y="86"  fontSize="10" className="fill-primary-700">A</text>
+      <text x="0"   y="7"   fontSize="10" className="fill-primary-700">B</text>
+      <text x="84"  y="7"   fontSize="10" className="fill-primary-700">C</text>
+      <text x="115" y="44"  fontSize="10" className="fill-primary-700">D</text>
+      <text x="115" y="86"  fontSize="10" className="fill-primary-700">E</text>
     </svg>
   ),
 };
