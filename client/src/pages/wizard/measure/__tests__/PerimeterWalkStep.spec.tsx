@@ -81,6 +81,8 @@ const makeSegment = (overrides = {}) => ({
   sortOrder: 0,
   description: null,
   depth: null,
+  offsetFromPrev: null,
+  isInner: null,
   windowOpeningId: null,
   doorOpeningId: null,
   createdAt: new Date().toISOString(),
@@ -178,7 +180,7 @@ describe('PerimeterWalkStep', () => {
     // wall = 4.02m, existing segments = 2.0m → remainder = 2.02
     setupStore([makeWall()], { w1: [makeSegment({ length: 2.0 })] });
     render(<PerimeterWalkStep />);
-    const input = screen.getByLabelText(/Длина, м/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/Длина участка, м/i) as HTMLInputElement;
     expect(Number(input.value)).toBeCloseTo(2.02, 3);
   });
 
@@ -186,7 +188,7 @@ describe('PerimeterWalkStep', () => {
     // wall = 4.02m, segments = 4.02m → remainder = 0 → empty field
     setupStore([makeWall()], { w1: [makeSegment({ length: 4.02 })] });
     render(<PerimeterWalkStep />);
-    const input = screen.getByLabelText(/Длина, м/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/Длина участка, м/i) as HTMLInputElement;
     expect(Number(input.value)).toBe(0);
   });
 
@@ -197,7 +199,7 @@ describe('PerimeterWalkStep', () => {
     setupStore([makeWall()]);
     render(<PerimeterWalkStep />);
 
-    fireEvent.change(screen.getByLabelText(/Длина, м/i), { target: { value: '2.0' } });
+    fireEvent.change(screen.getByLabelText(/Длина участка, м/i), { target: { value: '2.0' } });
     fireEvent.click(screen.getByRole('button', { name: /добавить/i }));
 
     await waitFor(() => {
@@ -219,13 +221,76 @@ describe('PerimeterWalkStep', () => {
     render(<PerimeterWalkStep />);
 
     fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'WINDOW' } });
-    fireEvent.change(screen.getByLabelText(/Длина, м/i), { target: { value: '1.2' } });
+    fireEvent.change(screen.getByLabelText(/Ширина проёма, м/i), { target: { value: '1.2' } });
     fireEvent.click(screen.getByRole('button', { name: /добавить/i }));
 
     await waitFor(() => {
       expect(openingsApi.windows.create).toHaveBeenCalledWith('w1', expect.objectContaining({ width: 1200 }));
       expect(mockUpsertWindow).toHaveBeenCalledWith('w1', createdWin);
     });
+  });
+
+  it('shows offsetFromPrev field for non-PLAIN types', () => {
+    setupStore([makeWall()]);
+    render(<PerimeterWalkStep />);
+    // Initially PLAIN — no offset field
+    expect(screen.queryByLabelText(/Расстояние от угла/i)).not.toBeInTheDocument();
+    // Switch to WINDOW
+    fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'WINDOW' } });
+    expect(screen.getByLabelText(/Расстояние от угла/i)).toBeInTheDocument();
+  });
+
+  it('shows inner/outer toggle only for STEP type', () => {
+    setupStore([makeWall()]);
+    render(<PerimeterWalkStep />);
+    expect(screen.queryByText(/Внутренняя/i)).not.toBeInTheDocument();
+    fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'STEP' } });
+    expect(screen.getByText(/Внутренняя/i)).toBeInTheDocument();
+    expect(screen.getByText(/Внешняя/i)).toBeInTheDocument();
+  });
+
+  it('uses context-aware label for DOOR type', () => {
+    setupStore([makeWall()]);
+    render(<PerimeterWalkStep />);
+    fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'DOOR' } });
+    expect(screen.getByLabelText(/Ширина проёма, м/i)).toBeInTheDocument();
+  });
+
+  it('sends offsetFromPrev when adding WINDOW segment', async () => {
+    const created = makeSegment({ id: 's-win', segmentType: 'WINDOW', length: 1.2, offsetFromPrev: 0.5 });
+    vi.mocked(segmentsApi.create).mockResolvedValue(created);
+
+    setupStore([makeWall()]);
+    render(<PerimeterWalkStep />);
+
+    fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'WINDOW' } });
+    fireEvent.change(screen.getByLabelText(/Расстояние от угла/i), { target: { value: '0.5' } });
+    fireEvent.change(screen.getByLabelText(/Ширина проёма, м/i), { target: { value: '1.2' } });
+    fireEvent.click(screen.getByRole('button', { name: /добавить/i }));
+
+    await waitFor(() => {
+      expect(segmentsApi.create).toHaveBeenCalledWith('w1', expect.objectContaining({
+        segmentType: 'WINDOW',
+        offsetFromPrev: 0.5,
+        length: 1.2,
+      }));
+    });
+  });
+
+  it('displays offsetFromPrev in segment list when set', () => {
+    setupStore([makeWall()], {
+      w1: [makeSegment({ segmentType: 'WINDOW', length: 1.2, offsetFromPrev: 0.5 })],
+    });
+    render(<PerimeterWalkStep />);
+    expect(screen.getByText('+0.500')).toBeInTheDocument();
+  });
+
+  it('displays STEP type with isInner label in segment list', () => {
+    setupStore([makeWall()], {
+      w1: [makeSegment({ segmentType: 'STEP', length: 0.3, isInner: true })],
+    });
+    render(<PerimeterWalkStep />);
+    expect(screen.getByText(/Ступенька.*внутренняя/i)).toBeInTheDocument();
   });
 
   it('removes segment when ✕ clicked', async () => {

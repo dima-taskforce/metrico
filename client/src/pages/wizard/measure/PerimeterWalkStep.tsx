@@ -17,7 +17,32 @@ const SEGMENT_TYPE_LABELS: Record<SegmentType, string> = {
   PROTRUSION: 'Выступ',
   NICHE: 'Ниша',
   PARTITION: 'Перегородка',
+  STEP: 'Ступенька',
 };
+
+// Context-aware field labels per type
+const LENGTH_LABEL: Record<SegmentType, string> = {
+  PLAIN: 'Длина участка, м',
+  WINDOW: 'Ширина проёма, м',
+  DOOR: 'Ширина проёма, м',
+  PROTRUSION: 'Длина выступа, м',
+  NICHE: 'Ширина ниши, м',
+  PARTITION: 'Длина перегородки, м',
+  STEP: 'Ширина ступеньки, м',
+};
+
+const DEPTH_LABEL: Record<SegmentType, string> = {
+  PLAIN: '',
+  WINDOW: '',
+  DOOR: '',
+  PROTRUSION: 'Глубина выступа, м',
+  NICHE: 'Глубина ниши, м',
+  PARTITION: 'Толщина перегородки, м',
+  STEP: 'Глубина ступеньки, м',
+};
+
+// Non-PLAIN types that have offsetFromPrev
+const NON_PLAIN_TYPES = new Set<SegmentType>(['WINDOW', 'DOOR', 'PROTRUSION', 'NICHE', 'PARTITION', 'STEP']);
 
 const segmentSchema = z.discriminatedUnion('segmentType', [
   z.object({
@@ -27,30 +52,43 @@ const segmentSchema = z.discriminatedUnion('segmentType', [
   }),
   z.object({
     segmentType: z.literal('WINDOW'),
-    length: z.coerce.number().positive('Длина > 0'),
+    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
+    length: z.coerce.number().positive('Ширина > 0'),
     description: z.string().optional(),
   }),
   z.object({
     segmentType: z.literal('DOOR'),
-    length: z.coerce.number().positive('Длина > 0'),
+    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
+    length: z.coerce.number().positive('Ширина > 0'),
     description: z.string().optional(),
   }),
   z.object({
     segmentType: z.literal('PROTRUSION'),
+    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
     length: z.coerce.number().positive('Длина > 0'),
     depth: z.coerce.number().positive('Глубина > 0'),
     description: z.string().optional(),
   }),
   z.object({
     segmentType: z.literal('NICHE'),
-    length: z.coerce.number().positive('Длина > 0'),
+    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
+    length: z.coerce.number().positive('Ширина > 0'),
     depth: z.coerce.number().positive('Глубина > 0'),
     description: z.string().optional(),
   }),
   z.object({
     segmentType: z.literal('PARTITION'),
+    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
     length: z.coerce.number().positive('Длина > 0'),
     depth: z.coerce.number().positive('Толщина > 0'),
+    description: z.string().optional(),
+  }),
+  z.object({
+    segmentType: z.literal('STEP'),
+    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
+    length: z.coerce.number().positive('Ширина > 0'),
+    depth: z.coerce.number().positive('Глубина > 0'),
+    isInner: z.boolean().optional(),
     description: z.string().optional(),
   }),
 ]);
@@ -113,6 +151,7 @@ export function PerimeterWalkStep() {
     watch,
     reset,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<SegmentForm>({
     resolver: zodResolver(segmentSchema),
@@ -128,7 +167,21 @@ export function PerimeterWalkStep() {
   }, [currentWall?.id, segments[currentWall?.id ?? '']?.length]);
 
   const segmentType = watch('segmentType');
-  const needsDepth = segmentType === 'PROTRUSION' || segmentType === 'NICHE' || segmentType === 'PARTITION';
+  const isNonPlain = NON_PLAIN_TYPES.has(segmentType);
+  const needsDepth = segmentType === 'PROTRUSION' || segmentType === 'NICHE' || segmentType === 'PARTITION' || segmentType === 'STEP';
+  const isStep = segmentType === 'STEP';
+
+  // Reset form fields when type changes
+  useEffect(() => {
+    const r = calcRemainder(wallLength, currentSegments);
+    const lengthVal = r || ('' as unknown as number);
+    if (segmentType === 'PLAIN') {
+      reset({ segmentType: 'PLAIN', length: lengthVal });
+    } else {
+      reset({ segmentType, length: '' as unknown as number } as SegmentForm);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segmentType]);
 
   const goToWall = (idx: number) => {
     setWallIdx(idx);
@@ -142,7 +195,11 @@ export function PerimeterWalkStep() {
         segmentType: data.segmentType,
         length: data.length,
         sortOrder: currentSegments.length,
+        ...('offsetFromPrev' in data && data.offsetFromPrev !== undefined && data.offsetFromPrev !== null
+          ? { offsetFromPrev: data.offsetFromPrev }
+          : {}),
         ...(needsDepth && 'depth' in data ? { depth: data.depth } : {}),
+        ...('isInner' in data && data.isInner !== undefined ? { isInner: data.isInner } : {}),
         ...('description' in data && data.description ? { description: data.description } : {}),
       });
       upsertSegment(currentWall.id, created);
@@ -277,8 +334,14 @@ export function PerimeterWalkStep() {
               <span className="text-gray-500 w-5">{idx + 1}</span>
               <span className="flex-1 font-medium text-gray-800">
                 {SEGMENT_TYPE_LABELS[seg.segmentType]}
+                {seg.segmentType === 'STEP' && seg.isInner !== null && seg.isInner !== undefined
+                  ? ` (${seg.isInner ? 'внутренняя' : 'внешняя'})`
+                  : ''}
                 {seg.description && ` — ${seg.description}`}
               </span>
+              {seg.offsetFromPrev !== null && seg.offsetFromPrev !== undefined && (
+                <span className="text-gray-400 mr-2 text-xs">+{seg.offsetFromPrev.toFixed(3)}</span>
+              )}
               <span className="text-gray-600 mr-3">{seg.length.toFixed(3)} м</span>
               <button
                 className="text-red-400 hover:text-red-600 text-xs"
@@ -294,20 +357,39 @@ export function PerimeterWalkStep() {
       {/* Add segment form */}
       <form onSubmit={handleSubmit(onAddSegment)} className="bg-gray-50 rounded-xl p-4 mb-4" noValidate>
         <p className="text-sm font-medium text-gray-700 mb-3">Добавить сегмент</p>
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Тип</label>
-            <select
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
-              {...register('segmentType')}
-            >
-              {(Object.entries(SEGMENT_TYPE_LABELS) as [SegmentType, string][]).map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
-              ))}
-            </select>
+
+        {/* Type selector */}
+        <div className="mb-3">
+          <label className="text-sm font-medium text-gray-700 block mb-1">Тип</label>
+          <select
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
+            {...register('segmentType')}
+          >
+            {(Object.entries(SEGMENT_TYPE_LABELS) as [SegmentType, string][]).map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* offsetFromPrev — only for non-PLAIN */}
+        {isNonPlain && (
+          <div className="mb-3">
+            <Input
+              label="Расстояние от угла/предыдущего элемента, м"
+              type="number"
+              step="0.001"
+              min="0"
+              placeholder="0.000"
+              error={'offsetFromPrev' in errors ? (errors as { offsetFromPrev?: { message?: string } }).offsetFromPrev?.message : undefined}
+              {...register('offsetFromPrev' as 'length')}
+            />
           </div>
+        )}
+
+        {/* Length / width — context-aware label */}
+        <div className="mb-3">
           <Input
-            label="Длина, м"
+            label={LENGTH_LABEL[segmentType]}
             type="number"
             step="0.001"
             min="0.001"
@@ -316,16 +398,42 @@ export function PerimeterWalkStep() {
           />
         </div>
 
+        {/* Depth — for PROTRUSION, NICHE, PARTITION, STEP */}
         {needsDepth && (
           <div className="mb-3">
             <Input
-              label={segmentType === 'PARTITION' ? 'Толщина, м' : 'Глубина, м'}
+              label={DEPTH_LABEL[segmentType]}
               type="number"
               step="0.001"
               min="0.001"
               error={'depth' in errors ? errors.depth?.message : undefined}
               {...register('depth' as 'length')}
             />
+          </div>
+        )}
+
+        {/* isInner toggle — only for STEP */}
+        {isStep && (
+          <div className="mb-3 flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-700">Тип ступеньки:</span>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="radio"
+                value="false"
+                {...register('isInner' as 'length')}
+                onChange={() => setValue('isInner' as 'length', false as unknown as number)}
+              />
+              <span className="text-sm text-gray-700">Внешняя</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="radio"
+                value="true"
+                {...register('isInner' as 'length')}
+                onChange={() => setValue('isInner' as 'length', true as unknown as number)}
+              />
+              <span className="text-sm text-gray-700">Внутренняя</span>
+            </label>
           </div>
         )}
 

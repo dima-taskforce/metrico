@@ -4,7 +4,7 @@ export type RoomType = 'KITCHEN' | 'BEDROOM' | 'BATHROOM' | 'CORRIDOR' | 'BALCON
 export type RoomShape = 'RECTANGLE' | 'L_SHAPE' | 'U_SHAPE' | 'T_SHAPE' | 'CUSTOM';
 export type WallMaterial = 'CONCRETE' | 'DRYWALL' | 'BRICK' | 'OTHER';
 export type WallType = 'EXTERNAL' | 'INTERNAL' | 'ADJACENT';
-export type SegmentType = 'PLAIN' | 'WINDOW' | 'DOOR' | 'PROTRUSION' | 'NICHE' | 'PARTITION';
+export type SegmentType = 'PLAIN' | 'WINDOW' | 'DOOR' | 'PROTRUSION' | 'NICHE' | 'PARTITION' | 'STEP';
 export type ElementType = 'COLUMN' | 'VENT_SHAFT' | 'RADIATOR' | 'ELECTRICAL_PANEL' | 'LOW_VOLTAGE_PANEL' | 'PIPE';
 export type PhotoType = 'OVERVIEW_BEFORE' | 'OVERVIEW_AFTER' | 'DETAIL';
 
@@ -89,7 +89,9 @@ export interface WallSegment {
   wallId: string;
   segmentType: SegmentType;
   length: number;
+  offsetFromPrev: number | null;
   depth: number | null;
+  isInner: boolean | null;
   sortOrder: number;
   windowOpeningId: string | null;
   doorOpeningId: string | null;

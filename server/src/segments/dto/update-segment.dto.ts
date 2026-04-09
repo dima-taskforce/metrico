@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsNumber, IsString, IsPositive, IsInt, Min } from 'class-validator';
+import { IsEnum, IsOptional, IsNumber, IsString, IsPositive, IsInt, Min, IsBoolean } from 'class-validator';
 import { SegmentType } from '@prisma/client';
 
 export class UpdateSegmentDto {
@@ -19,7 +19,16 @@ export class UpdateSegmentDto {
   @IsOptional()
   @IsNumber()
   @IsPositive()
+  offsetFromPrev?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
   depth?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isInner?: boolean;
 
   @IsOptional()
   @IsString()

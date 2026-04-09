@@ -12,7 +12,9 @@ const makeSegment = (overrides = {}) => ({
   sortOrder: 0,
   segmentType: SegmentType.PLAIN,
   length: 2.0,
+  offsetFromPrev: null,
   depth: null,
+  isInner: null,
   description: null,
   windowOpeningId: null,
   doorOpeningId: null,
@@ -103,6 +105,19 @@ describe('SegmentsService', () => {
       const dto = { sortOrder: 1, segmentType: SegmentType.WINDOW, length: 1.2 };
       const result = await service.create('w1', 'u1', dto);
       expect(result.segmentType).toBe(SegmentType.WINDOW);
+    });
+
+    it('creates a STEP segment with offsetFromPrev and isInner', async () => {
+      prisma.wall.findUnique.mockResolvedValue(makeWallWithAccess());
+      const seg = makeSegment({ segmentType: SegmentType.STEP, length: 0.3, depth: 0.15, offsetFromPrev: 1.0, isInner: true });
+      prisma.wallSegment.create.mockResolvedValue(seg);
+
+      const dto = { sortOrder: 2, segmentType: SegmentType.STEP, length: 0.3, depth: 0.15, offsetFromPrev: 1.0, isInner: true };
+      const result = await service.create('w1', 'u1', dto);
+      expect(result.segmentType).toBe(SegmentType.STEP);
+      expect(prisma.wallSegment.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ offsetFromPrev: 1.0, isInner: true }) }),
+      );
     });
   });
 

@@ -71,6 +71,7 @@ enum SegmentType {
   PROTRUSION
   NICHE
   PARTITION
+  STEP
 }
 
 enum ElementType {
@@ -212,7 +213,9 @@ model WallSegment {
   sortOrder     Int
   segmentType   SegmentType
   length        Float
+  offsetFromPrev Float?
   depth         Float?
+  isInner       Boolean?
   description   String?
 
   windowOpeningId String?
