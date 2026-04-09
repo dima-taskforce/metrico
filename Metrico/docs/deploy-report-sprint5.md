@@ -180,3 +180,46 @@ Certbot-контейнер с `restart: no` работает как бескон
 | S5-07: E2E тесты (31/31 green) | ✓ |
 | S5-08: Health endpoint + backup script | ✓ |
 | S5-09: Deploy → metrico.n1tr0.space | ✓ |
+
+---
+
+## Пост-деплой: фикс ввода дробных размеров
+
+**Дата:** 2026-04-09  
+**Проблема:** Пользователь не мог ввести дробные значения вида `1.125` (1 м 12.5 см) в ряде полей wizard.
+
+### Root cause
+
+HTML5 атрибут `step` на `<input type="number">` блокирует ввод значений, не кратных шагу, **на уровне браузера** — до любой JS/Zod валидации.  
+Backend (Prisma `Float`, `@IsNumber()`, `z.coerce.number()`) всегда принимал дробные числа корректно.
+
+### Затронутые компоненты
+
+| Файл | Поле | Было | Стало |
+|------|------|------|-------|
+| `OpeningsStep.tsx` — `WindowCard` | Высота, мм | `step="1"` | `step="0.1"` |
+| `OpeningsStep.tsx` — `WindowCard` | Высота подоконника, мм | `step="1"` | `step="0.1"` |
+| `OpeningsStep.tsx` — `WindowCard` | Откос слева/справа, мм | `step="1"` | `step="0.1"` |
+| `OpeningsStep.tsx` — `DoorCard` | Высота от стяжки, мм | `step="1"` | `step="0.1"` |
+| `OpeningsStep.tsx` — `DoorCard` | Откос слева/справа, мм | `step="1"` | `step="0.1"` |
+| `WallElevationStep.tsx` — `ElementForm` | Позиция от нач. стены, м | `step="0.01"` | `step="0.001"` |
+| `WallElevationStep.tsx` — `ElementForm` | Высота от пола, м | `step="0.01"` | `step="0.001"` |
+| `WallElevationStep.tsx` — `ElementForm` | Ширина, м | `step="0.01"` | `step="0.001"` |
+
+### Проверенные компоненты (изменений не требовалось)
+
+| Файл | Поле | Step | Статус |
+|------|------|------|--------|
+| `WallDimensionsStep.tsx` | Длина стены, м | `step="0.001"` | ✓ |
+| `CeilingHeightStep.tsx` | Высота потолка, м | `step="0.001"` | ✓ |
+| `PerimeterWalkStep.tsx` | Длина прогона, м | `step="0.001"` | ✓ |
+| `WallElevationStep.tsx` | Кривизна (мм) | `step="0.1"` | ✓ |
+
+### Тесты
+
+Добавлено **9 новых тестов** в существующие spec-файлы:
+
+- `OpeningsStep.spec.tsx`: 7 тестов — проверка `step="0.1"` на всех полях, сохранение с `1125.5` мм, сохранение двери с `2100.5` мм
+- `WallElevationStep.spec.tsx`: 4 теста — проверка `step="0.001"` на positionX/offsetFromFloor/width, сохранение с `1.125` м → `1125` мм
+
+Результат: **289 тестов, все прошли** (`npm test --run`)

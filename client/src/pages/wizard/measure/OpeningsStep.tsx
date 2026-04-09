@@ -66,7 +66,7 @@ function WindowCard({ wall, win }: { wall: Wall; win: WindowOpening }) {
         <Input
           label="Высота, мм"
           type="number"
-          step="1"
+          step="0.1"
           min="1"
           error={errors.height?.message}
           {...register('height')}
@@ -74,7 +74,7 @@ function WindowCard({ wall, win }: { wall: Wall; win: WindowOpening }) {
         <Input
           label="Высота подоконника от стяжки, мм"
           type="number"
-          step="1"
+          step="0.1"
           min="0"
           error={errors.sillHeightFromScreed?.message}
           {...register('sillHeightFromScreed')}
@@ -82,7 +82,7 @@ function WindowCard({ wall, win }: { wall: Wall; win: WindowOpening }) {
         <Input
           label="Откос слева, мм"
           type="number"
-          step="1"
+          step="0.1"
           min="0"
           error={errors.revealWidthLeft?.message}
           {...register('revealWidthLeft')}
@@ -90,7 +90,7 @@ function WindowCard({ wall, win }: { wall: Wall; win: WindowOpening }) {
         <Input
           label="Откос справа, мм"
           type="number"
-          step="1"
+          step="0.1"
           min="0"
           error={errors.revealWidthRight?.message}
           {...register('revealWidthRight')}
@@ -148,7 +148,7 @@ function DoorCard({ wall, door }: { wall: Wall; door: DoorOpening }) {
         <Input
           label="Высота от стяжки, мм"
           type="number"
-          step="1"
+          step="0.1"
           min="1"
           error={errors.heightFromScreed?.message}
           {...register('heightFromScreed')}
@@ -157,7 +157,7 @@ function DoorCard({ wall, door }: { wall: Wall; door: DoorOpening }) {
         <Input
           label="Откос слева, мм"
           type="number"
-          step="1"
+          step="0.1"
           min="0"
           error={errors.revealLeft?.message}
           {...register('revealLeft')}
@@ -165,7 +165,7 @@ function DoorCard({ wall, door }: { wall: Wall; door: DoorOpening }) {
         <Input
           label="Откос справа, мм"
           type="number"
-          step="1"
+          step="0.1"
           min="0"
           error={errors.revealRight?.message}
           {...register('revealRight')}

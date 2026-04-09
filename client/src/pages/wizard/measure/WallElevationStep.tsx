@@ -419,7 +419,7 @@ export function WallElevationStep() {
           <Input
             label="Позиция от нач. стены, м"
             type="number"
-            step="0.01"
+            step="0.001"
             min="0"
             error={errors.positionX?.message}
             {...register('positionX')}
@@ -427,7 +427,7 @@ export function WallElevationStep() {
           <Input
             label="Высота от пола, м"
             type="number"
-            step="0.01"
+            step="0.001"
             min="0"
             error={errors.offsetFromFloor?.message}
             {...register('offsetFromFloor')}
@@ -435,7 +435,7 @@ export function WallElevationStep() {
           <Input
             label="Ширина, м (необязательно)"
             type="number"
-            step="0.01"
+            step="0.001"
             min="0"
             error={errors.width?.message}
             {...register('width')}

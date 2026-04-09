@@ -222,6 +222,41 @@ describe('WallElevationStep', () => {
     expect(mockSetSubstep).toHaveBeenCalledWith(5);
   });
 
+  // ── Decimal input tests ────────────────────────────────────────────────
+
+  it('element positionX field has step="0.001" to allow 3-decimal meter values', () => {
+    render(<WallElevationStep />);
+    const positionInput = screen.getByLabelText(/Позиция от нач. стены/i);
+    expect(positionInput).toHaveAttribute('step', '0.001');
+  });
+
+  it('element offsetFromFloor field has step="0.001" to allow 3-decimal meter values', () => {
+    render(<WallElevationStep />);
+    const offsetInput = screen.getByLabelText(/Высота от пола/i);
+    expect(offsetInput).toHaveAttribute('step', '0.001');
+  });
+
+  it('element width field has step="0.001" to allow 3-decimal meter values', () => {
+    render(<WallElevationStep />);
+    const widthInput = screen.getByLabelText(/Ширина, м/i);
+    expect(widthInput).toHaveAttribute('step', '0.001');
+  });
+
+  it('adds element with 3-decimal meter positionX (e.g. 1.125)', async () => {
+    const created = makeElement({ id: 'el-new', positionX: 1125 });
+    vi.mocked(elementsApi.create).mockResolvedValue(created);
+
+    render(<WallElevationStep />);
+    fireEvent.change(screen.getByLabelText(/Позиция от нач. стены/i), { target: { value: '1.125' } });
+    fireEvent.submit(screen.getByRole('button', { name: /Добавить элемент/i }).closest('form')!);
+
+    await waitFor(() => {
+      expect(elementsApi.create).toHaveBeenCalledWith('r1', expect.objectContaining({
+        positionX: 1125,
+      }));
+    });
+  });
+
   it('shows error message when element create fails', async () => {
     vi.mocked(elementsApi.create).mockRejectedValue(new Error('Ошибка добавления'));
 

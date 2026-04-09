@@ -244,6 +244,81 @@ describe('OpeningsStep', () => {
     expect(mockSetSubstep).toHaveBeenCalledWith(6);
   });
 
+  // ── Decimal input tests ────────────────────────────────────────────────
+
+  it('window height field has step="0.1" to allow decimal mm values', () => {
+    setupStore([makeWall()], { w1: [makeWindow()] }, {}, {});
+    render(<OpeningsStep />);
+    const heightInput = screen.getByLabelText(/Высота, мм/i);
+    expect(heightInput).toHaveAttribute('step', '0.1');
+  });
+
+  it('window sill height field has step="0.1" to allow decimal mm values', () => {
+    setupStore([makeWall()], { w1: [makeWindow()] }, {}, {});
+    render(<OpeningsStep />);
+    const sillInput = screen.getByLabelText(/Высота подоконника от стяжки/i);
+    expect(sillInput).toHaveAttribute('step', '0.1');
+  });
+
+  it('window reveal fields have step="0.1" to allow decimal mm values', () => {
+    setupStore([makeWall()], { w1: [makeWindow()] }, {}, {});
+    render(<OpeningsStep />);
+    const [revealLeft, revealRight] = screen.getAllByLabelText(/Откос/i);
+    expect(revealLeft).toHaveAttribute('step', '0.1');
+    expect(revealRight).toHaveAttribute('step', '0.1');
+  });
+
+  it('door height field has step="0.1" to allow decimal mm values', () => {
+    setupStore([makeWall()], {}, { w1: [makeDoor()] }, {});
+    render(<OpeningsStep />);
+    const heightInput = screen.getByLabelText(/Высота от стяжки, мм/i);
+    expect(heightInput).toHaveAttribute('step', '0.1');
+  });
+
+  it('door reveal fields have step="0.1" to allow decimal mm values', () => {
+    setupStore([makeWall()], {}, { w1: [makeDoor()] }, {});
+    render(<OpeningsStep />);
+    const [revealLeft, revealRight] = screen.getAllByLabelText(/Откос/i);
+    expect(revealLeft).toHaveAttribute('step', '0.1');
+    expect(revealRight).toHaveAttribute('step', '0.1');
+  });
+
+  it('saves window with decimal mm values (e.g. 1125.5)', async () => {
+    const updated = makeWindow({ height: 1125.5 });
+    vi.mocked(openingsApi.windows.update).mockResolvedValue(updated);
+
+    setupStore([makeWall()], { w1: [makeWindow({ height: 0 })] }, {}, {});
+    render(<OpeningsStep />);
+
+    fireEvent.change(screen.getByLabelText(/Высота, мм/i), { target: { value: '1125.5' } });
+    fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
+
+    await waitFor(() => {
+      expect(openingsApi.windows.update).toHaveBeenCalledWith(
+        'w1', 'win1',
+        expect.objectContaining({ height: 1125.5 }),
+      );
+    });
+  });
+
+  it('saves door with decimal mm height (e.g. 2100.5)', async () => {
+    const updated = makeDoor({ heightFromScreed: 2100.5 });
+    vi.mocked(openingsApi.doors.update).mockResolvedValue(updated);
+
+    setupStore([makeWall()], {}, { w1: [makeDoor({ heightFromScreed: 0 })] }, {});
+    render(<OpeningsStep />);
+
+    fireEvent.change(screen.getByLabelText(/Высота от стяжки, мм/i), { target: { value: '2100.5' } });
+    fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
+
+    await waitFor(() => {
+      expect(openingsApi.doors.update).toHaveBeenCalledWith(
+        'w1', 'door1',
+        expect.objectContaining({ heightFromScreed: 2100.5 }),
+      );
+    });
+  });
+
   it('shows wall label for each wall with openings', () => {
     setupStore(
       [makeWall({ label: 'A-B' }), makeWall({ id: 'w2', label: 'B-C', sortOrder: 1 })],
