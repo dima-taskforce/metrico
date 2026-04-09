@@ -29,6 +29,7 @@ function getCornersForShape(shape: RoomShape): Array<{ from: string; to: string 
     RECTANGLE: 4,
     L_SHAPE: 6,
     U_SHAPE: 8,
+    T_SHAPE: 8,
     CUSTOM: 4,
   };
   const n = counts[shape];
