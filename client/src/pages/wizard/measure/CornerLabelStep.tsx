@@ -10,51 +10,75 @@ const CORNER_COUNT: Record<RoomShape, number> = {
 };
 
 const SHAPE_SVG: Record<RoomShape, React.ReactNode> = {
+  // A = нижний левый, далее по часовой стрелке (вдоль левой стены вверх)
   RECTANGLE: (
-    <svg viewBox="0 0 120 80" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="10" y="10" width="100" height="60" className="text-primary-300" />
-      <text x="5" y="16" fontSize="10" className="fill-primary-700 font-bold">A</text>
-      <text x="112" y="16" fontSize="10" className="fill-primary-700 font-bold">B</text>
-      <text x="112" y="76" fontSize="10" className="fill-primary-700 font-bold">C</text>
-      <text x="5" y="76" fontSize="10" className="fill-primary-700 font-bold">D</text>
-      <circle cx="10" cy="10" r="3" className="fill-primary-500 text-primary-500" />
-      <circle cx="110" cy="10" r="3" className="fill-primary-500 text-primary-500" />
-      <circle cx="110" cy="70" r="3" className="fill-primary-500 text-primary-500" />
-      <circle cx="10" cy="70" r="3" className="fill-primary-500 text-primary-500" />
+    <svg viewBox="0 0 126 92" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="14" y="12" width="96" height="60" className="text-primary-300" />
+      {/* corners: BL, TL, TR, BR */}
+      <circle cx="14" cy="72" r="3" className="fill-primary-500" />
+      <circle cx="14" cy="12" r="3" className="fill-primary-500" />
+      <circle cx="110" cy="12" r="3" className="fill-primary-500" />
+      <circle cx="110" cy="72" r="3" className="fill-primary-500" />
+      {/* labels: outside corners */}
+      <text x="2"   y="86"  fontSize="11" className="fill-primary-700 font-bold">A</text>
+      <text x="2"   y="9"   fontSize="11" className="fill-primary-700 font-bold">B</text>
+      <text x="114" y="9"   fontSize="11" className="fill-primary-700 font-bold">C</text>
+      <text x="114" y="86"  fontSize="11" className="fill-primary-700 font-bold">D</text>
     </svg>
   ),
   L_SHAPE: (
-    <svg viewBox="0 0 120 100" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="10,90 10,10 70,10 70,50 110,50 110,90 10,90" className="text-primary-300" />
-      <text x="3" y="16" fontSize="9" className="fill-primary-700 font-bold">A</text>
-      <text x="72" y="16" fontSize="9" className="fill-primary-700 font-bold">B</text>
-      <text x="72" y="50" fontSize="9" className="fill-primary-700 font-bold">C</text>
-      <text x="112" y="50" fontSize="9" className="fill-primary-700 font-bold">D</text>
-      <text x="112" y="96" fontSize="9" className="fill-primary-700 font-bold">E</text>
-      <text x="3" y="96" fontSize="9" className="fill-primary-700 font-bold">F</text>
+    <svg viewBox="0 0 126 112" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="12,100 12,10 72,10 72,50 112,50 112,100 12,100" className="text-primary-300" />
+      <circle cx="12"  cy="100" r="3" className="fill-primary-500" />
+      <circle cx="12"  cy="10"  r="3" className="fill-primary-500" />
+      <circle cx="72"  cy="10"  r="3" className="fill-primary-500" />
+      <circle cx="72"  cy="50"  r="3" className="fill-primary-500" />
+      <circle cx="112" cy="50"  r="3" className="fill-primary-500" />
+      <circle cx="112" cy="100" r="3" className="fill-primary-500" />
+      <text x="0"   y="111" fontSize="10" className="fill-primary-700 font-bold">A</text>
+      <text x="0"   y="7"   fontSize="10" className="fill-primary-700 font-bold">B</text>
+      <text x="74"  y="7"   fontSize="10" className="fill-primary-700 font-bold">C</text>
+      <text x="55"  y="62"  fontSize="10" className="fill-primary-700 font-bold">D</text>
+      <text x="115" y="62"  fontSize="10" className="fill-primary-700 font-bold">E</text>
+      <text x="115" y="111" fontSize="10" className="fill-primary-700 font-bold">F</text>
     </svg>
   ),
   U_SHAPE: (
-    <svg viewBox="0 0 130 100" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 142 106" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2">
       <polyline points="10,10 10,90 50,90 50,50 80,50 80,90 120,90 120,10 100,10 100,30 30,30 30,10 10,10" className="text-primary-300" />
-      <text x="3" y="14" fontSize="8" className="fill-primary-700 font-bold">A</text>
-      <text x="32" y="14" fontSize="8" className="fill-primary-700 font-bold">B</text>
-      <text x="32" y="34" fontSize="8" className="fill-primary-700 font-bold">C</text>
-      <text x="102" y="34" fontSize="8" className="fill-primary-700 font-bold">D</text>
-      <text x="102" y="14" fontSize="8" className="fill-primary-700 font-bold">E</text>
-      <text x="120" y="14" fontSize="8" className="fill-primary-700 font-bold">F</text>
-      <text x="120" y="95" fontSize="8" className="fill-primary-700 font-bold">G</text>
-      <text x="3" y="95" fontSize="8" className="fill-primary-700 font-bold">H</text>
+      {/* 8 named corners: BL→TL→inner-TL→concave-L→concave-R→inner-TR→TR→BR */}
+      <circle cx="10"  cy="90" r="3" className="fill-primary-500" />
+      <circle cx="10"  cy="10" r="3" className="fill-primary-500" />
+      <circle cx="30"  cy="10" r="3" className="fill-primary-500" />
+      <circle cx="30"  cy="30" r="3" className="fill-primary-500" />
+      <circle cx="100" cy="30" r="3" className="fill-primary-500" />
+      <circle cx="100" cy="10" r="3" className="fill-primary-500" />
+      <circle cx="120" cy="10" r="3" className="fill-primary-500" />
+      <circle cx="120" cy="90" r="3" className="fill-primary-500" />
+      {/* labels outside shape */}
+      <text x="0"   y="103" fontSize="9" className="fill-primary-700 font-bold">A</text>
+      <text x="0"   y="7"   fontSize="9" className="fill-primary-700 font-bold">B</text>
+      <text x="32"  y="7"   fontSize="9" className="fill-primary-700 font-bold">C</text>
+      <text x="32"  y="43"  fontSize="9" className="fill-primary-700 font-bold">D</text>
+      <text x="87"  y="43"  fontSize="9" className="fill-primary-700 font-bold">E</text>
+      <text x="87"  y="7"   fontSize="9" className="fill-primary-700 font-bold">F</text>
+      <text x="123" y="7"   fontSize="9" className="fill-primary-700 font-bold">G</text>
+      <text x="123" y="103" fontSize="9" className="fill-primary-700 font-bold">H</text>
     </svg>
   ),
   CUSTOM: (
-    <svg viewBox="0 0 120 80" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2">
-      <polygon points="10,70 10,10 80,10 110,40 110,70" className="text-primary-300" />
-      <text x="3" y="76" fontSize="9" className="fill-primary-700 font-bold">A</text>
-      <text x="3" y="14" fontSize="9" className="fill-primary-700 font-bold">B</text>
-      <text x="82" y="14" fontSize="9" className="fill-primary-700 font-bold">C</text>
-      <text x="112" y="42" fontSize="9" className="fill-primary-700 font-bold">D</text>
-      <text x="112" y="76" fontSize="9" className="fill-primary-700 font-bold">E</text>
+    <svg viewBox="0 0 126 92" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2">
+      <polygon points="12,72 12,10 82,10 112,40 112,72" className="text-primary-300" />
+      <circle cx="12"  cy="72" r="3" className="fill-primary-500" />
+      <circle cx="12"  cy="10" r="3" className="fill-primary-500" />
+      <circle cx="82"  cy="10" r="3" className="fill-primary-500" />
+      <circle cx="112" cy="40" r="3" className="fill-primary-500" />
+      <circle cx="112" cy="72" r="3" className="fill-primary-500" />
+      <text x="0"   y="86"  fontSize="10" className="fill-primary-700 font-bold">A</text>
+      <text x="0"   y="7"   fontSize="10" className="fill-primary-700 font-bold">B</text>
+      <text x="84"  y="7"   fontSize="10" className="fill-primary-700 font-bold">C</text>
+      <text x="115" y="44"  fontSize="10" className="fill-primary-700 font-bold">D</text>
+      <text x="115" y="86"  fontSize="10" className="fill-primary-700 font-bold">E</text>
     </svg>
   ),
 };
@@ -99,8 +123,8 @@ export function CornerLabelStep() {
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
         <p className="text-sm text-amber-800">
-          <strong>Подсказка:</strong> встаньте спиной к входной двери, левый дальний угол — это угол&nbsp;A.
-          Нумеруйте по часовой стрелке.
+          <strong>Подсказка:</strong> встаньте у входа лицом в комнату — угол&nbsp;<strong>A</strong> ближайший слева.
+          Не нужно идти к дальнему углу: просто повернитесь налево и нумеруйте по часовой стрелке.
         </p>
       </div>
 
