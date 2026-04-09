@@ -6,7 +6,7 @@ export interface ShapeOption {
   label: string;
 }
 
-// 10 variants: 1 rect + 4 L + 4 U + 1 custom
+// 14 variants: 1 rect + 4 L + 4 U + 4 T + 1 custom
 export const SHAPE_OPTIONS: ShapeOption[] = [
   { shape: 'RECTANGLE', orientation: 0, label: 'Прямоугольник' },
   { shape: 'L_SHAPE',   orientation: 0, label: 'Г-образная' },
@@ -17,6 +17,10 @@ export const SHAPE_OPTIONS: ShapeOption[] = [
   { shape: 'U_SHAPE',   orientation: 1, label: 'П-образная ↻' },
   { shape: 'U_SHAPE',   orientation: 2, label: 'П-образная ↻↻' },
   { shape: 'U_SHAPE',   orientation: 3, label: 'П-образная ↺' },
+  { shape: 'T_SHAPE',   orientation: 0, label: 'Т-образная' },
+  { shape: 'T_SHAPE',   orientation: 1, label: 'Т-образная ↻' },
+  { shape: 'T_SHAPE',   orientation: 2, label: 'Т-образная ↻↻' },
+  { shape: 'T_SHAPE',   orientation: 3, label: 'Т-образная ↺' },
   { shape: 'CUSTOM',    orientation: 0, label: 'Сложная' },
 ];
 
@@ -37,6 +41,12 @@ const BASE_SVG: Record<RoomShape, React.ReactNode> = {
       <polygon points="4,4 4,36 14,36 14,18 26,18 26,36 36,36 36,4" />
     </svg>
   ),
+  T_SHAPE: (
+    <svg viewBox="0 0 40 36" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-full h-full">
+      {/* Т-образная: широкое основание внизу, выступ вверх по центру */}
+      <polygon points="4,36 4,20 14,20 14,4 26,4 26,20 36,20 36,36" />
+    </svg>
+  ),
   CUSTOM: (
     <svg viewBox="0 0 40 36" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-full h-full">
       <polygon points="4,32 4,4 26,4 36,16 36,32" />
@@ -54,7 +64,7 @@ interface ShapePickerProps {
 
 export function ShapePicker({ value, orientation, onChange }: ShapePickerProps) {
   return (
-    <div className="grid grid-cols-5 gap-2">
+    <div className="grid grid-cols-5 gap-2 sm:grid-cols-7">
       {SHAPE_OPTIONS.map((opt) => {
         const isSelected = opt.shape === value && opt.orientation === orientation;
         return (

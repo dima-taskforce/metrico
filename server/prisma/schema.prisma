@@ -47,6 +47,7 @@ enum RoomShape {
   RECTANGLE
   L_SHAPE
   U_SHAPE
+  T_SHAPE
   CUSTOM
 }
 

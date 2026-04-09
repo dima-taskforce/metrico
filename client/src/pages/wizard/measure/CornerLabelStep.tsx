@@ -8,6 +8,7 @@ const CORNER_COUNT: Record<RoomShape, number> = {
   RECTANGLE: 4,
   L_SHAPE: 6,
   U_SHAPE: 8,
+  T_SHAPE: 8,
   CUSTOM: 4,
 };
 
@@ -65,6 +66,28 @@ const SHAPE_SVG: Record<RoomShape, React.ReactNode> = {
       <text x="103" y="43"  fontSize="9" className="fill-primary-700">F</text>
       <text x="26"  y="43"  fontSize="9" className="fill-primary-700">G</text>
       <text x="26"  y="103" fontSize="9" className="fill-primary-700">H</text>
+    </svg>
+  ),
+  T_SHAPE: (
+    <svg viewBox="0 0 148 106" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2">
+      {/* Т-образная: A=BL по часовой. Широкое основание внизу, выступ по центру вверх */}
+      <polygon points="10,90 10,50 45,50 45,10 95,10 95,50 130,50 130,90" className="text-primary-300" />
+      <circle cx="10"  cy="90" r="3" className="fill-primary-500" />
+      <circle cx="10"  cy="50" r="3" className="fill-primary-500" />
+      <circle cx="45"  cy="50" r="3" className="fill-primary-500" />
+      <circle cx="45"  cy="10" r="3" className="fill-primary-500" />
+      <circle cx="95"  cy="10" r="3" className="fill-primary-500" />
+      <circle cx="95"  cy="50" r="3" className="fill-primary-500" />
+      <circle cx="130" cy="50" r="3" className="fill-primary-500" />
+      <circle cx="130" cy="90" r="3" className="fill-primary-500" />
+      <text x="0"   y="103" fontSize="9" className="fill-primary-700">A</text>
+      <text x="0"   y="53"  fontSize="9" className="fill-primary-700">B</text>
+      <text x="29"  y="63"  fontSize="9" className="fill-primary-700">C</text>
+      <text x="29"  y="7"   fontSize="9" className="fill-primary-700">D</text>
+      <text x="97"  y="7"   fontSize="9" className="fill-primary-700">E</text>
+      <text x="97"  y="63"  fontSize="9" className="fill-primary-700">F</text>
+      <text x="133" y="53"  fontSize="9" className="fill-primary-700">G</text>
+      <text x="133" y="103" fontSize="9" className="fill-primary-700">H</text>
     </svg>
   ),
   CUSTOM: (

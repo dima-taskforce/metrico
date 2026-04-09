@@ -1,7 +1,7 @@
 export type ObjectType = 'APARTMENT' | 'STUDIO' | 'APARTMENTS' | 'HOUSE';
 export type ProjectStatus = 'DRAFT' | 'COMPLETED';
 export type RoomType = 'KITCHEN' | 'BEDROOM' | 'BATHROOM' | 'CORRIDOR' | 'BALCONY' | 'STORAGE' | 'LIVING' | 'OTHER';
-export type RoomShape = 'RECTANGLE' | 'L_SHAPE' | 'U_SHAPE' | 'CUSTOM';
+export type RoomShape = 'RECTANGLE' | 'L_SHAPE' | 'U_SHAPE' | 'T_SHAPE' | 'CUSTOM';
 export type WallMaterial = 'CONCRETE' | 'DRYWALL' | 'BRICK' | 'OTHER';
 export type WallType = 'EXTERNAL' | 'INTERNAL' | 'ADJACENT';
 export type SegmentType = 'PLAIN' | 'WINDOW' | 'DOOR' | 'PROTRUSION' | 'NICHE' | 'PARTITION';

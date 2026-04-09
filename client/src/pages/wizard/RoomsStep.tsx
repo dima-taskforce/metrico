@@ -38,13 +38,14 @@ const SHAPE_CORNER_COUNT: Record<RoomShape, number> = {
   RECTANGLE: 4,
   L_SHAPE: 6,
   U_SHAPE: 8,
+  T_SHAPE: 8,
   CUSTOM: 0,
 };
 
 const createRoomSchema = z.object({
   name: z.string().min(1, 'Введите название'),
   type: z.enum(['KITCHEN', 'BEDROOM', 'BATHROOM', 'CORRIDOR', 'BALCONY', 'STORAGE', 'LIVING', 'OTHER'] as const),
-  shape: z.enum(['RECTANGLE', 'L_SHAPE', 'U_SHAPE', 'CUSTOM'] as const),
+  shape: z.enum(['RECTANGLE', 'L_SHAPE', 'U_SHAPE', 'T_SHAPE', 'CUSTOM'] as const),
 });
 
 type CreateRoomForm = z.infer<typeof createRoomSchema>;

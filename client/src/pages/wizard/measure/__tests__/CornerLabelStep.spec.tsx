@@ -11,7 +11,7 @@ vi.mock('../../../../stores/roomMeasureStore', () => ({
 
 const mockSetSubstep = vi.fn();
 
-const makeRoom = (shape: 'RECTANGLE' | 'L_SHAPE' | 'U_SHAPE' | 'CUSTOM' = 'RECTANGLE') => ({
+const makeRoom = (shape: 'RECTANGLE' | 'L_SHAPE' | 'U_SHAPE' | 'T_SHAPE' | 'CUSTOM' = 'RECTANGLE') => ({
   id: 'r1',
   projectId: 'p1',
   name: 'Гостиная',
@@ -29,6 +29,7 @@ const setupStore = (room = makeRoom()) => {
   vi.mocked(useRoomMeasureStore).mockReturnValue({
     currentRoom: room,
     setSubstep: mockSetSubstep,
+    shapeOrientation: 0,
   } as ReturnType<typeof useRoomMeasureStore>);
 };
 
@@ -70,6 +71,13 @@ describe('CornerLabelStep', () => {
     setupStore(makeRoom('U_SHAPE'));
     render(<CornerLabelStep />);
     expect(screen.getByText(/Угол H/)).toBeInTheDocument();
+  });
+
+  it('renders 8 corners for T_SHAPE', () => {
+    setupStore(makeRoom('T_SHAPE'));
+    render(<CornerLabelStep />);
+    expect(screen.getByText(/Угол H/)).toBeInTheDocument();
+    expect(screen.queryByText(/Угол I/)).not.toBeInTheDocument();
   });
 
   it('marks corner A as "левый нижний"', () => {
