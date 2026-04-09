@@ -46,26 +46,25 @@ const SHAPE_SVG: Record<RoomShape, React.ReactNode> = {
     </svg>
   ),
   U_SHAPE: (
-    <svg viewBox="0 0 142 106" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="10,10 10,90 50,90 50,50 80,50 80,90 120,90 120,10 100,10 100,30 30,30 30,10 10,10" className="text-primary-300" />
-      {/* 8 named corners: BL→TL→inner-TL→concave-L→concave-R→inner-TR→TR→BR */}
+    <svg viewBox="0 0 148 106" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2">
+      {/* П-shape: A=BL, clockwise. Opening at bottom-center */}
+      <polygon points="10,90 10,10 130,10 130,90 100,90 100,40 40,40 40,90" className="text-primary-300" />
       <circle cx="10"  cy="90" r="3" className="fill-primary-500" />
       <circle cx="10"  cy="10" r="3" className="fill-primary-500" />
-      <circle cx="30"  cy="10" r="3" className="fill-primary-500" />
-      <circle cx="30"  cy="30" r="3" className="fill-primary-500" />
-      <circle cx="100" cy="30" r="3" className="fill-primary-500" />
-      <circle cx="100" cy="10" r="3" className="fill-primary-500" />
-      <circle cx="120" cy="10" r="3" className="fill-primary-500" />
-      <circle cx="120" cy="90" r="3" className="fill-primary-500" />
-      {/* labels outside shape */}
+      <circle cx="130" cy="10" r="3" className="fill-primary-500" />
+      <circle cx="130" cy="90" r="3" className="fill-primary-500" />
+      <circle cx="100" cy="90" r="3" className="fill-primary-500" />
+      <circle cx="100" cy="40" r="3" className="fill-primary-500" />
+      <circle cx="40"  cy="40" r="3" className="fill-primary-500" />
+      <circle cx="40"  cy="90" r="3" className="fill-primary-500" />
       <text x="0"   y="103" fontSize="9" className="fill-primary-700">A</text>
       <text x="0"   y="7"   fontSize="9" className="fill-primary-700">B</text>
-      <text x="32"  y="7"   fontSize="9" className="fill-primary-700">C</text>
-      <text x="32"  y="43"  fontSize="9" className="fill-primary-700">D</text>
-      <text x="87"  y="43"  fontSize="9" className="fill-primary-700">E</text>
-      <text x="87"  y="7"   fontSize="9" className="fill-primary-700">F</text>
-      <text x="123" y="7"   fontSize="9" className="fill-primary-700">G</text>
-      <text x="123" y="103" fontSize="9" className="fill-primary-700">H</text>
+      <text x="133" y="7"   fontSize="9" className="fill-primary-700">C</text>
+      <text x="133" y="103" fontSize="9" className="fill-primary-700">D</text>
+      <text x="88"  y="103" fontSize="9" className="fill-primary-700">E</text>
+      <text x="103" y="43"  fontSize="9" className="fill-primary-700">F</text>
+      <text x="26"  y="43"  fontSize="9" className="fill-primary-700">G</text>
+      <text x="26"  y="103" fontSize="9" className="fill-primary-700">H</text>
     </svg>
   ),
   CUSTOM: (

@@ -33,8 +33,8 @@ const BASE_SVG: Record<RoomShape, React.ReactNode> = {
     </svg>
   ),
   U_SHAPE: (
-    <svg viewBox="0 0 44 40" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-full h-full">
-      <polyline points="4,4 4,36 16,36 16,20 28,20 28,36 40,36 40,4 32,4 32,14 12,14 12,4 4,4" />
+    <svg viewBox="0 0 40 36" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-full h-full">
+      <polygon points="4,4 4,36 14,36 14,18 26,18 26,36 36,36 36,4" />
     </svg>
   ),
   CUSTOM: (
