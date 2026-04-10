@@ -109,6 +109,46 @@
 
 ---
 
+### BL-15. Phase 1 — Исправление бизнес-логики (Goals 2–4)
+
+**Приоритет:** высокий
+**Статус:** реализовано
+
+P1-01: `assembleOpenings()` использует реальные размеры проёмов.
+P1-02: PlanStep навигация ведёт на `/summary`.
+P1-03: завершение проекта вынесено в отдельный endpoint `completeProject()`.
+Исправлен `photos.service.spec.ts` — добавлены поля `originalPath`/`thumbPath` в фабрику мока.
+
+---
+
+### BL-16. Phase 2 — MeasurementHint на всех шагах обмера (Goal 2)
+
+**Приоритет:** высокий
+**Статус:** реализовано
+
+P2-01..04: добавлен `<MeasurementHint>` на шаги CornerLabelStep, CeilingHeightStep, PerimeterWalkStep, PhotoChecklistStep. Компонент расширен поддержкой prop `className`.
+
+---
+
+### BL-17. Phase 3 — Полнота данных (Goal 3)
+
+**Приоритет:** высокий
+**Статус:** реализовано
+
+P3-01: `canMarkDone` требует `allWallsHaveSegments + allOpeningsMeasured`.
+P3-02: добавлена секция загрузки DETAIL-фото (проблемные места).
+
+---
+
+### BL-18. Phase 4 — PDF улучшения (Goal 4)
+
+**Приоритет:** высокий
+**Статус:** реализовано
+
+P4-01/02: `FloorPlanSvg` переписан: grid layout, реальные размеры стен, подписи WxH (в метрах). P4-03: в страницы комнат добавлена кривизна (ср. ± σ). Исправлена дупликация проекта — `filePath` заменён на `originalPath`/`thumbPath`.
+
+---
+
 ## В очереди
 
 ---
