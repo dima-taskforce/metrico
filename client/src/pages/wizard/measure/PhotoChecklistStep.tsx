@@ -4,6 +4,7 @@ import { photosApi } from '../../../api/photos';
 import { roomsApi } from '../../../api/rooms';
 import { useRoomMeasureStore } from '../../../stores/roomMeasureStore';
 import { Button } from '../../../components/ui/Button';
+import { MeasurementHint } from '../../../components/MeasurementHint';
 import type { Photo } from '../../../types/api';
 
 function CheckItem({
@@ -134,9 +135,10 @@ export function PhotoChecklistStep() {
   return (
     <div className="p-6 max-w-xl pb-20 sm:pb-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-1">3.7 Фото и чеклист</h3>
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-gray-500 mb-3">
         Сделайте общее фото комнаты и убедитесь, что все замеры выполнены.
       </p>
+      <MeasurementHint stepKey="room-photo" className="mb-4" />
 
       {/* Photo upload section */}
       <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">

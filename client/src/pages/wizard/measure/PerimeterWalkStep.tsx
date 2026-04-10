@@ -8,6 +8,7 @@ import { useRoomMeasureStore } from '../../../stores/roomMeasureStore';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { WallMiniMap } from '../../../components/WallMiniMap';
+import { MeasurementHint } from '../../../components/MeasurementHint';
 import type { SegmentType, WallSegment } from '../../../types/api';
 
 const SEGMENT_TYPE_LABELS: Record<SegmentType, string> = {
@@ -291,6 +292,7 @@ export function PerimeterWalkStep() {
           <p className="text-sm text-gray-500">
             Разбейте стену на участки: просто стена, окно, дверь, выступ. Если особых участков нет — нажмите «Далее».
           </p>
+          <MeasurementHint stepKey="perimeter-walk" />
         </div>
         {currentRoom && (
           <div className="w-full h-36 text-primary-400">

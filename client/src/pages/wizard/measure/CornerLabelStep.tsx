@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRoomMeasureStore } from '../../../stores/roomMeasureStore';
 import { Button } from '../../../components/ui/Button';
+import { MeasurementHint } from '../../../components/MeasurementHint';
 import type { RoomShape } from '../../../types/api';
 
 interface CornerDef {
@@ -399,6 +400,8 @@ export function CornerLabelStep() {
           })}
         </svg>
       </div>
+
+      <MeasurementHint stepKey="corner-label" className="mb-6" />
 
       {/* Corner list */}
       <div className="flex flex-col gap-2 mb-6">

@@ -4,9 +4,10 @@ import { HINTS } from '../data/hints';
 interface MeasurementHintProps {
   stepKey: string;
   position?: 'top' | 'right' | 'bottom';
+  className?: string;
 }
 
-export function MeasurementHint({ stepKey, position = 'right' }: MeasurementHintProps) {
+export function MeasurementHint({ stepKey, position = 'right', className }: MeasurementHintProps) {
   const [isOpen, setIsOpen] = useState(false);
   const hint = HINTS[stepKey];
   const svgRef = useRef<HTMLDivElement>(null);
@@ -36,7 +37,7 @@ export function MeasurementHint({ stepKey, position = 'right' }: MeasurementHint
   };
 
   return (
-    <div className="relative inline-block">
+    <div className={`relative inline-block${className ? ` ${className}` : ''}`}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}

@@ -6,6 +6,7 @@ import { roomsApi } from '../../../api/rooms';
 import { useRoomMeasureStore } from '../../../stores/roomMeasureStore';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
+import { MeasurementHint } from '../../../components/MeasurementHint';
 
 const schema = z.object({
   ceilingHeight1: z.coerce.number().min(1.5, 'Минимум 1.5 м').max(10, 'Максимум 10 м'),
@@ -60,23 +61,7 @@ export function CeilingHeightStep() {
         Измерьте высоту в двух точках: у наружной стены (под окном) и у противоположной.
       </p>
 
-      {/* Illustration */}
-      <div className="bg-gray-50 rounded-xl p-4 mb-6">
-        <svg viewBox="0 0 200 120" className="w-full h-28" stroke="currentColor" strokeWidth="1.5">
-          {/* Room outline */}
-          <rect x="10" y="10" width="180" height="90" fill="none" className="text-gray-300" />
-          {/* Window */}
-          <rect x="20" y="10" width="40" height="20" fill="rgb(219 234 254)" stroke="rgb(147 197 253)" />
-          {/* Height line 1 (near window) */}
-          <line x1="35" y1="30" x2="35" y2="100" fill="none" className="text-primary-500" strokeDasharray="4 2" />
-          <text x="38" y="70" fontSize="9" fill="#1d4ed8" stroke="none">H1</text>
-          {/* Height line 2 (opposite wall) */}
-          <line x1="165" y1="10" x2="165" y2="100" fill="none" className="text-orange-400" strokeDasharray="4 2" />
-          <text x="168" y="60" fontSize="9" fill="#c2410c" stroke="none">H2</text>
-          {/* Floor label */}
-          <text x="80" y="115" fontSize="9" fill="#6b7280" stroke="none">пол (стяжка)</text>
-        </svg>
-      </div>
+      <MeasurementHint stepKey="ceiling-height" className="mb-6" />
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
         <Input
