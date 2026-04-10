@@ -78,8 +78,8 @@ function RoomCard({
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-gray-900 truncate">{room.name}</p>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <p className="text-xs text-gray-500 truncate">{ROOM_TYPE_LABELS[room.type]}</p>
+        <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+          <p className="text-xs text-gray-500 truncate min-w-0">{ROOM_TYPE_LABELS[room.type]}</p>
           <span className={`text-xs px-1.5 py-0 rounded-full whitespace-nowrap flex-shrink-0 ${status.bgColor} ${status.textColor}`}>
             {status.label}
           </span>

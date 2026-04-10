@@ -93,30 +93,32 @@ export function MeasureStep() {
           <span className="font-medium text-gray-800">{currentRoom.name}</span>
         </div>
         {/* Substep progress */}
-        <div className="flex items-center gap-1 mt-3">
-          {([1, 2, 3, 4, 5, 6, 7] as MeasureSubstep[]).map((step) => (
-            <div key={step} className="flex items-center gap-1">
-              <div
-                className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium transition-colors ${
-                  step === currentSubstep
-                    ? 'bg-primary-600 text-white'
-                    : step < currentSubstep
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'bg-gray-100 text-gray-500'
-                }`}
-              >
-                {step}
-              </div>
-              {step < 7 && (
+        <div className="mt-3">
+          <div className="flex items-center gap-0.5">
+            {([1, 2, 3, 4, 5, 6, 7] as MeasureSubstep[]).map((step) => (
+              <div key={step} className="flex items-center gap-0.5">
                 <div
-                  className={`w-6 h-0.5 ${step < currentSubstep ? 'bg-primary-300' : 'bg-gray-200'}`}
-                />
-              )}
-            </div>
-          ))}
-          <span className="ml-3 text-sm font-medium text-gray-700">
+                  className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium transition-colors ${
+                    step === currentSubstep
+                      ? 'bg-primary-600 text-white'
+                      : step < currentSubstep
+                      ? 'bg-primary-100 text-primary-700'
+                      : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  {step}
+                </div>
+                {step < 7 && (
+                  <div
+                    className={`w-3 h-0.5 ${step < currentSubstep ? 'bg-primary-300' : 'bg-gray-200'}`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-sm font-medium text-gray-700 mt-1">
             {SUBSTEP_LABELS[currentSubstep]}
-          </span>
+          </p>
         </div>
       </div>
 
