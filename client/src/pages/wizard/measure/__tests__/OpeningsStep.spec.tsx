@@ -177,7 +177,7 @@ describe('OpeningsStep', () => {
 
   it('saves window on form submit', async () => {
     const updated = makeWindow({ height: 1500000 });
-    vi.mocked(openingsApi.windows.update).mockResolvedValue(updated);
+    mockedOpeningsWindowsUpdate.mockResolvedValue(updated);
 
     setupStore(
       [makeWall()],
@@ -194,7 +194,7 @@ describe('OpeningsStep', () => {
     fireEvent.click(saveBtn);
 
     await waitFor(() => {
-      expect(openingsApi.windows.update).toHaveBeenCalledWith(
+      expect(mockedOpeningsWindowsUpdate).toHaveBeenCalledWith(
         'w1',
         'win1',
         expect.objectContaining({ height: 1500 }),
@@ -205,7 +205,7 @@ describe('OpeningsStep', () => {
 
   it('saves door on form submit', async () => {
     const updated = makeDoor({ heightFromScreed: 2200000 });
-    vi.mocked(openingsApi.doors.update).mockResolvedValue(updated);
+    mockedOpeningsDoorsUpdate.mockResolvedValue(updated);
 
     setupStore(
       [makeWall()],
@@ -221,7 +221,7 @@ describe('OpeningsStep', () => {
     fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
 
     await waitFor(() => {
-      expect(openingsApi.doors.update).toHaveBeenCalledWith(
+      expect(mockedOpeningsDoorsUpdate).toHaveBeenCalledWith(
         'w1',
         'door1',
         expect.objectContaining({ heightFromScreed: 2200 }),
@@ -299,7 +299,7 @@ describe('OpeningsStep', () => {
 
   it('saves window with decimal meter values (e.g. 1.125)', async () => {
     const updated = makeWindow({ height: 1125 });
-    vi.mocked(openingsApi.windows.update).mockResolvedValue(updated);
+    mockedOpeningsWindowsUpdate.mockResolvedValue(updated);
 
     setupStore([makeWall()], { w1: [makeWindow({ height: 0 })] }, {}, {});
     render(<OpeningsStep />);
@@ -308,7 +308,7 @@ describe('OpeningsStep', () => {
     fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
 
     await waitFor(() => {
-      expect(openingsApi.windows.update).toHaveBeenCalledWith(
+      expect(mockedOpeningsWindowsUpdate).toHaveBeenCalledWith(
         'w1', 'win1',
         expect.objectContaining({ height: 1125 }),
       );
@@ -317,7 +317,7 @@ describe('OpeningsStep', () => {
 
   it('saves door with decimal meter height (e.g. 2.1)', async () => {
     const updated = makeDoor({ heightFromScreed: 2100 });
-    vi.mocked(openingsApi.doors.update).mockResolvedValue(updated);
+    mockedOpeningsDoorsUpdate.mockResolvedValue(updated);
 
     setupStore([makeWall()], {}, { w1: [makeDoor({ heightFromScreed: 0 })] }, {});
     render(<OpeningsStep />);
@@ -326,7 +326,7 @@ describe('OpeningsStep', () => {
     fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
 
     await waitFor(() => {
-      expect(openingsApi.doors.update).toHaveBeenCalledWith(
+      expect(mockedOpeningsDoorsUpdate).toHaveBeenCalledWith(
         'w1', 'door1',
         expect.objectContaining({ heightFromScreed: 2100 }),
       );
