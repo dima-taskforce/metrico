@@ -12,6 +12,7 @@ import { RoomsStep } from './pages/wizard/RoomsStep';
 import { SummaryStep } from './pages/wizard/SummaryStep';
 import { MeasureStep } from './pages/wizard/MeasureStep';
 import { PlanStep } from './pages/wizard/PlanStep';
+import { RoomViewPage } from './pages/wizard/RoomViewPage';
 
 // Lazy imports for main pages (to be implemented in S1-08, S1-09, S1-11)
 import { LoginPage } from './pages/LoginPage';
@@ -75,6 +76,10 @@ function App() {
           <Route
             path="/wizard/:projectId/rooms/:roomId/measure"
             element={<MeasureStep />}
+          />
+          <Route
+            path="/wizard/:projectId/rooms/:roomId/view"
+            element={<RoomViewPage />}
           />
         </Route>
 

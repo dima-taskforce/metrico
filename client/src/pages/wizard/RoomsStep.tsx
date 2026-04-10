@@ -55,11 +55,13 @@ function getRoomStatus(room: Room): { label: string; bgColor: string; textColor:
 function RoomCard({
   room,
   onMeasure,
+  onView,
   onDelete,
   isDragging,
 }: {
   room: Room;
   onMeasure: (id: string) => void;
+  onView: (id: string) => void;
   onDelete: (id: string) => void;
   isDragging: boolean;
 }) {
@@ -86,9 +88,20 @@ function RoomCard({
         </div>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
-        <Button size="sm" onClick={() => onMeasure(room.id)}>
-          Замерить
-        </Button>
+        {room.isMeasured ? (
+          <>
+            <Button size="sm" variant="secondary" onClick={() => onView(room.id)}>
+              Просмотр
+            </Button>
+            <Button size="sm" onClick={() => onMeasure(room.id)}>
+              Изменить
+            </Button>
+          </>
+        ) : (
+          <Button size="sm" onClick={() => onMeasure(room.id)}>
+            Замерить
+          </Button>
+        )}
         <button
           type="button"
           onClick={() => onDelete(room.id)}
@@ -176,6 +189,10 @@ export function RoomsStep() {
     navigate(`/wizard/${projectId}/rooms/${roomId}/measure`);
   };
 
+  const handleView = (roomId: string) => {
+    navigate(`/wizard/${projectId}/rooms/${roomId}/view`);
+  };
+
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     const roomCard = (e.target as HTMLElement).closest('[data-room-id]') as HTMLDivElement | null;
     const roomId = roomCard?.getAttribute('data-room-id');
@@ -257,6 +274,7 @@ export function RoomsStep() {
               <RoomCard
                 room={room}
                 onMeasure={handleMeasure}
+                onView={handleView}
                 onDelete={(id) => setDeleteRoomId(id)}
                 isDragging={draggedRoom === room.id}
               />

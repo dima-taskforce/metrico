@@ -32,17 +32,17 @@ const makeWall = (id: string, length: number, segments: FloorPlanSegment[] = [])
 const makeRoom = (overrides: Partial<FloorPlanRoom> = {}): FloorPlanRoom => ({
   id: 'r1',
   label: 'Гостиная',
-  perimeter: 14000,
+  perimeter: 15,
   area: 20.5,
   volume: 55.35,
   ceilingHeight: 2.7,
   curvatureMean: null,
   curvatureStdDev: null,
   walls: [
-    makeWall('w1', 4500),
-    makeWall('w2', 3000),
-    makeWall('w3', 4500),
-    makeWall('w4', 3000),
+    makeWall('w1', 4.5),
+    makeWall('w2', 3.0),
+    makeWall('w3', 4.5),
+    makeWall('w4', 3.0),
   ],
   elements: [],
   ...overrides,
@@ -76,14 +76,14 @@ describe('computeRoomDimensions', () => {
   });
 
   it('scales wall[0].length to width and wall[1].length to height', () => {
-    const walls = [makeWall('w1', 4500), makeWall('w2', 3000)];
+    const walls = [makeWall('w1', 4.5), makeWall('w2', 3.0)];
     const { w, h } = computeRoomDimensions(walls);
-    expect(w).toBe(Math.round(4500 * MM_TO_PX));
-    expect(h).toBe(Math.round(3000 * MM_TO_PX));
+    expect(w).toBe(Math.round(4.5 * MM_TO_PX));
+    expect(h).toBe(Math.round(3.0 * MM_TO_PX));
   });
 
   it('enforces minimum width and height', () => {
-    const walls = [makeWall('w1', 100), makeWall('w2', 100)]; // tiny walls
+    const walls = [makeWall('w1', 0.5), makeWall('w2', 0.4)]; // tiny walls
     const { w, h } = computeRoomDimensions(walls);
     expect(w).toBeGreaterThanOrEqual(80);
     expect(h).toBeGreaterThanOrEqual(60);
@@ -99,16 +99,16 @@ describe('computeSegmentOffsets', () => {
 
   it('accumulates segment lengths correctly', () => {
     const segments: FloorPlanSegment[] = [
-      { id: 's1', label: 'S1', segmentType: 'PLAIN', length: 1000 },
-      { id: 's2', label: 'S2', segmentType: 'WINDOW', length: 1500 },
-      { id: 's3', label: 'S3', segmentType: 'PLAIN', length: 500 },
+      { id: 's1', label: 'S1', segmentType: 'PLAIN', length: 1.0 },
+      { id: 's2', label: 'S2', segmentType: 'WINDOW', length: 1.5 },
+      { id: 's3', label: 'S3', segmentType: 'PLAIN', length: 0.5 },
     ];
     const offsets = computeSegmentOffsets(segments);
     expect(offsets).toHaveLength(4);
     expect(offsets[0]).toBe(0);
-    expect(offsets[1]).toBeCloseTo(1000 * MM_TO_PX);
-    expect(offsets[2]).toBeCloseTo(2500 * MM_TO_PX);
-    expect(offsets[3]).toBeCloseTo(3000 * MM_TO_PX);
+    expect(offsets[1]).toBeCloseTo(1.0 * MM_TO_PX);
+    expect(offsets[2]).toBeCloseTo(2.5 * MM_TO_PX);
+    expect(offsets[3]).toBeCloseTo(3.0 * MM_TO_PX);
   });
 });
 

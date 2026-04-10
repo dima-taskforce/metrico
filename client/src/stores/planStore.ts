@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import type { FloorPlanRoom, FloorPlanAdjacency, GetPlanDto } from '../types/api';
 
-/** 1 pixel = 10 mm at scale=1 (must match PlanCanvas.MM_TO_PX) */
-const MM_TO_PX = 0.1;
+/** 1 meter = 100 pixels at scale=1 (wall lengths are stored in meters, must match PlanCanvas.MM_TO_PX) */
+const METERS_TO_PX = 100;
 const MIN_W = 80;
 const MIN_H = 60;
 const GAP = 40; // px between rooms
@@ -10,32 +10,115 @@ const MARGIN = 40; // px from canvas edge
 const WRAP_AT = 1200; // px — wrap to new row after this width
 
 function roomDimPx(room: FloorPlanRoom): { w: number; h: number } {
-  const w = Math.max(MIN_W, Math.round((room.walls[0]?.length ?? 2000) * MM_TO_PX));
-  const h = Math.max(MIN_H, Math.round((room.walls[1]?.length ?? 1500) * MM_TO_PX));
+  const w = Math.max(MIN_W, Math.round((room.walls[0]?.length ?? 4) * METERS_TO_PX));
+  const h = Math.max(MIN_H, Math.round((room.walls[1]?.length ?? 3) * METERS_TO_PX));
   return { w, h };
 }
 
 /**
- * Grid auto-layout: place rooms left→right, wrapping to new row when
- * the next room would exceed WRAP_AT. Each room gets real dimensions
- * derived from wall lengths.
+ * Adjacency-aware layout: BFS from first room, placing each connected
+ * neighbour on the correct side based on the connecting wall's sortOrder.
+ * Unconnected rooms fall back to a simple grid.
+ *
+ * Wall sortOrder convention (clockwise):
+ *   0 = top, 1 = right, 2 = bottom, 3 = left
  */
-function computeAutoLayout(rooms: FloorPlanRoom[]): Record<string, RoomPosition> {
+function computeAutoLayout(
+  rooms: FloorPlanRoom[],
+  adjacencies: FloorPlanAdjacency[] = [],
+): Record<string, RoomPosition> {
+  if (rooms.length === 0) return {};
+
   const positions: Record<string, RoomPosition> = {};
+  const placed = new Set<string>();
+
+  // Build wallId → roomId lookup
+  const wallToRoom: Record<string, string> = {};
+  for (const room of rooms) {
+    for (const wall of room.walls) {
+      wallToRoom[wall.id] = room.id;
+    }
+  }
+
+  // BFS from first room
+  const firstRoom = rooms[0]!;
+  const firstDim = roomDimPx(firstRoom);
+  positions[firstRoom.id] = { x: MARGIN, y: MARGIN, rotation: 0 };
+  placed.add(firstRoom.id);
+  const queue: string[] = [firstRoom.id];
+
+  while (queue.length > 0) {
+    const currentRoomId = queue.shift()!;
+    const currentPos = positions[currentRoomId]!;
+    const currentRoom = rooms.find((r) => r.id === currentRoomId);
+    if (!currentRoom) continue;
+    const { w: cw, h: ch } = roomDimPx(currentRoom);
+
+    for (const adj of adjacencies) {
+      // Determine which wall belongs to currentRoom and which to neighbour
+      let myWallId: string, neighbourWallId: string;
+      if (wallToRoom[adj.wallAId] === currentRoomId) {
+        myWallId = adj.wallAId;
+        neighbourWallId = adj.wallBId;
+      } else if (wallToRoom[adj.wallBId] === currentRoomId) {
+        myWallId = adj.wallBId;
+        neighbourWallId = adj.wallAId;
+      } else {
+        continue;
+      }
+
+      const neighbourRoomId = wallToRoom[neighbourWallId];
+      if (!neighbourRoomId || placed.has(neighbourRoomId)) continue;
+
+      const neighbourRoom = rooms.find((r) => r.id === neighbourRoomId);
+      if (!neighbourRoom) continue;
+      const { w: nw, h: nh } = roomDimPx(neighbourRoom);
+
+      const myWall = currentRoom.walls.find((w) => w.id === myWallId);
+      const side = (myWall?.sortOrder ?? 1) % 4;
+
+      let nx: number, ny: number;
+      switch (side) {
+        case 0: // my top wall → neighbour is above
+          nx = currentPos.x;
+          ny = currentPos.y - nh - GAP;
+          break;
+        case 1: // my right wall → neighbour is to the right
+          nx = currentPos.x + cw + GAP;
+          ny = currentPos.y;
+          break;
+        case 2: // my bottom wall → neighbour is below
+          nx = currentPos.x;
+          ny = currentPos.y + ch + GAP;
+          break;
+        case 3: // my left wall → neighbour is to the left
+          nx = currentPos.x - nw - GAP;
+          ny = currentPos.y;
+          break;
+        default:
+          nx = currentPos.x + cw + GAP;
+          ny = currentPos.y;
+      }
+
+      positions[neighbourRoomId] = { x: nx, y: ny, rotation: 0 };
+      placed.add(neighbourRoomId);
+      queue.push(neighbourRoomId);
+    }
+  }
+
+  // Grid fallback for rooms not yet placed via adjacencies
   let curX = MARGIN;
-  let curY = MARGIN;
+  let curY = MARGIN + firstDim.h + GAP * 2;
   let rowMaxH = 0;
 
   for (const room of rooms) {
+    if (placed.has(room.id)) continue;
     const { w, h } = roomDimPx(room);
-
-    // Wrap if this room won't fit in the current row (and we're not at the start)
     if (curX > MARGIN && curX + w > WRAP_AT) {
       curX = MARGIN;
       curY += rowMaxH + GAP;
       rowMaxH = 0;
     }
-
     positions[room.id] = { x: curX, y: curY, rotation: 0 };
     curX += w + GAP;
     rowMaxH = Math.max(rowMaxH, h);
@@ -115,14 +198,14 @@ export const usePlanStore = create<PlanState>((set) => ({
           roomPositions = saved;
         } else {
           // Partial save — merge saved with auto-layout for new rooms
-          const autoPositions = computeAutoLayout(data.rooms);
+          const autoPositions = computeAutoLayout(data.rooms, data.adjacencies);
           roomPositions = { ...autoPositions, ...saved };
         }
       } catch {
-        roomPositions = computeAutoLayout(data.rooms);
+        roomPositions = computeAutoLayout(data.rooms, data.adjacencies);
       }
     } else {
-      roomPositions = computeAutoLayout(data.rooms);
+      roomPositions = computeAutoLayout(data.rooms, data.adjacencies);
     }
 
     set({

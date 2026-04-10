@@ -4,8 +4,8 @@ import Konva from 'konva';
 import type { FloorPlanRoom, FloorPlanWall, FloorPlanElement, FloorPlanSegment } from '../../types/api';
 import type { KonvaEventObject } from 'konva/lib/Node';
 
-/** 1 pixel = 10 mm at scale=1 */
-export const MM_TO_PX = 0.1;
+/** 1 meter = 100 pixels at scale=1 (wall lengths are stored in meters) */
+export const MM_TO_PX = 100;
 
 /** Minimum rendered room dimensions in pixels */
 const MIN_W = 80;
@@ -443,9 +443,9 @@ function RoomGroup({
     onSelect(room.id);
   };
 
-  // Dimension labels in meters
+  // Dimension labels in meters (wall.length is stored in meters)
   const wallLabels = room.walls.slice(0, 4).map((wall) =>
-    (wall.length / 1000).toFixed(2) + ' м'
+    wall.length.toFixed(2) + ' м'
   );
 
   return (

@@ -6,17 +6,17 @@ import type { FloorPlanRoom, FloorPlanAdjacency } from '../../types/api';
 const mockRoom = (id: string, label: string): FloorPlanRoom => ({
   id,
   label,
-  perimeter: 1000,
-  area: 5000,
-  volume: 2700,
+  perimeter: 9.0,
+  area: 5.0,
+  volume: 13.5,
   ceilingHeight: 2.7,
   curvatureMean: 0,
   curvatureStdDev: 0,
   walls: [
-    { id: `${id}-w1`, roomId: id, label: `${label}-W1`, length: 250, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 0, segments: [], openings: [] },
-    { id: `${id}-w2`, roomId: id, label: `${label}-W2`, length: 200, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 1, segments: [], openings: [] },
-    { id: `${id}-w3`, roomId: id, label: `${label}-W3`, length: 250, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 2, segments: [], openings: [] },
-    { id: `${id}-w4`, roomId: id, label: `${label}-W4`, length: 200, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 3, segments: [], openings: [] },
+    { id: `${id}-w1`, roomId: id, label: `${label}-W1`, length: 2.5, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 0, segments: [], openings: [] },
+    { id: `${id}-w2`, roomId: id, label: `${label}-W2`, length: 2.0, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 1, segments: [], openings: [] },
+    { id: `${id}-w3`, roomId: id, label: `${label}-W3`, length: 2.5, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 2, segments: [], openings: [] },
+    { id: `${id}-w4`, roomId: id, label: `${label}-W4`, length: 2.0, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 3, segments: [], openings: [] },
   ],
   elements: [],
 });
@@ -85,7 +85,8 @@ describe('planStore', () => {
     });
 
     expect(result.current.roomPositions['r1']).toEqual({ x: 40, y: 40, rotation: 0 });
-    expect(result.current.roomPositions['r2']).toEqual({ x: 160, y: 40, rotation: 0 });
+    // r2 has no adjacency to r1, so it falls into grid fallback row below r1
+    expect(result.current.roomPositions['r2']).toEqual({ x: 40, y: 320, rotation: 0 });
   });
 
   it('sets selected room id', () => {
@@ -309,7 +310,7 @@ describe('planStore', () => {
 
     expect(result.current.roomPositions['r1']?.x).toBe(100);
     expect(result.current.roomPositions['r1']?.y).toBe(40);
-    expect(result.current.roomPositions['r2']?.x).toBe(160);
+    expect(result.current.roomPositions['r2']?.x).toBe(40);
     expect(result.current.roomPositions['r2']?.y).toBe(200);
   });
 
