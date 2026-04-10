@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AdjacencyForm } from '../AdjacencyForm';
+import type { AdjacencyFormData } from '../AdjacencyForm';
 import type { FloorPlanRoom } from '../../../types/api';
 
 const mockRoom = (id: string, name: string, walls: number = 4): FloorPlanRoom => ({
@@ -34,10 +35,10 @@ describe('AdjacencyForm', () => {
     mockRoom('room-3', 'Bedroom'),
   ];
 
-  let onSubmit: ReturnType<typeof vi.fn>;
+  let onSubmit: ReturnType<typeof vi.fn<(data: AdjacencyFormData) => Promise<void>>>;
 
   beforeEach(() => {
-    onSubmit = vi.fn();
+    onSubmit = vi.fn<(data: AdjacencyFormData) => Promise<void>>().mockResolvedValue(undefined);
   });
 
   it('renders form with room selects', () => {

@@ -25,7 +25,7 @@ const mockUpsertWindow = vi.fn();
 const mockUpsertDoor = vi.fn();
 
 // Type-cast for mocking
-const mockedUseRoomMeasureStore = useRoomMeasureStore as ReturnType<typeof vi.fn>;
+const mockedUseRoomMeasureStore = useRoomMeasureStore as unknown as ReturnType<typeof vi.fn>;
 const mockedOpeningsWindowsList = (openingsApi.windows.list as any) as ReturnType<typeof vi.fn>;
 const mockedOpeningsWindowsUpdate = (openingsApi.windows.update as any) as ReturnType<typeof vi.fn>;
 const mockedOpeningsDoorsList = (openingsApi.doors.list as any) as ReturnType<typeof vi.fn>;

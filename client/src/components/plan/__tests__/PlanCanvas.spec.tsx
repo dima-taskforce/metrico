@@ -47,14 +47,14 @@ describe('PlanCanvas', () => {
     'room-3': { x: 600, y: 0, rotation: 0 },
   };
 
-  let onSelectRoom: ReturnType<typeof vi.fn>;
-  let onUpdateRoomPosition: ReturnType<typeof vi.fn>;
-  let onScaleChange: ReturnType<typeof vi.fn>;
+  let onSelectRoom: (roomId: string) => void;
+  let onUpdateRoomPosition: (roomId: string, position: { x: number; y: number; rotation: number }) => void;
+  let onScaleChange: (scale: number) => void;
 
   beforeEach(() => {
-    onSelectRoom = vi.fn();
-    onUpdateRoomPosition = vi.fn();
-    onScaleChange = vi.fn();
+    onSelectRoom = vi.fn() as unknown as (roomId: string) => void;
+    onUpdateRoomPosition = vi.fn() as unknown as (roomId: string, position: { x: number; y: number; rotation: number }) => void;
+    onScaleChange = vi.fn() as unknown as (scale: number) => void;
 
     // Mock window.matchMedia for ResizeObserver
     Object.defineProperty(window, 'matchMedia', {

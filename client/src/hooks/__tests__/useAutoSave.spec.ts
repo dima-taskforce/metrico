@@ -3,10 +3,10 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useAutoSave } from '../useAutoSave';
 
 describe('useAutoSave', () => {
-  let mockApiCall: ReturnType<typeof vi.fn>;
+  let mockApiCall: ReturnType<typeof vi.fn<(data: { count: number }) => Promise<void>>>;
 
   beforeEach(() => {
-    mockApiCall = vi.fn().mockResolvedValue(undefined);
+    mockApiCall = vi.fn<(data: { count: number }) => Promise<void>>().mockResolvedValue(undefined);
   });
 
   afterEach(() => {

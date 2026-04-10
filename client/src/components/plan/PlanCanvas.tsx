@@ -632,7 +632,7 @@ export function PlanCanvas({
       lastDistance = 0;
     };
 
-    stage.on('contentTouchMove', handleTouchMove as Parameters<typeof stage.on>[1]);
+    stage.on('contentTouchMove', handleTouchMove as unknown as (e: KonvaEventObject<TouchEvent>) => void);
     stage.on('contentTouchEnd', handleTouchEnd);
 
     return () => {
