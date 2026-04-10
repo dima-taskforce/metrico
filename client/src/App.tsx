@@ -8,6 +8,7 @@ import { WizardLayout } from './layouts/WizardLayout';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlaceholderStep } from './pages/wizard/PlaceholderStep';
 import { ProjectInfoStep } from './pages/wizard/ProjectInfoStep';
+import { SketchStep } from './pages/wizard/SketchStep';
 import { RoomsStep } from './pages/wizard/RoomsStep';
 import { SummaryStep } from './pages/wizard/SummaryStep';
 import { MeasureStep } from './pages/wizard/MeasureStep';
@@ -64,6 +65,7 @@ function App() {
           <Route path="/wizard/:projectId" element={<WizardLayout />}>
             <Route index element={<Navigate to="info" replace />} />
             <Route path="info" element={<ProjectInfoStep />} />
+            <Route path="sketch" element={<SketchStep />} />
             <Route path="rooms" element={<RoomsStep />} />
             <Route path="plan" element={<PlanStep />} />
             <Route path="summary" element={<SummaryStep />} />

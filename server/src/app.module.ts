@@ -12,6 +12,7 @@ import { AnglesModule } from './angles/angles.module';
 import { SegmentsModule } from './segments/segments.module';
 import { PhotosModule } from './photos/photos.module';
 import { AdjacencyModule } from './adjacency/adjacency.module';
+import { SketchModule } from './sketch/sketch.module';
 import { PlanModule } from './plan/plan.module';
 import { PdfModule } from './pdf/pdf.module';
 import { HealthModule } from './health/health.module';
@@ -31,6 +32,7 @@ import { HealthModule } from './health/health.module';
     SegmentsModule,
     PhotosModule,
     AdjacencyModule,
+    SketchModule,
     PlanModule,
     PdfModule,
     HealthModule,

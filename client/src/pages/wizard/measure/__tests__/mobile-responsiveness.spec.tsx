@@ -43,7 +43,7 @@ vi.mock('../../../../api/photos', () => ({
 }));
 
 vi.mock('../../../../api/rooms', () => ({
-  roomsApi: { update: vi.fn() },
+  roomsApi: { update: vi.fn(), list: vi.fn().mockResolvedValue([]) },
 }));
 
 vi.mock('../../../../api/walls', () => ({

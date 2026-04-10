@@ -3,9 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { usePlanStore } from '../../stores/planStore';
 import { planApi } from '../../api/plan';
 import { Button } from '../../components/ui/Button';
-import { AdjacencyForm } from '../../components/plan/AdjacencyForm';
 import { PlanCanvas } from '../../components/plan/PlanCanvas';
-import type { AdjacencyFormData } from '../../components/plan/AdjacencyForm';
 
 export function PlanStep() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -30,7 +28,6 @@ export function PlanStep() {
     removeAdjacency,
   } = usePlanStore();
 
-  const [isFormLoading, setIsFormLoading] = useState(false);
   const [selectedAdjacencyId, setSelectedAdjacencyId] = useState<string | null>(null);
 
   // Load floor plan on mount
@@ -49,24 +46,6 @@ export function PlanStep() {
         setStatus('error');
       });
   }, [projectId, setPlanData, setStatus, setError]);
-
-  const handleCreateAdjacency = async (formData: AdjacencyFormData) => {
-    if (!projectId) return;
-
-    setIsFormLoading(true);
-    try {
-      const adjacency = await planApi.createAdjacency(projectId, {
-        wallAId: formData.wallAId,
-        wallBId: formData.wallBId,
-        hasDoorBetween: formData.hasDoorBetween,
-      });
-      addAdjacency(adjacency);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка создания связи');
-    } finally {
-      setIsFormLoading(false);
-    }
-  };
 
   const handleDeleteAdjacency = async (adjacencyId: string) => {
     if (!projectId) return;
@@ -191,93 +170,36 @@ export function PlanStep() {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-4 flex-1 overflow-hidden">
-        {/* Canvas section */}
-        <div className="flex-1 flex flex-col gap-2 min-w-0">
-          <div className="text-sm font-medium text-gray-700">План комнат</div>
-          <div className="relative flex-1 min-h-[280px] rounded-lg border border-gray-200 overflow-hidden">
-            <PlanCanvas
-              rooms={rooms}
-              selectedRoomId={selectedRoomId}
-              onSelectRoom={setSelectedRoomId}
-              roomPositions={roomPositions}
-              roomPolygons={roomPolygons}
-              onUpdateRoomPosition={updateRoomPosition}
-              scale={scale}
-              onScaleChange={setScale}
-            />
-          </div>
-
-          {/* Canvas controls */}
-          {selectedRoomId && (
-            <div className="flex gap-2 px-4 py-2 bg-gray-50 rounded border border-gray-200">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleRotateRoom}
-              >
-                ↻ Повернуть на 90°
-              </Button>
-              <span className="flex items-center text-sm text-gray-600">
-                Выбранная комната: {rooms.find((r) => r.id === selectedRoomId)?.label}
-              </span>
-            </div>
-          )}
+      <div className="flex-1 flex flex-col gap-2 min-w-0 overflow-hidden">
+        <div className="text-sm font-medium text-gray-700">План комнат</div>
+        <div className="relative flex-1 min-h-[280px] rounded-lg border border-gray-200 overflow-hidden">
+          <PlanCanvas
+            rooms={rooms}
+            selectedRoomId={selectedRoomId}
+            onSelectRoom={setSelectedRoomId}
+            roomPositions={roomPositions}
+            roomPolygons={roomPolygons}
+            onUpdateRoomPosition={updateRoomPosition}
+            scale={scale}
+            onScaleChange={setScale}
+          />
         </div>
 
-        {/* Sidebar with adjacencies and form */}
-        <div className="w-full lg:w-80 flex flex-col gap-4 overflow-y-auto">
-          {/* Adjacencies list */}
-          <div className="flex flex-col gap-2">
-            <div className="text-sm font-medium text-gray-700">Связи комнат</div>
-            {adjacencies.length === 0 ? (
-              <p className="text-xs text-gray-500 p-2 bg-gray-50 rounded">
-                Связи между комнатами не установлены
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {adjacencies.map((adj) => (
-                  <div
-                    key={adj.id}
-                    onClick={() => setSelectedAdjacencyId(adj.id)}
-                    className={`p-3 rounded border text-sm cursor-pointer transition ${
-                      selectedAdjacencyId === adj.id
-                        ? 'bg-primary-50 border-primary-300'
-                        : 'bg-white border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <p className="font-medium text-gray-900">
-                      {adj.wallALabel} ↔ {adj.wallBLabel}
-                    </p>
-                    {adj.hasDoor && (
-                      <p className="text-xs text-gray-600 mt-1"><span>🚪</span> С дверью</p>
-                    )}
-                    {selectedAdjacencyId === adj.id && (
-                      <button
-                        onClick={() => handleDeleteAdjacency(adj.id)}
-                        className="text-xs text-red-600 hover:text-red-700 font-medium mt-2"
-                      >
-                        ✕ Удалить
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* Canvas controls */}
+        {selectedRoomId && (
+          <div className="flex gap-2 px-4 py-2 bg-gray-50 rounded border border-gray-200">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleRotateRoom}
+            >
+              ↻ Повернуть на 90°
+            </Button>
+            <span className="flex items-center text-sm text-gray-600">
+              Выбранная комната: {rooms.find((r) => r.id === selectedRoomId)?.label}
+            </span>
           </div>
-
-          {/* Adjacency form */}
-          <div className="flex flex-col gap-2">
-            <div className="text-sm font-medium text-gray-700">Новая связь</div>
-            <div className="p-4 bg-gray-50 rounded border border-gray-200">
-              <AdjacencyForm
-                rooms={rooms}
-                onSubmit={handleCreateAdjacency}
-                isLoading={isFormLoading}
-              />
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Footer buttons */}

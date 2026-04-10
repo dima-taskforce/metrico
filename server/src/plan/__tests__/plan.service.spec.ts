@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { PlanService } from '../plan.service';
 import { PlanAssemblerService } from '../plan-assembler.service';
+import { GeometryAssemblerService } from '../geometry-assembler.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProjectsService } from '../../projects/projects.service';
 
@@ -69,6 +70,16 @@ describe('PlanService', () => {
               findUnique: jest.fn(),
               delete: jest.fn(),
             },
+            floorPlanSketch: {
+              findUnique: jest.fn().mockResolvedValue(null),
+            },
+          },
+        },
+        {
+          provide: GeometryAssemblerService,
+          useValue: {
+            computeLayout: jest.fn().mockReturnValue({ placements: [], errors: [] }),
+            computeLayoutFromSketch: jest.fn().mockReturnValue({ placements: [], errors: [] }),
           },
         },
         {

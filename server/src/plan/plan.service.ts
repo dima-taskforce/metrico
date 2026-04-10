@@ -70,7 +70,23 @@ export class PlanService {
       adjacencies,
     );
 
-    const assemblyResult = this.geometryAssembler.computeLayout(project.rooms, angles);
+    const sketch = await this.prisma.floorPlanSketch.findUnique({
+      where: { projectId },
+    });
+
+    let assemblyResult;
+    if (sketch) {
+      const sketchData = JSON.parse(sketch.sketchJson) as Parameters<
+        typeof this.geometryAssembler.computeLayoutFromSketch
+      >[0];
+      assemblyResult = this.geometryAssembler.computeLayoutFromSketch(
+        sketchData,
+        project.rooms,
+        angles,
+      );
+    } else {
+      assemblyResult = this.geometryAssembler.computeLayout(project.rooms, angles);
+    }
 
     const savedLayout = await this.prisma.floorPlanLayout.findUnique({
       where: { projectId },

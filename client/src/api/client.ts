@@ -68,6 +68,12 @@ class ApiClient {
     return this.request<T>(path, init);
   }
 
+  put<T>(path: string, body?: unknown): Promise<T> {
+    const init: RequestInit = { method: 'PUT' };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request<T>(path, init);
+  }
+
   patch<T>(path: string, body?: unknown): Promise<T> {
     const init: RequestInit = { method: 'PATCH' };
     if (body !== undefined) init.body = JSON.stringify(body);

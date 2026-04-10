@@ -3,6 +3,34 @@ import type { Angle, Wall, WallSegment, DoorOpening, WindowOpening, Room } from 
 
 // ─── Internal types ───────────────────────────────────────────────────────────
 
+export interface SketchNode {
+  id: string;
+  x: number;
+  y: number;
+}
+
+export interface SketchEdge {
+  id: string;
+  fromNodeId: string;
+  toNodeId: string;
+  wallId?: string;
+  lengthM?: number;
+}
+
+export interface SketchRoom {
+  id: string;
+  label: string;
+  edgeIds: string[];
+  nodeIds: string[];
+  roomId?: string;
+}
+
+export interface SketchData {
+  nodes: SketchNode[];
+  edges: SketchEdge[];
+  rooms: SketchRoom[];
+}
+
 interface Point {
   x: number;
   y: number;
@@ -365,5 +393,164 @@ export class GeometryAssemblerService {
       x: tx + p.x * cos - p.y * sin,
       y: ty + p.x * sin + p.y * cos,
     };
+  }
+
+  // ─── Sketch-based layout ────────────────────────────────────────────────────
+
+  /**
+   * Собрать план из эскиза + реальных размеров стен.
+   * Топология берётся из эскиза, длины из обмера.
+   */
+  computeLayoutFromSketch(
+    sketchData: SketchData,
+    rooms: RoomWithWalls[],
+    _angles: Angle[],
+  ): AssemblyResult {
+    const edgeLengths = new Map<string, number>();
+    for (const edge of sketchData.edges) {
+      if (edge.wallId) {
+        for (const room of rooms) {
+          const wall = room.walls.find((w) => w.id === edge.wallId);
+          if (wall) {
+            edgeLengths.set(edge.id, wall.length * 1000);
+            break;
+          }
+        }
+      }
+    }
+
+    const nodePositions = this.solveNodePositions(sketchData, edgeLengths);
+
+    const placements: RoomPlacement[] = [];
+    const errors: AssemblyError[] = [];
+
+    for (const sr of sketchData.rooms) {
+      if (!sr.roomId) continue;
+      const polygon: Point[] = [];
+      for (const nid of sr.nodeIds) {
+        const pos = nodePositions.get(nid);
+        if (pos) polygon.push(pos);
+      }
+      if (polygon.length < 3) {
+        errors.push({
+          roomId: sr.roomId,
+          message: 'Недостаточно вершин для полигона',
+        });
+        continue;
+      }
+
+      const minX = Math.min(...polygon.map((p) => p.x));
+      const minY = Math.min(...polygon.map((p) => p.y));
+
+      placements.push({
+        roomId: sr.roomId,
+        x: minX,
+        y: minY,
+        rotation: 0,
+        polygon,
+      });
+    }
+
+    return { placements, errors };
+  }
+
+  /**
+   * Вычислить позиции узлов в глобальной системе координат.
+   * BFS от первого узла, используя реальные длины и направления из эскиза.
+   */
+  solveNodePositions(
+    sketch: SketchData,
+    edgeLengths: Map<string, number>,
+  ): Map<string, Point> {
+    const positions = new Map<string, Point>();
+    const nodeMap = new Map(sketch.nodes.map((n) => [n.id, n]));
+
+    if (sketch.nodes.length === 0) return positions;
+
+    const firstNode = sketch.nodes[0]!;
+    positions.set(firstNode.id, { x: 0, y: 0 });
+
+    const visited = new Set<string>([firstNode.id]);
+    const queue = [firstNode.id];
+
+    const adj = new Map<
+      string,
+      Array<{ neighborId: string; edgeId: string }>
+    >();
+    for (const edge of sketch.edges) {
+      if (!adj.has(edge.fromNodeId)) adj.set(edge.fromNodeId, []);
+      if (!adj.has(edge.toNodeId)) adj.set(edge.toNodeId, []);
+      adj.get(edge.fromNodeId)!.push({
+        neighborId: edge.toNodeId,
+        edgeId: edge.id,
+      });
+      adj.get(edge.toNodeId)!.push({
+        neighborId: edge.fromNodeId,
+        edgeId: edge.id,
+      });
+    }
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+      const currentPos = positions.get(currentId)!;
+      const currentNode = nodeMap.get(currentId)!;
+
+      for (const { neighborId, edgeId } of adj.get(currentId) ?? []) {
+        if (visited.has(neighborId)) continue;
+        const neighborNode = nodeMap.get(neighborId)!;
+
+        const dx = neighborNode.x - currentNode.x;
+        const dy = neighborNode.y - currentNode.y;
+        const sketchDist = Math.sqrt(dx * dx + dy * dy);
+        if (sketchDist < 1) continue;
+
+        const dirX = dx / sketchDist;
+        const dirY = dy / sketchDist;
+
+        let realLength = edgeLengths.get(edgeId);
+        if (!realLength) {
+          const scale = this.estimateSketchScale(sketch, edgeLengths);
+          realLength = sketchDist * scale;
+        }
+
+        positions.set(neighborId, {
+          x: currentPos.x + dirX * realLength,
+          y: currentPos.y + dirY * realLength,
+        });
+        visited.add(neighborId);
+        queue.push(neighborId);
+      }
+    }
+
+    return positions;
+  }
+
+  /**
+   * Оценить масштаб эскиза: пиксели → мм.
+   */
+  estimateSketchScale(
+    sketch: SketchData,
+    edgeLengths: Map<string, number>,
+  ): number {
+    const nodeMap = new Map(sketch.nodes.map((n) => [n.id, n]));
+    let sumRatio = 0;
+    let count = 0;
+
+    for (const edge of sketch.edges) {
+      const realLen = edgeLengths.get(edge.id);
+      if (!realLen) continue;
+
+      const from = nodeMap.get(edge.fromNodeId)!;
+      const to = nodeMap.get(edge.toNodeId)!;
+      const sketchDist = Math.sqrt(
+        (to.x - from.x) ** 2 + (to.y - from.y) ** 2,
+      );
+      if (sketchDist < 1) continue;
+
+      sumRatio += realLen / sketchDist;
+      count++;
+    }
+
+    return count > 0 ? sumRatio / count : 100;
   }
 }

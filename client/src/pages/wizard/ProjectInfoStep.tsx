@@ -77,7 +77,7 @@ export function ProjectInfoStep() {
   const onSubmit = async (data: InfoForm) => {
     if (!projectId) return;
     if (!isDirty) {
-      navigate(`/wizard/${projectId}/rooms`);
+      navigate(`/wizard/${projectId}/sketch`);
       return;
     }
     try {
@@ -92,7 +92,7 @@ export function ProjectInfoStep() {
       });
       upsertProject(updated);
       setCurrentProject(updated);
-      navigate(`/wizard/${projectId}/rooms`);
+      navigate(`/wizard/${projectId}/sketch`);
     } catch (err) {
       setError('root', {
         message: err instanceof Error ? err.message : 'Ошибка сохранения',

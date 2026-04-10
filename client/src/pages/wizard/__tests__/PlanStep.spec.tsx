@@ -21,13 +21,6 @@ vi.mock('react-router-dom', async () => ({
 vi.mock('../../../components/plan/PlanCanvas', () => ({
   PlanCanvas: () => <div data-testid="plan-canvas">Canvas</div>,
 }));
-vi.mock('../../../components/plan/AdjacencyForm', () => ({
-  AdjacencyForm: ({ onSubmit }: any) => (
-    <button data-testid="adjacency-submit" onClick={() => onSubmit({ wallAId: 'w1', wallBId: 'w2', hasDoorBetween: true })}>
-      Create Adjacency
-    </button>
-  ),
-}));
 
 const mockRoom = (id: string, label: string): FloorPlanRoom => ({
   id,
@@ -41,17 +34,8 @@ const mockRoom = (id: string, label: string): FloorPlanRoom => ({
   walls: [
     { id: `${id}-w1`, roomId: id, label: `${label}-W1`, length: 250, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 0, segments: [], openings: [] },
     { id: `${id}-w2`, roomId: id, label: `${label}-W2`, length: 200, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 1, segments: [], openings: [] },
-    { id: `${id}-w3`, roomId: id, label: `${label}-W3`, length: 250, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 2, segments: [], openings: [] },
-    { id: `${id}-w4`, roomId: id, label: `${label}-W4`, length: 200, material: 'CONCRETE', wallType: 'INTERNAL', sortOrder: 3, segments: [], openings: [] },
   ],
   elements: [],
-});
-
-const mockAdjacency = (id: string, wallALabel: string, wallBLabel: string) => ({
-  id,
-  wallALabel,
-  wallBLabel,
-  hasDoor: false,
 });
 
 function Wrapper({ children }: { children: React.ReactNode }) {
@@ -71,18 +55,16 @@ describe('PlanStep', () => {
       mockRoom('room-2', 'Kitchen'),
     ];
 
-    const adjacencies = [
-      mockAdjacency('adj-1', 'Living Room-W1', 'Kitchen-W1'),
-    ];
-
     usePlanStoreValue = {
       rooms,
-      adjacencies,
+      adjacencies: [],
       selectedRoomId: null,
       roomPositions: {
         'room-1': { x: 0, y: 0, rotation: 0 },
         'room-2': { x: 300, y: 0, rotation: 0 },
       },
+      roomPolygons: {},
+      assemblyErrors: [],
       scale: 1,
       status: 'done' as const,
       error: null,
@@ -124,7 +106,7 @@ describe('PlanStep', () => {
       projectId: 'test-project',
       projectLabel: 'Test Project',
       rooms: usePlanStoreValue.rooms,
-      adjacencies: usePlanStoreValue.adjacencies,
+      adjacencies: [],
       generatedAt: new Date(),
     });
 
@@ -158,58 +140,13 @@ describe('PlanStep', () => {
       projectId: 'test-project',
       projectLabel: 'Test Project',
       rooms: usePlanStoreValue.rooms,
-      adjacencies: usePlanStoreValue.adjacencies,
+      adjacencies: [],
       generatedAt: new Date(),
     });
 
     render(<PlanStep />, { wrapper: Wrapper });
 
     expect(screen.getByTestId('plan-canvas')).toBeInTheDocument();
-  });
-
-  it('displays adjacencies list', () => {
-    render(<PlanStep />, { wrapper: Wrapper });
-
-    expect(screen.getByText('Связи комнат')).toBeInTheDocument();
-    expect(screen.getByText(/Living Room-W1 ↔ Kitchen-W1/)).toBeInTheDocument();
-  });
-
-  it('allows selecting adjacency', async () => {
-    const user = userEvent.setup();
-    render(<PlanStep />, { wrapper: Wrapper });
-
-    const adjacencyItem = screen.getByText(/Living Room-W1 ↔ Kitchen-W1/);
-    await user.click(adjacencyItem);
-
-    expect(adjacencyItem).toBeInTheDocument();
-  });
-
-  it('shows delete button when adjacency selected', async () => {
-    const user = userEvent.setup();
-    render(<PlanStep />, { wrapper: Wrapper });
-
-    const adjacencyItem = screen.getByText(/Living Room-W1 ↔ Kitchen-W1/);
-    await user.click(adjacencyItem);
-
-    const deleteButton = screen.getByText(/Удалить/);
-    expect(deleteButton).toBeInTheDocument();
-  });
-
-  it('deletes adjacency when delete clicked', async () => {
-    const user = userEvent.setup();
-    vi.mocked(planApi.planApi.deleteAdjacency).mockResolvedValue(undefined);
-
-    render(<PlanStep />, { wrapper: Wrapper });
-
-    const adjacencyItem = screen.getByText(/Living Room-W1 ↔ Kitchen-W1/);
-    await user.click(adjacencyItem);
-
-    const deleteButton = screen.getByText(/Удалить/);
-    await user.click(deleteButton);
-
-    await waitFor(() => {
-      expect(planApi.planApi.deleteAdjacency).toHaveBeenCalledWith('test-project', 'adj-1');
-    });
   });
 
   it('renders rotation button for selected room', () => {
@@ -253,36 +190,6 @@ describe('PlanStep', () => {
     });
   });
 
-  it('shows door icon when adjacency has door', () => {
-    usePlanStoreValue.adjacencies = [
-      { ...mockAdjacency('adj-1', 'Living Room-W1', 'Kitchen-W1'), hasDoor: true },
-    ];
-
-    render(<PlanStep />, { wrapper: Wrapper });
-
-    expect(screen.getByText('🚪')).toBeInTheDocument();
-  });
-
-  it('renders adjacency form', () => {
-    render(<PlanStep />, { wrapper: Wrapper });
-
-    expect(screen.getByText('Новая связь')).toBeInTheDocument();
-  });
-
-  it('calls error handler when adjacency creation fails', async () => {
-    const user = userEvent.setup();
-    vi.mocked(planApi.planApi.createAdjacency).mockRejectedValue(new Error('API error'));
-
-    render(<PlanStep />, { wrapper: Wrapper });
-
-    const submitButton = screen.getByTestId('adjacency-submit');
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(usePlanStoreValue.setError).toHaveBeenCalled();
-    });
-  });
-
   it('disables next button while assembling', () => {
     usePlanStoreValue.status = 'assembling';
 
@@ -299,5 +206,16 @@ describe('PlanStep', () => {
 
     const nextButton = screen.getByRole('button', { name: /Сохранение/i });
     expect(nextButton).toBeInTheDocument();
+  });
+
+  it('shows assembly errors when present', () => {
+    usePlanStoreValue.assemblyErrors = [
+      { roomId: 'room-1', message: 'Невозможно разместить комнату' },
+    ];
+
+    render(<PlanStep />, { wrapper: Wrapper });
+
+    expect(screen.getByText('Ошибки геометрической сборки:')).toBeInTheDocument();
+    expect(screen.getByText(/Невозможно разместить комнату/)).toBeInTheDocument();
   });
 });
