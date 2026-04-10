@@ -285,7 +285,8 @@ const SHAPE_VARIANTS: Record<string, ShapeVariant> = {
 };
 
 const DOT_R = 6;
-const LABEL_OFFSET = 16;
+const LABEL_OFFSET = 14;
+const LABEL_MARGIN = 7;
 
 function getVariantKey(shape: RoomShape, orientation: 0 | 1 | 2 | 3): string {
   return `${shape}_${orientation}`;
@@ -301,9 +302,12 @@ function getLabelPosition(
   const vh = parts[3] ?? 92;
   const midX = vw / 2;
   const midY = vh / 2;
-  const dx = cx < midX ? -LABEL_OFFSET : LABEL_OFFSET;
-  const dy = cy < midY ? -LABEL_OFFSET : LABEL_OFFSET;
-  return { x: cx + dx, y: cy + dy };
+  const rawX = cx + (cx < midX ? -LABEL_OFFSET : LABEL_OFFSET);
+  const rawY = cy + (cy < midY ? -LABEL_OFFSET : LABEL_OFFSET);
+  return {
+    x: Math.max(LABEL_MARGIN, Math.min(vw - LABEL_MARGIN, rawX)),
+    y: Math.max(LABEL_MARGIN, Math.min(vh - LABEL_MARGIN, rawY)),
+  };
 }
 
 export function CornerLabelStep() {
@@ -340,7 +344,7 @@ export function CornerLabelStep() {
         <svg
           viewBox={variant.viewBox}
           className="w-full max-w-xs border border-gray-200 rounded-xl bg-gray-50"
-          style={{ height: '180px' }}
+          style={{ height: '150px' }}
           aria-label="Схема комнаты с обозначенными углами"
         >
           {/* Room outline */}
@@ -371,21 +375,21 @@ export function CornerLabelStep() {
                   strokeWidth="1.5"
                 />
                 <rect
-                  x={labelPos.x - 6}
-                  y={labelPos.y - 6}
-                  width="12"
-                  height="12"
+                  x={labelPos.x - 5}
+                  y={labelPos.y - 5}
+                  width="10"
+                  height="10"
                   rx="2"
                   fill="white"
-                  fillOpacity="0.85"
+                  fillOpacity="0.9"
                 />
                 <text
                   x={labelPos.x}
                   y={labelPos.y}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize="9"
-                  fontWeight="500"
+                  fontSize="8"
+                  fontWeight="600"
                   fill={isActive ? '#0284c7' : '#374151'}
                 >
                   {corner.label}
