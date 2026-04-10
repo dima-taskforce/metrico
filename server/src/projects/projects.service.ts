@@ -293,7 +293,10 @@ export class ProjectsService {
             data: {
               roomId: newRoomId,
               photoType: photo.photoType,
-              filePath: filePathMap[photo.filePath] ?? photo.filePath,
+              originalPath: filePathMap[photo.originalPath] ?? photo.originalPath,
+              thumbPath: photo.thumbPath
+                ? (filePathMap[photo.thumbPath] ?? photo.thumbPath)
+                : null,
             },
           });
         }

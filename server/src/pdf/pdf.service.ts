@@ -108,22 +108,44 @@ function Watermark(): React.ReactElement {
 
 // ── Floor plan SVG thumbnail ──────────────────────────────────────────────────
 
-function FloorPlanSvg({ rooms, positions }: {
+function FloorPlanSvg({ rooms }: {
   rooms: FloorPlanRoom[];
-  positions: Record<string, { x: number; y: number }>;
 }): React.ReactElement {
-  const SVG_W = 400;
-  const SVG_H = 280;
-  const SCALE = 0.06; // mm→SVG px
+  const SVG_W = 460;
+  const SVG_H = 300;
+  const MARGIN = 12;
+  const GAP = 10;
+
+  const COLS = Math.min(rooms.length, Math.ceil(Math.sqrt(rooms.length * 1.5)));
+  const ROWS = Math.ceil(rooms.length / COLS);
+
+  // Real dimensions per room from first two walls (or perimeter fallback)
+  const roomDims = rooms.map((r) => {
+    const w1 = r.walls[0]?.length ?? Math.sqrt(r.area ?? 9e6);
+    const w2 = r.walls[1]?.length ?? Math.sqrt(r.area ?? 6e6);
+    return { w: Math.max(w1, 1), h: Math.max(w2, 1) };
+  });
+
+  // Uniform cell size from max dimensions, scaled to fit
+  const maxW = Math.max(...roomDims.map((d) => d.w), 1);
+  const maxH = Math.max(...roomDims.map((d) => d.h), 1);
+  const cellW = (SVG_W - MARGIN * 2 - GAP * Math.max(COLS - 1, 0)) / COLS;
+  const cellH = (SVG_H - MARGIN * 2 - GAP * Math.max(ROWS - 1, 0)) / ROWS;
+  const SCALE = Math.min(cellW / maxW, cellH / maxH);
 
   const elements = rooms.map((room, i) => {
-    const pos = positions[room.id] ?? { x: i * 50 + 10, y: 10 };
-    const w1 = room.walls[0]?.length ?? 3000;
-    const w2 = room.walls[1]?.length ?? 2000;
-    const rw = Math.max(30, w1 * SCALE);
-    const rh = Math.max(20, w2 * SCALE);
-    const rx = Math.min(pos.x * SCALE, SVG_W - rw - 5);
-    const ry = Math.min(pos.y * SCALE, SVG_H - rh - 15);
+    const col = i % COLS;
+    const row = Math.floor(i / COLS);
+    const dim = roomDims[i] ?? { w: 3000, h: 2000 };
+    const rw = Math.max(24, dim.w * SCALE);
+    const rh = Math.max(16, dim.h * SCALE);
+    // Centre each room within its grid cell
+    const cellX = MARGIN + col * (cellW + GAP);
+    const cellY = MARGIN + row * (cellH + GAP);
+    const rx = cellX + (cellW - rw) / 2;
+    const ry = cellY + (cellH - rh) / 2;
+
+    const dimLabel = `${(dim.w / 1000).toFixed(2)}×${(dim.h / 1000).toFixed(2)}`;
 
     return React.createElement(
       G,
@@ -133,8 +155,11 @@ function FloorPlanSvg({ rooms, positions }: {
         fill: '#e8f4f8', stroke: '#6b7280', strokeWidth: 0.75,
       }),
       React.createElement(Text, {
-        style: { fontSize: 5, position: 'absolute', left: rx + 2, top: ry + 2 },
-      }, room.label.slice(0, 10)),
+        style: { fontSize: 5.5, position: 'absolute', left: rx + 2, top: ry + 2, color: '#1a1a1a' },
+      }, room.label.slice(0, 12)),
+      React.createElement(Text, {
+        style: { fontSize: 4.5, position: 'absolute', left: rx + 2, top: ry + rh - 8, color: '#555555' },
+      }, dimLabel),
     );
   });
 
@@ -170,12 +195,20 @@ function roomStats(room: FloorPlanRoom): React.ReactElement[] {
   const perim = (room.perimeter / 1000).toFixed(2) + ' м';
   const vol = room.volume != null ? (room.volume / 1e9).toFixed(2) + ' м³' : '—';
   const h = room.ceilingHeight != null ? room.ceilingHeight.toFixed(2) + ' м' : '—';
+  const curvMean = room.curvatureMean != null
+    ? (room.curvatureMean).toFixed(1) + ' мм (ср.)'
+    : '—';
+  const curvStd = room.curvatureStdDev != null
+    ? (room.curvatureStdDev).toFixed(1) + ' мм (σ)'
+    : null;
+  const curvLabel = curvStd ? `${curvMean}, ${curvStd}` : curvMean;
 
   return [
     ['Площадь', area],
     ['Периметр', perim],
     ['Объём', vol],
     ['Высота потолка', h],
+    ['Кривизна стен', curvLabel],
   ].map(([label, value]) =>
     React.createElement(
       View,
@@ -329,12 +362,6 @@ function PlanDocument({ plan, projectName, projectAddress }: {
     year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  // Simple auto-positions for SVG thumbnail
-  const positions: Record<string, { x: number; y: number }> = {};
-  plan.rooms.forEach((r, i) => {
-    positions[r.id] = { x: (i % 3) * 1600 + 200, y: Math.floor(i / 3) * 1200 + 200 };
-  });
-
   const titlePage = React.createElement(
     Page,
     { size: 'A4', style: { ...s.page, justifyContent: 'center', alignItems: 'center' } },
@@ -351,7 +378,7 @@ function PlanDocument({ plan, projectName, projectAddress }: {
     Page,
     { size: 'A4', style: s.page },
     React.createElement(Text, { style: s.h1 }, 'Схема квартиры'),
-    React.createElement(FloorPlanSvg, { rooms: plan.rooms, positions }),
+    React.createElement(FloorPlanSvg, { rooms: plan.rooms }),
     React.createElement(Watermark),
   );
 
