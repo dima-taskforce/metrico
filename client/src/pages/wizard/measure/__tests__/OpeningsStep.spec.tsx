@@ -335,7 +335,7 @@ describe('OpeningsStep', () => {
 
   it('converts comma decimal separator to dot in window height', async () => {
     const updated = makeWindow({ height: 1400 });
-    vi.mocked(openingsApi.windows.update).mockResolvedValue(updated);
+    mockedOpeningsWindowsUpdate.mockResolvedValue(updated);
 
     setupStore([makeWall()], { w1: [makeWindow({ height: 0 })] }, {}, {});
     render(<OpeningsStep />);
@@ -344,7 +344,7 @@ describe('OpeningsStep', () => {
     fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
 
     await waitFor(() => {
-      expect(openingsApi.windows.update).toHaveBeenCalledWith(
+      expect(mockedOpeningsWindowsUpdate).toHaveBeenCalledWith(
         'w1', 'win1',
         expect.objectContaining({ height: 1400 }),
       );
