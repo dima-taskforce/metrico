@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -82,7 +82,6 @@ export function WallDimensionsStep() {
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     control,
     setError,
@@ -93,17 +92,6 @@ export function WallDimensionsStep() {
   });
 
   const { fields } = useFieldArray({ control, name: 'walls' });
-
-  // Auto-fill for rectangles: when AB or BC changes, fill CD and DA
-  const watchedWalls = watch('walls');
-  useEffect(() => {
-    if (currentRoom?.shape !== 'RECTANGLE') return;
-    const ab = watchedWalls[0]?.length;
-    const bc = watchedWalls[1]?.length;
-    if (ab && Number(ab) > 0) setValue('walls.2.length', ab);
-    if (bc && Number(bc) > 0) setValue('walls.3.length', bc);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchedWalls[0]?.length, watchedWalls[1]?.length]);
 
   const onSubmit = async (data: WallDimensionsForm) => {
     if (!currentRoom) return;
@@ -184,15 +172,32 @@ export function WallDimensionsStep() {
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                <Input
-                  label="Длина, м"
-                  type="number"
-                  step="0.001"
-                  min="0.001"
-                  readOnly={isAutoFilled}
-                  error={wallErrors?.length?.message}
-                  {...register(`walls.${idx}.length`)}
-                />
+                {(() => {
+                  const reg = register(`walls.${idx}.length`);
+                  const origOnChange = reg.onChange;
+                  const onChange = isRectangle && idx < 2
+                    ? (e: React.ChangeEvent<HTMLInputElement>) => {
+                        void origOnChange(e);
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val) && val > 0) {
+                          if (idx === 0) setValue('walls.2.length', val as unknown as number);
+                          if (idx === 1) setValue('walls.3.length', val as unknown as number);
+                        }
+                      }
+                    : origOnChange;
+                  return (
+                    <Input
+                      label="Длина, м"
+                      type="number"
+                      step="0.001"
+                      min="0.001"
+                      readOnly={isAutoFilled}
+                      error={wallErrors?.length?.message}
+                      {...reg}
+                      onChange={onChange}
+                    />
+                  );
+                })()}
 
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-medium text-gray-700">Материал</label>

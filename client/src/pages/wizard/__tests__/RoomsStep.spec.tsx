@@ -114,7 +114,7 @@ describe('RoomsStep', () => {
     render(<RoomsStep />, { wrapper: Wrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('+ Добавить комнату')).toBeInTheDocument();
+      expect(screen.getByText('+ Добавить')).toBeInTheDocument();
     });
   });
 

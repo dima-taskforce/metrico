@@ -230,14 +230,13 @@ describe('PerimeterWalkStep', () => {
     });
   });
 
-  it('shows offsetFromPrev field for non-PLAIN types', () => {
+  it('does not show offsetFromPrev field', () => {
     setupStore([makeWall()]);
     render(<PerimeterWalkStep />);
-    // Offset field is always visible regardless of type
-    expect(screen.getByLabelText(/Отступ от начала/i)).toBeInTheDocument();
-    // Still visible after switching to WINDOW
+    expect(screen.queryByLabelText(/Отступ от начала/i)).not.toBeInTheDocument();
+    // Still absent after switching to WINDOW
     fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'WINDOW' } });
-    expect(screen.getByLabelText(/Отступ от начала/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Отступ от начала/i)).not.toBeInTheDocument();
   });
 
   it('shows inner/outer toggle only for STEP type', () => {
@@ -256,33 +255,34 @@ describe('PerimeterWalkStep', () => {
     expect(screen.getByLabelText(/Ширина проёма, м/i)).toBeInTheDocument();
   });
 
-  it('sends offsetFromPrev when adding WINDOW segment', async () => {
-    const created = makeSegment({ id: 's-win', segmentType: 'WINDOW', length: 1.2, offsetFromPrev: 0.5 });
+  it('adds WINDOW segment without offsetFromPrev', async () => {
+    const created = makeSegment({ id: 's-win', segmentType: 'WINDOW', length: 1.2 });
     vi.mocked(segmentsApi.create).mockResolvedValue(created);
 
     setupStore([makeWall()]);
     render(<PerimeterWalkStep />);
 
     fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'WINDOW' } });
-    fireEvent.change(screen.getByLabelText(/Отступ от начала/i), { target: { value: '0.5' } });
     fireEvent.change(screen.getByLabelText(/Ширина проёма, м/i), { target: { value: '1.2' } });
     fireEvent.click(screen.getByRole('button', { name: /добавить/i }));
 
     await waitFor(() => {
       expect(segmentsApi.create).toHaveBeenCalledWith('w1', expect.objectContaining({
         segmentType: 'WINDOW',
-        offsetFromPrev: 0.5,
         length: 1.2,
+      }));
+      expect(segmentsApi.create).toHaveBeenCalledWith('w1', expect.not.objectContaining({
+        offsetFromPrev: expect.anything(),
       }));
     });
   });
 
-  it('displays offsetFromPrev in segment list when set', () => {
+  it('does not display offsetFromPrev in segment list', () => {
     setupStore([makeWall()], {
       w1: [makeSegment({ segmentType: 'WINDOW', length: 1.2, offsetFromPrev: 0.5 })],
     });
     render(<PerimeterWalkStep />);
-    expect(screen.getByText('+0.500')).toBeInTheDocument();
+    expect(screen.queryByText('+0.500')).not.toBeInTheDocument();
   });
 
   it('displays STEP type with isInner label in segment list', () => {

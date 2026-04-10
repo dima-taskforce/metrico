@@ -101,7 +101,7 @@ export function ProjectInfoStep() {
   };
 
   return (
-    <div className="p-6 max-w-lg">
+    <div className="p-6 pb-24 sm:pb-6 max-w-lg">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Общая информация</h2>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
@@ -143,15 +143,16 @@ export function ProjectInfoStep() {
           <p className="text-sm text-red-500">{errors.root.message}</p>
         )}
 
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="sticky bottom-0 sm:static bg-white sm:bg-transparent border-t sm:border-0 border-gray-100 -mx-6 sm:mx-0 px-6 sm:px-0 py-3 sm:py-0 sm:pt-2 flex gap-3 mt-4">
           <Button
             type="button"
             variant="secondary"
+            className="flex-1 sm:flex-none"
             onClick={() => navigate('/projects')}
           >
-            Назад к проектам
+            ← Назад
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting} className="flex-1 sm:flex-none">
             {isSubmitting ? 'Сохранение…' : 'Далее →'}
           </Button>
         </div>

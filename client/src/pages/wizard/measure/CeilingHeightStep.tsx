@@ -62,19 +62,19 @@ export function CeilingHeightStep() {
 
       {/* Illustration */}
       <div className="bg-gray-50 rounded-xl p-4 mb-6">
-        <svg viewBox="0 0 200 120" className="w-full h-28" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg viewBox="0 0 200 120" className="w-full h-28" stroke="currentColor" strokeWidth="1.5">
           {/* Room outline */}
-          <rect x="10" y="10" width="180" height="90" className="text-gray-300" />
+          <rect x="10" y="10" width="180" height="90" fill="none" className="text-gray-300" />
           {/* Window */}
-          <rect x="20" y="10" width="40" height="20" className="text-blue-300" fill="rgb(219 234 254)" stroke="rgb(147 197 253)" />
+          <rect x="20" y="10" width="40" height="20" fill="rgb(219 234 254)" stroke="rgb(147 197 253)" />
           {/* Height line 1 (near window) */}
-          <line x1="35" y1="30" x2="35" y2="100" className="text-primary-500" strokeDasharray="4 2" />
-          <text x="38" y="70" fontSize="9" className="fill-primary-700">H1</text>
+          <line x1="35" y1="30" x2="35" y2="100" fill="none" className="text-primary-500" strokeDasharray="4 2" />
+          <text x="38" y="70" fontSize="9" fill="#1d4ed8" stroke="none">H1</text>
           {/* Height line 2 (opposite wall) */}
-          <line x1="165" y1="10" x2="165" y2="100" className="text-orange-400" strokeDasharray="4 2" />
-          <text x="168" y="60" fontSize="9" className="fill-orange-700">H2</text>
+          <line x1="165" y1="10" x2="165" y2="100" fill="none" className="text-orange-400" strokeDasharray="4 2" />
+          <text x="168" y="60" fontSize="9" fill="#c2410c" stroke="none">H2</text>
           {/* Floor label */}
-          <text x="80" y="115" fontSize="9" className="fill-gray-500">пол (стяжка)</text>
+          <text x="80" y="115" fontSize="9" fill="#6b7280" stroke="none">пол (стяжка)</text>
         </svg>
       </div>
 

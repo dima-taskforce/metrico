@@ -158,7 +158,7 @@ export function PlanStep() {
         {/* Canvas section */}
         <div className="flex-1 flex flex-col gap-2 min-w-0">
           <div className="text-sm font-medium text-gray-700">План комнат</div>
-          <div className="relative flex-1 rounded-lg border border-gray-200 overflow-hidden">
+          <div className="relative flex-1 min-h-[280px] rounded-lg border border-gray-200 overflow-hidden">
             <PlanCanvas
               rooms={rooms}
               selectedRoomId={selectedRoomId}
@@ -243,14 +243,16 @@ export function PlanStep() {
       </div>
 
       {/* Footer buttons */}
-      <div className="flex justify-between gap-4 pt-4 border-t border-gray-200">
+      <div className="flex gap-3 pt-4 border-t border-gray-200">
         <Button
           variant="secondary"
+          className="flex-1 sm:flex-none"
           onClick={() => navigate(`/wizard/${projectId}/rooms`)}
         >
           ← Назад
         </Button>
         <Button
+          className="flex-1 sm:flex-none"
           onClick={handleNext}
           disabled={status === 'assembling'}
         >

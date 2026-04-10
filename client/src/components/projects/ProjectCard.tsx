@@ -25,13 +25,13 @@ export function ProjectCard({ project, onDelete, onDuplicate }: ProjectCardProps
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-sm transition-shadow">
       <div className="flex items-start justify-between gap-2">
-        <div>
+        <div className="min-w-0">
           <h3 className="font-semibold text-gray-900 truncate">{project.name}</h3>
           {project.address && (
             <p className="text-sm text-gray-500 truncate mt-0.5">{project.address}</p>
           )}
         </div>
-        <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+        <span className="shrink-0 mt-0.5 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
           {STATUS_LABELS[project.status]}
         </span>
       </div>

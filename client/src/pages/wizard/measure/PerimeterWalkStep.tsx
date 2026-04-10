@@ -41,8 +41,6 @@ const DEPTH_LABEL: Record<SegmentType, string> = {
   STEP: 'Глубина ступеньки, м',
 };
 
-// Non-PLAIN types that have offsetFromPrev
-const NON_PLAIN_TYPES = new Set<SegmentType>(['WINDOW', 'DOOR', 'PROTRUSION', 'NICHE', 'PARTITION', 'STEP']);
 
 const segmentSchema = z.discriminatedUnion('segmentType', [
   z.object({
@@ -52,40 +50,34 @@ const segmentSchema = z.discriminatedUnion('segmentType', [
   }),
   z.object({
     segmentType: z.literal('WINDOW'),
-    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
     length: z.coerce.number().positive('Ширина > 0'),
     description: z.string().optional(),
   }),
   z.object({
     segmentType: z.literal('DOOR'),
-    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
     length: z.coerce.number().positive('Ширина > 0'),
     description: z.string().optional(),
   }),
   z.object({
     segmentType: z.literal('PROTRUSION'),
-    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
     length: z.coerce.number().positive('Длина > 0'),
     depth: z.coerce.number().positive('Глубина > 0'),
     description: z.string().optional(),
   }),
   z.object({
     segmentType: z.literal('NICHE'),
-    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
     length: z.coerce.number().positive('Ширина > 0'),
     depth: z.coerce.number().positive('Глубина > 0'),
     description: z.string().optional(),
   }),
   z.object({
     segmentType: z.literal('PARTITION'),
-    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
     length: z.coerce.number().positive('Длина > 0'),
     depth: z.coerce.number().positive('Толщина > 0'),
     description: z.string().optional(),
   }),
   z.object({
     segmentType: z.literal('STEP'),
-    offsetFromPrev: z.coerce.number().nonnegative('Расстояние ≥ 0').optional(),
     length: z.coerce.number().positive('Ширина > 0'),
     depth: z.coerce.number().positive('Глубина > 0'),
     isInner: z.boolean().optional(),
@@ -96,7 +88,7 @@ const segmentSchema = z.discriminatedUnion('segmentType', [
 type SegmentForm = z.infer<typeof segmentSchema>;
 
 function calcRemainder(wallLength: number, segs: WallSegment[]): number {
-  const sum = segs.reduce((acc, s) => acc + s.length, 0);
+  const sum = segs.reduce((acc, s) => acc + (s.length ?? 0), 0);
   return Math.max(0, +(wallLength - sum).toFixed(3));
 }
 
@@ -167,7 +159,6 @@ export function PerimeterWalkStep() {
   }, [currentWall?.id, segments[currentWall?.id ?? '']?.length]);
 
   const segmentType = watch('segmentType');
-  const isNonPlain = NON_PLAIN_TYPES.has(segmentType);
   const needsDepth = segmentType === 'PROTRUSION' || segmentType === 'NICHE' || segmentType === 'PARTITION' || segmentType === 'STEP';
   const isStep = segmentType === 'STEP';
 
@@ -195,9 +186,6 @@ export function PerimeterWalkStep() {
         segmentType: data.segmentType,
         length: data.length,
         sortOrder: currentSegments.length,
-        ...('offsetFromPrev' in data && data.offsetFromPrev !== undefined && data.offsetFromPrev !== null
-          ? { offsetFromPrev: data.offsetFromPrev }
-          : {}),
         ...(needsDepth && 'depth' in data ? { depth: data.depth } : {}),
         ...('isInner' in data && data.isInner !== undefined ? { isInner: data.isInner } : {}),
         ...('description' in data && data.description ? { description: data.description } : {}),
@@ -242,7 +230,7 @@ export function PerimeterWalkStep() {
     if (result) setValidationResult(result);
   };
 
-  const segmentsSum = currentSegments.reduce((acc, s) => acc + s.length, 0);
+  const segmentsSum = currentSegments.reduce((acc, s) => acc + (s.length ?? 0), 0);
   const progress = wallLength > 0 ? Math.min((segmentsSum / wallLength) * 100, 100) : 0;
   const diffMm = Math.abs(wallLength - segmentsSum) * 1000;
 
@@ -339,9 +327,6 @@ export function PerimeterWalkStep() {
                   : ''}
                 {seg.description && ` — ${seg.description}`}
               </span>
-              {seg.offsetFromPrev !== null && seg.offsetFromPrev !== undefined && (
-                <span className="text-gray-400 mr-2 text-xs">+{seg.offsetFromPrev.toFixed(3)}</span>
-              )}
               <span className="text-gray-600 mr-3">{seg.length.toFixed(3)} м</span>
               <button
                 className="text-red-400 hover:text-red-600 text-xs"
@@ -370,21 +355,6 @@ export function PerimeterWalkStep() {
             ))}
           </select>
         </div>
-
-        {/* offsetFromPrev — only for non-PLAIN */}
-        {isNonPlain && (
-          <div className="mb-3">
-            <Input
-              label="Расстояние от угла/предыдущего элемента, м"
-              type="number"
-              step="0.001"
-              min="0"
-              placeholder="0.000"
-              error={'offsetFromPrev' in errors ? (errors as { offsetFromPrev?: { message?: string } }).offsetFromPrev?.message : undefined}
-              {...register('offsetFromPrev' as 'length')}
-            />
-          </div>
-        )}
 
         {/* Length / width — context-aware label */}
         <div className="mb-3">

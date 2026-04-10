@@ -5,6 +5,15 @@ import { wallsApi } from '../../api/walls';
 import { anglesApi } from '../../api/angles';
 import { elementsApi } from '../../api/elements';
 import { useRoomMeasureStore, type MeasureSubstep } from '../../stores/roomMeasureStore';
+
+function getStoredOrientation(roomId: string): 0 | 1 | 2 | 3 {
+  try {
+    const v = localStorage.getItem(`room_orientation_${roomId}`);
+    const n = Number(v);
+    if (n === 0 || n === 1 || n === 2 || n === 3) return n as 0 | 1 | 2 | 3;
+  } catch { /* ignore */ }
+  return 0;
+}
 import { CornerLabelStep } from './measure/CornerLabelStep';
 import { CeilingHeightStep } from './measure/CeilingHeightStep';
 import { WallDimensionsStep } from './measure/WallDimensionsStep';
@@ -33,6 +42,7 @@ export function MeasureStep() {
     setWalls,
     setAngles,
     setElements,
+    setShapeOrientation,
     reset,
   } = useRoomMeasureStore();
 
@@ -41,6 +51,8 @@ export function MeasureStep() {
     if (!projectId || !roomId) return;
 
     reset();
+    // Restore orientation saved when the room was created
+    setShapeOrientation(getStoredOrientation(roomId));
 
     Promise.all([
       roomsApi.get(projectId, roomId),
