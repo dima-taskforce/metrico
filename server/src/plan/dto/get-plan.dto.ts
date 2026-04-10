@@ -51,6 +51,8 @@ export interface FloorPlanElement {
 
 export interface FloorPlanAdjacency {
   id: string;
+  wallAId: string;
+  wallBId: string;
   wallALabel: string;
   wallBLabel: string;
   hasDoor: boolean;
@@ -63,4 +65,5 @@ export interface GetPlanDto {
   rooms: FloorPlanRoom[];
   adjacencies: FloorPlanAdjacency[];
   generatedAt: Date;
+  layoutJson?: string | null;
 }

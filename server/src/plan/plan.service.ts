@@ -68,7 +68,14 @@ export class PlanService {
       adjacencies,
     );
 
-    return plan;
+    const savedLayout = await this.prisma.floorPlanLayout.findUnique({
+      where: { projectId },
+    });
+
+    return {
+      ...plan,
+      layoutJson: savedLayout?.layoutJson ?? null,
+    };
   }
 
   /**

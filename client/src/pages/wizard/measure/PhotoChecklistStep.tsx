@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { photosApi } from '../../../api/photos';
 import { roomsApi } from '../../../api/rooms';
@@ -14,7 +14,7 @@ function CheckItem({
   manual = false,
   onChange,
 }: {
-  label: string;
+  label: ReactNode;
   checked: boolean;
   required?: boolean;
   manual?: boolean;
@@ -117,6 +117,8 @@ export function PhotoChecklistStep() {
     );
   });
   const hasElements = elements.length > 0;
+
+  const wallsMissingSegments = walls.filter((w) => (segments[w.id] ?? []).length === 0);
 
   const canMarkDone =
     hasPhoto &&
@@ -260,8 +262,15 @@ export function PhotoChecklistStep() {
             required
           />
           <CheckItem
-            label="Все стены разбиты на сегменты"
+            label={
+              allWallsHaveSegments
+                ? 'Все стены разбиты на сегменты'
+                : wallsMissingSegments.length === 1
+                  ? `Стена «${wallsMissingSegments[0]?.label}» — добавьте хотя бы один сегмент`
+                  : `${wallsMissingSegments.length} стены без сегментов (${wallsMissingSegments.map((w) => w.label).join(', ')})`
+            }
             checked={allWallsHaveSegments}
+            required
           />
           <CheckItem
             label="Размеры проёмов указаны"
@@ -290,9 +299,21 @@ export function PhotoChecklistStep() {
 
       {!canMarkDone && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-          <p className="text-sm text-amber-800">
-            Загрузите фото и отметьте обязательные пункты чеклиста, чтобы завершить обмер.
-          </p>
+          <p className="text-sm font-medium text-amber-800 mb-1">Осталось выполнить:</p>
+          <ul className="text-sm text-amber-700 space-y-0.5 list-disc list-inside">
+            {!hasPhoto && <li>Загрузить общее фото комнаты</li>}
+            {!hasWalls && <li>Добавить стены</li>}
+            {!allWallsHaveSegments && wallsMissingSegments.length > 0 && (
+              <li>
+                Добавить сегменты для стен:{' '}
+                <span className="font-medium">{wallsMissingSegments.map((w) => w.label).join(', ')}</span>
+                {' '}(для сплошной стены добавьте один сегмент типа «Без особенностей»)
+              </li>
+            )}
+            {!allOpeningsMeasured && <li>Указать размеры всех проёмов</li>}
+            {!manualChecks.curvatureChecked && <li>Подтвердить проверку кривизны стен</li>}
+            {!manualChecks.elementsPlaced && <li>Подтвердить отметку всех элементов на развёртке</li>}
+          </ul>
         </div>
       )}
 

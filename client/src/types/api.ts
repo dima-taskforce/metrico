@@ -214,6 +214,7 @@ export interface GetPlanDto {
   rooms: FloorPlanRoom[];
   adjacencies: FloorPlanAdjacency[];
   generatedAt: Date;
+  layoutJson?: string | null;
 }
 
 export interface ApiError {

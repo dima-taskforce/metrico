@@ -114,7 +114,7 @@ describe('PlanService', () => {
 
       const result = await service.getFloorPlan('proj-1', 'user-id');
 
-      expect(result).toEqual(mockFloorPlan);
+      expect(result).toMatchObject(mockFloorPlan);
       expect(prisma.project.findUnique).toHaveBeenCalledWith({
         where: { id: 'proj-1' },
         include: expect.any(Object),

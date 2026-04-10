@@ -187,6 +187,8 @@ export class PlanAssemblerService {
 
     return {
       id: adjacency.id,
+      wallAId: adjacency.wallAId,
+      wallBId: adjacency.wallBId,
       wallALabel,
       wallBLabel,
       hasDoor: adjacency.hasDoorBetween,
