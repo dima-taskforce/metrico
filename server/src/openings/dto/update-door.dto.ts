@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsPositive, Min } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsPositive, Min } from 'class-validator';
 
 export class UpdateDoorDto {
   @IsOptional()
@@ -20,4 +20,8 @@ export class UpdateDoorDto {
   @IsNumber()
   @Min(0)
   revealRight?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isFrenchDoor?: boolean;
 }

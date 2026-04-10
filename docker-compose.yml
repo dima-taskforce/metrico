@@ -5,7 +5,7 @@ services:
       dockerfile: server/Dockerfile
     restart: unless-stopped
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3000
       DATABASE_URL: file:/app/data/metrico.db
       JWT_SECRET: ${JWT_SECRET}
@@ -22,6 +22,27 @@ services:
       retries: 3
       start_period: 40s
 
+  # Build client SPA and copy to shared volume (runs once, then exits)
+  client-builder:
+    image: node:20-alpine
+    restart: "no"
+    working_dir: /build
+    volumes:
+      - ./client:/build/client
+      - ./package.json:/build/package.json:ro
+      - ./package-lock.json:/build/package-lock.json:ro
+      - ./tsconfig.base.json:/build/tsconfig.base.json:ro
+      - client_dist:/dist
+    command: >
+      sh -c "
+        cd /build &&
+        mkdir -p server &&
+        echo '{\"name\":\"@metrico/server\",\"version\":\"1.0.0\",\"private\":true}' > server/package.json &&
+        npm ci --workspace=client --ignore-scripts &&
+        cd client &&
+        NODE_ENV=production npx vite build --outDir /dist
+      "
+
   nginx:
     image: nginx:alpine
     restart: unless-stopped
@@ -36,6 +57,8 @@ services:
     depends_on:
       app:
         condition: service_healthy
+      client-builder:
+        condition: service_completed_successfully
 
 volumes:
   data:

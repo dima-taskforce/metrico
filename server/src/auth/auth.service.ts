@@ -84,7 +84,8 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload: JwtPayload = { sub: userId, email };
 
-    const jwtSecret = process.env['JWT_SECRET'] ?? 'fallback_secret';
+    const jwtSecret = process.env['JWT_SECRET'];
+    if (!jwtSecret) throw new Error('JWT_SECRET is not set');
     const accessToken = this.jwtService.sign(payload, {
       secret: jwtSecret,
       expiresIn: process.env['JWT_ACCESS_EXPIRES_IN'] ?? '15m',

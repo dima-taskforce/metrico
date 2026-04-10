@@ -281,6 +281,7 @@ model DoorOpening {
   heightFromScreed Float
   revealLeft      Float?
   revealRight     Float?
+  isFrenchDoor    Boolean @default(false)
   photoPath       String?
 
   segments     WallSegment[]
