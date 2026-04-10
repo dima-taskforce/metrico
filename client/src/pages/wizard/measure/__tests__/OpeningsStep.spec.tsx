@@ -169,7 +169,7 @@ describe('OpeningsStep', () => {
   });
 
   it('saves window on form submit', async () => {
-    const updated = makeWindow({ height: 1500 });
+    const updated = makeWindow({ height: 1500000 });
     vi.mocked(openingsApi.windows.update).mockResolvedValue(updated);
 
     setupStore(
@@ -180,8 +180,8 @@ describe('OpeningsStep', () => {
     );
     render(<OpeningsStep />);
 
-    const heightInput = screen.getByLabelText(/Высота, мм/i);
-    fireEvent.change(heightInput, { target: { value: '1500' } });
+    const heightInput = screen.getByLabelText(/Высота, м/i);
+    fireEvent.change(heightInput, { target: { value: '1.5' } });
 
     const saveBtn = screen.getByRole('button', { name: /Сохранить/i });
     fireEvent.click(saveBtn);
