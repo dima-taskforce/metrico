@@ -22,6 +22,8 @@ interface RoomCanvasProps {
   ) => void;
   scale: number;
   onScaleChange: (scale: number) => void;
+  /** Local polygon per room in px (flat [x,y,...] array). When present, rendered instead of Rect. */
+  roomPolygons?: Record<string, number[]>;
 }
 
 const ROOM_COLORS = [
@@ -410,6 +412,8 @@ interface RoomGroupProps {
   isSelected: boolean;
   onSelect: (roomId: string) => void;
   onPositionChange: (pos: { x: number; y: number; rotation: number }) => void;
+  /** Local polygon in px (flat [x,y,...]) — when provided, rendered instead of Rect. */
+  polygon?: number[];
 }
 
 function RoomGroup({
@@ -419,6 +423,7 @@ function RoomGroup({
   isSelected,
   onSelect,
   onPositionChange,
+  polygon,
 }: RoomGroupProps) {
   const groupRef = useRef<Konva.Group>(null);
   const isDragging = useRef(false);
@@ -460,14 +465,24 @@ function RoomGroup({
       onClick={handleClick}
       onTap={handleClick}
     >
-      {/* Room fill */}
-      <Rect
-        width={w}
-        height={h}
-        fill={getColorForRoom(index)}
-        stroke={isSelected ? '#1d4ed8' : '#6b7280'}
-        strokeWidth={isSelected ? 2 : 1.5}
-      />
+      {/* Room fill — polygon when geometry data available, rectangle otherwise */}
+      {polygon ? (
+        <Line
+          points={polygon}
+          closed
+          fill={getColorForRoom(index)}
+          stroke={isSelected ? '#1d4ed8' : '#6b7280'}
+          strokeWidth={isSelected ? 2 : 1.5}
+        />
+      ) : (
+        <Rect
+          width={w}
+          height={h}
+          fill={getColorForRoom(index)}
+          stroke={isSelected ? '#1d4ed8' : '#6b7280'}
+          strokeWidth={isSelected ? 2 : 1.5}
+        />
+      )}
 
       {/* Room label */}
       <Text
@@ -573,6 +588,7 @@ export function PlanCanvas({
   onUpdateRoomPosition,
   scale,
   onScaleChange,
+  roomPolygons = {},
 }: RoomCanvasProps) {
   const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -691,6 +707,7 @@ export function PlanCanvas({
                 isSelected={selectedRoomId === room.id}
                 onSelect={onSelectRoom}
                 onPositionChange={(newPos) => onUpdateRoomPosition(room.id, newPos)}
+                {...(roomPolygons[room.id] ? { polygon: roomPolygons[room.id]! } : {})}
               />
             );
           })}

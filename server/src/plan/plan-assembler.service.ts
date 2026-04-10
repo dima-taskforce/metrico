@@ -120,6 +120,7 @@ export class PlanAssemblerService {
       label,
       length: segment.length, // metres
       segmentType: segment.segmentType,
+      leadsToRoomId: segment.leadsToRoomId ?? null,
     };
   }
 

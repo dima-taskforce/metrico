@@ -5,9 +5,11 @@ export interface CreateSegmentData {
   segmentType: SegmentType;
   length: number;
   sortOrder: number;
+  offsetFromPrev?: number;
   depth?: number;
   windowOpeningId?: string;
   doorOpeningId?: string;
+  leadsToRoomId?: string;
   description?: string;
 }
 
@@ -17,7 +19,7 @@ export const segmentsApi = {
   create: (wallId: string, data: CreateSegmentData) =>
     api.post<WallSegment>(`/walls/${wallId}/segments`, data),
 
-  update: (segmentId: string, data: Partial<Omit<CreateSegmentData, 'segmentType'>>) =>
+  update: (segmentId: string, data: Partial<CreateSegmentData>) =>
     api.patch<WallSegment>(`/segments/${segmentId}`, data),
 
   remove: (segmentId: string) => api.delete<void>(`/segments/${segmentId}`),

@@ -72,6 +72,7 @@ enum SegmentType {
   PLAIN
   WINDOW
   DOOR
+  PASSAGE
   PROTRUSION
   NICHE
   PARTITION
@@ -174,6 +175,9 @@ model Room {
   photos   RoomPhoto[]
   angles   Angle[]
 
+  // сегменты из других комнат, которые ведут сюда
+  incomingPassages WallSegment[] @relation("segmentLeadsTo")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -227,6 +231,10 @@ model WallSegment {
 
   doorOpeningId String?
   doorOpening   DoorOpening? @relation(fields: [doorOpeningId], references: [id], onDelete: Cascade)
+
+  // куда ведёт этот проход (DOOR/PASSAGE)
+  leadsToRoomId String?
+  leadsToRoom   Room?       @relation("segmentLeadsTo", fields: [leadsToRoomId], references: [id], onDelete: SetNull)
 
   @@index([wallId])
 }

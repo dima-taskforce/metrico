@@ -41,4 +41,8 @@ export class UpdateSegmentDto {
   @IsOptional()
   @IsString()
   doorOpeningId?: string;
+
+  @IsOptional()
+  @IsString()
+  leadsToRoomId?: string;
 }

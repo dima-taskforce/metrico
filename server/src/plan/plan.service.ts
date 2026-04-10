@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { ProjectStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanAssemblerService } from './plan-assembler.service';
+import { GeometryAssemblerService } from './geometry-assembler.service';
 import { ProjectsService } from '../projects/projects.service';
 import { GetPlanDto } from './dto/get-plan.dto';
 
@@ -10,6 +11,7 @@ export class PlanService {
   constructor(
     private prisma: PrismaService,
     private assembler: PlanAssemblerService,
+    private geometryAssembler: GeometryAssemblerService,
     private projectsService: ProjectsService,
   ) {}
 
@@ -68,6 +70,8 @@ export class PlanService {
       adjacencies,
     );
 
+    const assemblyResult = this.geometryAssembler.computeLayout(project.rooms, angles);
+
     const savedLayout = await this.prisma.floorPlanLayout.findUnique({
       where: { projectId },
     });
@@ -75,6 +79,8 @@ export class PlanService {
     return {
       ...plan,
       layoutJson: savedLayout?.layoutJson ?? null,
+      placements: assemblyResult.placements,
+      assemblyErrors: assemblyResult.errors,
     };
   }
 

@@ -85,6 +85,7 @@ const makeSegment = (overrides = {}) => ({
   isInner: null,
   windowOpeningId: null,
   doorOpeningId: null,
+  leadsToRoomId: null,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   ...overrides,

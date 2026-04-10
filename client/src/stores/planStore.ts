@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { FloorPlanRoom, FloorPlanAdjacency, GetPlanDto } from '../types/api';
+import type { FloorPlanRoom, FloorPlanAdjacency, GetPlanDto, RoomPlacement, AssemblyError } from '../types/api';
 
 /** 1 meter = 100 pixels at scale=1 (wall lengths are stored in meters, must match PlanCanvas.MM_TO_PX) */
 const METERS_TO_PX = 100;
@@ -127,6 +127,46 @@ function computeAutoLayout(
   return positions;
 }
 
+/** 1mm → 0.1 px (since 1m = 100px) */
+const MM_TO_PX = 0.1;
+
+/**
+ * Convert server placements (global mm) → canvas RoomPositions (px).
+ * Also computes local polygon in px for each room.
+ */
+function placementsToPositions(
+  placements: RoomPlacement[],
+): {
+  positions: Record<string, RoomPosition>;
+  polygons: Record<string, number[]>;
+} {
+  const positions: Record<string, RoomPosition> = {};
+  const polygons: Record<string, number[]> = {};
+
+  for (const p of placements) {
+    positions[p.roomId] = {
+      x: p.x * MM_TO_PX + MARGIN,
+      y: p.y * MM_TO_PX + MARGIN,
+      rotation: p.rotation,
+    };
+
+    // Inverse-transform global polygon to local px coords
+    const rotRad = (p.rotation * Math.PI) / 180;
+    const cos = Math.cos(-rotRad);
+    const sin = Math.sin(-rotRad);
+    const flat: number[] = [];
+    for (const pt of p.polygon) {
+      const dx = pt.x - p.x;
+      const dy = pt.y - p.y;
+      flat.push((dx * cos - dy * sin) * MM_TO_PX);
+      flat.push((dx * sin + dy * cos) * MM_TO_PX);
+    }
+    polygons[p.roomId] = flat;
+  }
+
+  return { positions, polygons };
+}
+
 export type PlanStatus = 'idle' | 'loading' | 'assembling' | 'done' | 'error';
 
 interface RoomPosition {
@@ -141,6 +181,10 @@ interface PlanState {
   rooms: FloorPlanRoom[];
   adjacencies: FloorPlanAdjacency[];
   generatedAt: Date | null;
+
+  // Geometry assembly
+  roomPolygons: Record<string, number[]>; // roomId -> flat [x,y,...] in px
+  assemblyErrors: AssemblyError[];
 
   // Canvas state
   selectedRoomId: string | null;
@@ -174,6 +218,8 @@ const initialState = {
   rooms: [],
   adjacencies: [],
   generatedAt: null,
+  roomPolygons: {},
+  assemblyErrors: [],
   selectedRoomId: null,
   roomPositions: {},
   scale: 1,
@@ -187,22 +233,32 @@ export const usePlanStore = create<PlanState>((set) => ({
 
   setPlanData: (data) => {
     let roomPositions: Record<string, RoomPosition>;
+    let roomPolygons: Record<string, number[]> = {};
 
-    // Restore saved layout if available
+    // Priority: savedLayout > geometry placements > computeAutoLayout
     if (data.layoutJson) {
       try {
         const saved = JSON.parse(data.layoutJson) as Record<string, RoomPosition>;
-        // Validate that saved positions cover all rooms; fill gaps with auto-layout
         const missing = data.rooms.filter((r) => !saved[r.id]);
         if (missing.length === 0) {
           roomPositions = saved;
         } else {
-          // Partial save — merge saved with auto-layout for new rooms
           const autoPositions = computeAutoLayout(data.rooms, data.adjacencies);
           roomPositions = { ...autoPositions, ...saved };
         }
       } catch {
         roomPositions = computeAutoLayout(data.rooms, data.adjacencies);
+      }
+    } else if (data.placements && data.placements.length > 0) {
+      const { positions, polygons } = placementsToPositions(data.placements);
+      roomPositions = positions;
+      roomPolygons = polygons;
+      // Fill any rooms not covered by placements with auto-layout
+      const placedIds = new Set(data.placements.map((p) => p.roomId));
+      const unplaced = data.rooms.filter((r) => !placedIds.has(r.id));
+      if (unplaced.length > 0) {
+        const autoPositions = computeAutoLayout(unplaced, []);
+        roomPositions = { ...roomPositions, ...autoPositions };
       }
     } else {
       roomPositions = computeAutoLayout(data.rooms, data.adjacencies);
@@ -214,6 +270,8 @@ export const usePlanStore = create<PlanState>((set) => ({
       adjacencies: data.adjacencies,
       generatedAt: data.generatedAt,
       roomPositions,
+      roomPolygons,
+      assemblyErrors: data.assemblyErrors ?? [],
     });
   },
 

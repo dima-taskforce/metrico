@@ -38,4 +38,8 @@ export class CreateSegmentDto {
   @IsOptional()
   @IsString()
   doorOpeningId?: string;
+
+  @IsOptional()
+  @IsString()
+  leadsToRoomId?: string;
 }

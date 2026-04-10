@@ -1,5 +1,27 @@
 // Assembled floor plan structure returned from GET /api/projects/:id/plan
 
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface RoomPlacement {
+  roomId: string;
+  /** Global x of room local origin, mm */
+  x: number;
+  /** Global y of room local origin, mm */
+  y: number;
+  /** Rotation in degrees (CW, screen coords) */
+  rotation: number;
+  /** Global polygon vertices in mm */
+  polygon: Point[];
+}
+
+export interface AssemblyError {
+  roomId: string;
+  message: string;
+}
+
 export interface FloorPlanRoom {
   id: string;
   label: string;
@@ -29,7 +51,8 @@ export interface FloorPlanSegment {
   id: string;
   label: string;
   length: number; // metres
-  segmentType: string; // PLAIN, WINDOW, DOOR, PROTRUSION, NICHE, PARTITION
+  segmentType: string; // PLAIN, WINDOW, DOOR, PASSAGE, PROTRUSION, NICHE, PARTITION
+  leadsToRoomId?: string | null;
 }
 
 export interface FloorPlanOpening {
@@ -66,4 +89,6 @@ export interface GetPlanDto {
   adjacencies: FloorPlanAdjacency[];
   generatedAt: Date;
   layoutJson?: string | null;
+  placements?: RoomPlacement[];
+  assemblyErrors?: AssemblyError[];
 }

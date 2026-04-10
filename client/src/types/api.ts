@@ -4,7 +4,7 @@ export type RoomType = 'KITCHEN' | 'BEDROOM' | 'BATHROOM' | 'CORRIDOR' | 'BALCON
 export type RoomShape = 'RECTANGLE' | 'L_SHAPE' | 'U_SHAPE' | 'T_SHAPE' | 'CUSTOM';
 export type WallMaterial = 'CONCRETE' | 'DRYWALL' | 'BRICK' | 'OTHER';
 export type WallType = 'EXTERNAL' | 'INTERNAL' | 'ADJACENT';
-export type SegmentType = 'PLAIN' | 'WINDOW' | 'DOOR' | 'PROTRUSION' | 'NICHE' | 'PARTITION' | 'STEP';
+export type SegmentType = 'PLAIN' | 'WINDOW' | 'DOOR' | 'PASSAGE' | 'PROTRUSION' | 'NICHE' | 'PARTITION' | 'STEP';
 export type ElementType = 'COLUMN' | 'VENT_SHAFT' | 'RADIATOR' | 'ELECTRICAL_PANEL' | 'LOW_VOLTAGE_PANEL' | 'PIPE';
 export type PhotoType = 'OVERVIEW_BEFORE' | 'OVERVIEW_AFTER' | 'DETAIL';
 
@@ -95,6 +95,7 @@ export interface WallSegment {
   sortOrder: number;
   windowOpeningId: string | null;
   doorOpeningId: string | null;
+  leadsToRoomId: string | null;
   description: string | null;
   createdAt: string;
   updatedAt: string;
@@ -149,11 +150,34 @@ export interface ValidateSegmentsResult {
   isValid: boolean;
 }
 
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface RoomPlacement {
+  roomId: string;
+  /** Global x of room local origin, mm */
+  x: number;
+  /** Global y of room local origin, mm */
+  y: number;
+  /** Rotation in degrees (CW, screen coords) */
+  rotation: number;
+  /** Global polygon vertices in mm */
+  polygon: Point[];
+}
+
+export interface AssemblyError {
+  roomId: string;
+  message: string;
+}
+
 export interface FloorPlanSegment {
   id: string;
   label: string;
   length: number;
   segmentType: string;
+  leadsToRoomId?: string | null;
 }
 
 export interface FloorPlanOpening {
@@ -215,6 +239,8 @@ export interface GetPlanDto {
   adjacencies: FloorPlanAdjacency[];
   generatedAt: Date;
   layoutJson?: string | null;
+  placements?: RoomPlacement[];
+  assemblyErrors?: AssemblyError[];
 }
 
 export interface ApiError {

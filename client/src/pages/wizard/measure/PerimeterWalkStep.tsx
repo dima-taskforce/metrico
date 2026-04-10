@@ -4,17 +4,19 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { segmentsApi } from '../../../api/segments';
 import { openingsApi } from '../../../api/openings';
+import { roomsApi } from '../../../api/rooms';
 import { useRoomMeasureStore } from '../../../stores/roomMeasureStore';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { WallMiniMap } from '../../../components/WallMiniMap';
 import { MeasurementHint } from '../../../components/MeasurementHint';
-import type { SegmentType, WallSegment } from '../../../types/api';
+import type { SegmentType, WallSegment, Room } from '../../../types/api';
 
 const SEGMENT_TYPE_LABELS: Record<SegmentType, string> = {
   PLAIN: 'Стена',
   WINDOW: 'Окно',
   DOOR: 'Дверь',
+  PASSAGE: 'Проход',
   PROTRUSION: 'Выступ',
   NICHE: 'Ниша',
   PARTITION: 'Перегородка',
@@ -26,6 +28,7 @@ const LENGTH_LABEL: Record<SegmentType, string> = {
   PLAIN: 'Длина участка, м',
   WINDOW: 'Ширина проёма, м',
   DOOR: 'Ширина проёма, м',
+  PASSAGE: 'Ширина прохода, м',
   PROTRUSION: 'Длина выступа, м',
   NICHE: 'Ширина ниши, м',
   PARTITION: 'Длина перегородки, м',
@@ -36,6 +39,7 @@ const DEPTH_LABEL: Record<SegmentType, string> = {
   PLAIN: '',
   WINDOW: '',
   DOOR: '',
+  PASSAGE: '',
   PROTRUSION: 'Глубина выступа, м',
   NICHE: 'Глубина ниши, м',
   PARTITION: 'Толщина перегородки, м',
@@ -56,6 +60,11 @@ const segmentSchema = z.discriminatedUnion('segmentType', [
   }),
   z.object({
     segmentType: z.literal('DOOR'),
+    length: z.coerce.number().positive('Ширина > 0'),
+    description: z.string().optional(),
+  }),
+  z.object({
+    segmentType: z.literal('PASSAGE'),
     length: z.coerce.number().positive('Ширина > 0'),
     description: z.string().optional(),
   }),
@@ -117,6 +126,8 @@ export function PerimeterWalkStep() {
   } | null>(null);
   const [beforeLength, setBeforeLength] = useState<string>('');
   const [afterLength, setAfterLength] = useState<string>('');
+  const [leadsToRoomId, setLeadsToRoomId] = useState<string>('');
+  const [projectRooms, setProjectRooms] = useState<Room[]>([]);
 
   const currentWall = walls[wallIdx];
   const currentSegments: WallSegment[] = currentWall ? (segments[currentWall.id] ?? []) : [];
@@ -136,6 +147,13 @@ export function PerimeterWalkStep() {
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWall?.id]);
+
+  // Load rooms for leadsToRoomId dropdown
+  useEffect(() => {
+    if (!currentRoom?.projectId) return;
+    roomsApi.list(currentRoom.projectId).then(setProjectRooms).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRoom?.projectId]);
 
   const wallLength = currentWall ? currentWall.length : 0;
   const remainder = calcRemainder(wallLength, currentSegments);
@@ -160,12 +178,14 @@ export function PerimeterWalkStep() {
     setValidationResult(null);
     setBeforeLength('');
     setAfterLength('');
+    setLeadsToRoomId('');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWall?.id, segments[currentWall?.id ?? '']?.length]);
 
   const segmentType = watch('segmentType');
   const needsDepth = segmentType === 'PROTRUSION' || segmentType === 'NICHE' || segmentType === 'PARTITION' || segmentType === 'STEP';
   const isStep = segmentType === 'STEP';
+  const needsLeadsTo = segmentType === 'DOOR' || segmentType === 'PASSAGE';
 
   // Reset form fields when type changes
   useEffect(() => {
@@ -178,6 +198,7 @@ export function PerimeterWalkStep() {
     }
     setBeforeLength('');
     setAfterLength('');
+    setLeadsToRoomId('');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [segmentType]);
 
@@ -215,6 +236,7 @@ export function PerimeterWalkStep() {
         ...(needsDepth && 'depth' in data ? { depth: data.depth } : {}),
         ...('isInner' in data && data.isInner !== undefined ? { isInner: data.isInner } : {}),
         ...('description' in data && data.description ? { description: data.description } : {}),
+        ...(needsLeadsTo && leadsToRoomId ? { leadsToRoomId } : {}),
       });
       upsertSegment(currentWall.id, created);
       newlyCreated.push(created);
@@ -250,6 +272,7 @@ export function PerimeterWalkStep() {
       const newRemainder = calcRemainder(wallLength, allSegs);
       setBeforeLength('');
       setAfterLength('');
+      setLeadsToRoomId('');
       reset({ segmentType: 'PLAIN', length: newRemainder || ('' as unknown as number) });
       setValidationResult(null);
     } catch (err) {
@@ -366,6 +389,10 @@ export function PerimeterWalkStep() {
                 {seg.segmentType === 'STEP' && seg.isInner !== null && seg.isInner !== undefined
                   ? ` (${seg.isInner ? 'внутренняя' : 'внешняя'})`
                   : ''}
+                {seg.leadsToRoomId && (() => {
+                  const r = projectRooms.find((pr) => pr.id === seg.leadsToRoomId);
+                  return r ? ` → ${r.name}` : '';
+                })()}
                 {seg.description && ` — ${seg.description}`}
               </span>
               <span className="text-gray-600 mr-3">{seg.length.toFixed(3)} м</span>
@@ -423,6 +450,27 @@ export function PerimeterWalkStep() {
                 {...register('length')}
               />
             </div>
+
+            {/* leadsToRoomId — for DOOR and PASSAGE */}
+            {needsLeadsTo && (
+              <div className="mb-3">
+                <label className="text-sm font-medium text-gray-700 block mb-1">
+                  Ведёт в комнату (необязательно)
+                </label>
+                <select
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                  value={leadsToRoomId}
+                  onChange={(e) => setLeadsToRoomId(e.target.value)}
+                >
+                  <option value="">— не указано —</option>
+                  {projectRooms
+                    .filter((r) => r.id !== currentRoom?.id)
+                    .map((r) => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                </select>
+              </div>
+            )}
 
             {/* Depth — for PROTRUSION, NICHE, PARTITION, STEP */}
             {needsDepth && (

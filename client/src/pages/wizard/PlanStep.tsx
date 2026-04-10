@@ -15,6 +15,8 @@ export function PlanStep() {
     adjacencies,
     selectedRoomId,
     roomPositions,
+    roomPolygons,
+    assemblyErrors,
     scale,
     status,
     error,
@@ -173,6 +175,22 @@ export function PlanStep() {
         </div>
       )}
 
+      {assemblyErrors.length > 0 && (
+        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+          <p className="font-medium mb-1">Ошибки геометрической сборки:</p>
+          <ul className="list-disc list-inside space-y-0.5">
+            {assemblyErrors.map((e) => {
+              const room = rooms.find((r) => r.id === e.roomId);
+              return (
+                <li key={e.roomId}>
+                  <span className="font-medium">{room?.label ?? e.roomId}:</span> {e.message}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row gap-4 flex-1 overflow-hidden">
         {/* Canvas section */}
         <div className="flex-1 flex flex-col gap-2 min-w-0">
@@ -183,6 +201,7 @@ export function PlanStep() {
               selectedRoomId={selectedRoomId}
               onSelectRoom={setSelectedRoomId}
               roomPositions={roomPositions}
+              roomPolygons={roomPolygons}
               onUpdateRoomPosition={updateRoomPosition}
               scale={scale}
               onScaleChange={setScale}
