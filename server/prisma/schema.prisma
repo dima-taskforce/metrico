@@ -41,6 +41,10 @@ enum RoomType {
   STORAGE
   LIVING
   OTHER
+  KITCHEN_LIVING
+  LAUNDRY
+  OFFICE
+  LIBRARY
 }
 
 enum RoomShape {

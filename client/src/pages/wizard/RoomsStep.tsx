@@ -23,6 +23,10 @@ const ROOM_TYPE_LABELS: Record<RoomType, string> = {
   BALCONY: 'Балкон / Лоджия',
   STORAGE: 'Кладовая',
   OTHER: 'Другое',
+  KITCHEN_LIVING: 'Кухня-гостиная',
+  LAUNDRY: 'Постирочная',
+  OFFICE: 'Кабинет',
+  LIBRARY: 'Библиотека',
 };
 
 const SHAPE_CORNER_COUNT: Record<RoomShape, number> = {
@@ -35,7 +39,7 @@ const SHAPE_CORNER_COUNT: Record<RoomShape, number> = {
 
 const createRoomSchema = z.object({
   name: z.string().min(1, 'Введите название'),
-  type: z.enum(['KITCHEN', 'BEDROOM', 'BATHROOM', 'CORRIDOR', 'BALCONY', 'STORAGE', 'LIVING', 'OTHER'] as const),
+  type: z.enum(['KITCHEN', 'BEDROOM', 'BATHROOM', 'CORRIDOR', 'BALCONY', 'STORAGE', 'LIVING', 'OTHER', 'KITCHEN_LIVING', 'LAUNDRY', 'OFFICE', 'LIBRARY'] as const),
   shape: z.enum(['RECTANGLE', 'L_SHAPE', 'U_SHAPE', 'T_SHAPE', 'CUSTOM'] as const),
 });
 

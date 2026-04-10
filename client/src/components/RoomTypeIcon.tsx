@@ -7,6 +7,10 @@ import {
   PottedPlant,
   Package,
   House,
+  ForkKnife,
+  WashingMachine,
+  Desktop,
+  Books,
 } from '@phosphor-icons/react';
 import type { RoomType } from '../types/api';
 
@@ -19,6 +23,10 @@ const ICONS: Record<RoomType, React.ElementType> = {
   BALCONY: PottedPlant,
   STORAGE: Package,
   OTHER: House,
+  KITCHEN_LIVING: ForkKnife,
+  LAUNDRY: WashingMachine,
+  OFFICE: Desktop,
+  LIBRARY: Books,
 };
 
 interface RoomTypeIconProps {

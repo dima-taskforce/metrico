@@ -18,6 +18,10 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
   BALCONY: 'Балкон / Лоджия',
   STORAGE: 'Кладовая',
   OTHER: 'Другое',
+  KITCHEN_LIVING: 'Кухня-гостиная',
+  LAUNDRY: 'Постирочная',
+  OFFICE: 'Кабинет',
+  LIBRARY: 'Библиотека',
 };
 
 
