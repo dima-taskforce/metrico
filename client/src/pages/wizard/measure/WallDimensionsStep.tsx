@@ -9,18 +9,18 @@ import { Button } from '../../../components/ui/Button';
 import { MeasurementHint } from '../../../components/MeasurementHint';
 import type { RoomShape, WallMaterial, WallType } from '../../../types/api';
 
-const WALL_MATERIAL_LABELS: Record<WallMaterial, string> = {
-  CONCRETE: 'Бетон',
-  DRYWALL: 'Гипсокартон',
-  BRICK: 'Кирпич',
-  OTHER: 'Другое',
-};
+const WALL_MATERIAL_OPTIONS: { value: WallMaterial; label: string }[] = [
+  { value: 'CONCRETE', label: 'Бетон' },
+  { value: 'BRICK', label: 'Кирпич' },
+  { value: 'DRYWALL', label: 'ГК' },
+  { value: 'OTHER', label: 'Другое' },
+];
 
-const WALL_TYPE_LABELS: Record<WallType, string> = {
-  EXTERNAL: 'Наружная',
-  INTERNAL: 'Внутренняя',
-  ADJACENT: 'Смежная (соседи)',
-};
+const WALL_TYPE_OPTIONS: { value: WallType; label: string }[] = [
+  { value: 'EXTERNAL', label: 'Наружная' },
+  { value: 'INTERNAL', label: 'Внутренняя' },
+  { value: 'ADJACENT', label: 'Смежная' },
+];
 
 const CORNER_LETTERS = 'ABCDEFGH';
 
@@ -171,7 +171,7 @@ export function WallDimensionsStep() {
                 )}
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="flex flex-col gap-3">
                 {(() => {
                   const reg = register(`walls.${idx}.length`);
                   const origOnChange = reg.onChange;
@@ -199,28 +199,42 @@ export function WallDimensionsStep() {
                   );
                 })()}
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium text-gray-700">Материал</label>
-                  <select
-                    className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500 h-[38px]"
-                    {...register(`walls.${idx}.material`)}
-                  >
-                    {(Object.entries(WALL_MATERIAL_LABELS) as [WallMaterial, string][]).map(([v, l]) => (
-                      <option key={v} value={v}>{l}</option>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Материал</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {WALL_MATERIAL_OPTIONS.map(({ value, label }) => (
+                      <label key={value} className="cursor-pointer">
+                        <input
+                          type="radio"
+                          value={value}
+                          className="sr-only peer"
+                          {...register(`walls.${idx}.material`)}
+                        />
+                        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium border border-gray-300 text-gray-600 bg-white transition-colors peer-checked:bg-primary-500 peer-checked:border-primary-500 peer-checked:text-white">
+                          {label}
+                        </span>
+                      </label>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium text-gray-700">Тип стены</label>
-                  <select
-                    className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500 h-[38px]"
-                    {...register(`walls.${idx}.wallType`)}
-                  >
-                    {(Object.entries(WALL_TYPE_LABELS) as [WallType, string][]).map(([v, l]) => (
-                      <option key={v} value={v}>{l}</option>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Тип стены</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {WALL_TYPE_OPTIONS.map(({ value, label }) => (
+                      <label key={value} className="cursor-pointer">
+                        <input
+                          type="radio"
+                          value={value}
+                          className="sr-only peer"
+                          {...register(`walls.${idx}.wallType`)}
+                        />
+                        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium border border-gray-300 text-gray-600 bg-white transition-colors peer-checked:bg-primary-500 peer-checked:border-primary-500 peer-checked:text-white">
+                          {label}
+                        </span>
+                      </label>
                     ))}
-                  </select>
+                  </div>
                 </div>
               </div>
             </div>
