@@ -59,14 +59,15 @@ export function PhotoChecklistStep() {
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photosLoading, setPhotosLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<'overview' | 'detail' | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [markingDone, setMarkingDone] = useState(false);
   const [manualChecks, setManualChecks] = useState({
     curvatureChecked: false,
     elementsPlaced: false,
   });
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const overviewInputRef = useRef<HTMLInputElement>(null);
+  const detailInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!roomId) return;
@@ -78,20 +79,22 @@ export function PhotoChecklistStep() {
   }, [roomId]);
 
   const overviewPhotos = photos.filter((p) => p.photoType === 'OVERVIEW_BEFORE');
+  const detailPhotos = photos.filter((p) => p.photoType === 'DETAIL');
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'OVERVIEW_BEFORE' | 'DETAIL') => {
     const file = e.target.files?.[0];
     if (!file || !roomId) return;
-    setUploading(true);
+    setUploading(type === 'OVERVIEW_BEFORE' ? 'overview' : 'detail');
     setUploadError(null);
     try {
-      const uploaded = await photosApi.upload(roomId, file, 'OVERVIEW_BEFORE');
+      const uploaded = await photosApi.upload(roomId, file, type);
       setPhotos((prev) => [...prev, uploaded]);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Ошибка загрузки');
     } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setUploading(null);
+      const ref = type === 'OVERVIEW_BEFORE' ? overviewInputRef : detailInputRef;
+      if (ref.current) ref.current.value = '';
     }
   };
 
@@ -118,6 +121,8 @@ export function PhotoChecklistStep() {
   const canMarkDone =
     hasPhoto &&
     hasWalls &&
+    allWallsHaveSegments &&
+    allOpeningsMeasured &&
     manualChecks.curvatureChecked &&
     manualChecks.elementsPlaced;
 
@@ -176,24 +181,68 @@ export function PhotoChecklistStep() {
         )}
 
         <input
-          ref={fileInputRef}
+          ref={overviewInputRef}
           type="file"
           accept="image/*"
           capture="environment"
           className="hidden"
-          onChange={handleUpload}
+          onChange={(e) => handleUpload(e, 'OVERVIEW_BEFORE')}
         />
         <Button
           variant="secondary"
           size="sm"
-          disabled={uploading}
-          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading !== null}
+          onClick={() => overviewInputRef.current?.click()}
         >
-          {uploading ? 'Загрузка…' : '+ Добавить фото'}
+          {uploading === 'overview' ? 'Загрузка…' : '+ Добавить фото'}
         </Button>
         {uploadError && (
           <p className="text-xs text-red-500 mt-2">{uploadError}</p>
         )}
+      </div>
+
+      {/* Detail photos */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+        <p className="text-sm font-medium text-gray-700 mb-2">
+          Детальные фото (проблемные места, ниши, трубы…)
+        </p>
+        {!photosLoading && detailPhotos.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {detailPhotos.map((photo) => (
+              <div key={photo.id} className="relative group">
+                <img
+                  src={photo.thumbPath ?? photo.originalPath}
+                  alt="деталь"
+                  className="w-24 h-24 object-cover rounded-md border border-gray-200"
+                  onError={(e) => { e.currentTarget.src = photo.originalPath; }}
+                />
+                <button
+                  className="absolute top-1 right-1 bg-white/90 rounded-full w-5 h-5 text-xs text-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => handleRemovePhoto(photo.id)}
+                  aria-label="Удалить фото"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <input
+          ref={detailInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => handleUpload(e, 'DETAIL')}
+        />
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={uploading !== null}
+          onClick={() => detailInputRef.current?.click()}
+        >
+          {uploading === 'detail' ? 'Загрузка…' : '+ Добавить фото'}
+        </Button>
       </div>
 
       {/* Checklist */}
