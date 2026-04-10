@@ -72,7 +72,7 @@ export class PhotosService {
     const originalName = `${name}.jpg`;
     const thumbName = `${name}_thumb.jpg`;
 
-    const [filePath] = await Promise.all([
+    const [originalPath, thumbPath] = await Promise.all([
       this.saveProcessed(file, subDir, originalName),
       // thumbnail
       (async () => {
@@ -84,10 +84,11 @@ export class PhotosService {
           .resize(THUMBNAIL_WIDTH)
           .jpeg({ quality: 75 })
           .toFile(path.join(dir, thumbName));
+        return path.join('uploads', subDir, thumbName).replace(/\\/g, '/');
       })(),
     ]);
 
-    return this.prisma.roomPhoto.create({ data: { roomId, photoType, filePath } });
+    return this.prisma.roomPhoto.create({ data: { roomId, photoType, originalPath, thumbPath } });
   }
 
   async remove(roomId: string, photoId: string, userId: string): Promise<void> {
@@ -98,15 +99,14 @@ export class PhotosService {
     await this.prisma.roomPhoto.delete({ where: { id: photoId } });
 
     // Delete original and thumbnail — guard against path traversal
-    const fullPath = path.resolve(process.cwd(), photo.filePath);
+    const originalFullPath = path.resolve(this.uploadsDir, photo.originalPath.replace(/^uploads\//, ''));
     const uploadsRoot = path.resolve(this.uploadsDir);
-    if (!fullPath.startsWith(uploadsRoot + path.sep) && fullPath !== uploadsRoot) {
+    if (!originalFullPath.startsWith(uploadsRoot + path.sep) && originalFullPath !== uploadsRoot) {
       throw new BadRequestException('Invalid file path');
     }
-    const thumbPath = fullPath.replace(/\.jpg$/, '_thumb.jpg');
     await Promise.all([
-      fs.unlink(fullPath).catch(() => undefined),
-      fs.unlink(thumbPath).catch(() => undefined),
+      fs.unlink(originalFullPath).catch(() => undefined),
+      photo.thumbPath ? fs.unlink(path.resolve(this.uploadsDir, photo.thumbPath.replace(/^uploads\//, ''))).catch(() => undefined) : Promise.resolve(),
     ]);
   }
 }

@@ -316,12 +316,13 @@ model RoomElement {
 }
 
 model RoomPhoto {
-  id        String    @id @default(uuid())
-  roomId    String
-  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  photoType PhotoType
-  filePath  String
-  createdAt DateTime  @default(now())
+  id           String    @id @default(uuid())
+  roomId       String
+  room         Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  photoType    PhotoType
+  originalPath String
+  thumbPath    String?
+  createdAt    DateTime  @default(now())
 
   @@index([roomId])
 }

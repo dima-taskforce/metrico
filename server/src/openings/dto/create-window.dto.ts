@@ -6,7 +6,7 @@ export class CreateWindowDto {
   width!: number;
 
   @IsNumber()
-  @IsPositive()
+  @Min(0)
   height!: number;
 
   @IsNumber()

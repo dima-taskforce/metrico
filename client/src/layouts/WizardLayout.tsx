@@ -3,9 +3,7 @@ import { Outlet, useParams, NavLink, Link, useLocation } from 'react-router-dom'
 const STEPS = [
   { step: 1, label: 'Общая информация', path: 'info' },
   { step: 2, label: 'Комнаты', path: 'rooms' },
-  { step: 3, label: 'Стены', path: 'walls' },
-  { step: 4, label: 'Элементы', path: 'elements' },
-  { step: 5, label: 'Фото', path: 'photos' },
+  { step: 3, label: 'Сводка', path: 'summary' },
 ];
 
 export function WizardLayout() {

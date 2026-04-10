@@ -11,19 +11,40 @@ import type { Wall, WindowOpening, DoorOpening } from '../../../types/api';
 
 // --- Window form ---
 const windowSchema = z.object({
-  height: z.coerce.number().positive('Высота > 0'),
-  sillHeightFromScreed: z.coerce.number().min(0, '≥ 0'),
-  revealWidthLeft: z.coerce.number().min(0, '≥ 0').optional(),
-  revealWidthRight: z.coerce.number().min(0, '≥ 0').optional(),
+  height: z.preprocess(
+    v => String(v).replace(',', '.'),
+    z.coerce.number().positive('Высота > 0'),
+  ),
+  sillHeightFromScreed: z.preprocess(
+    v => String(v).replace(',', '.'),
+    z.coerce.number().min(0, '≥ 0'),
+  ),
+  revealWidthLeft: z.preprocess(
+    v => String(v).replace(',', '.'),
+    z.coerce.number().min(0, '≥ 0'),
+  ).optional(),
+  revealWidthRight: z.preprocess(
+    v => String(v).replace(',', '.'),
+    z.coerce.number().min(0, '≥ 0'),
+  ).optional(),
   isFrenchDoor: z.boolean().optional(),
 });
 type WindowForm = z.infer<typeof windowSchema>;
 
 // --- Door form ---
 const doorSchema = z.object({
-  heightFromScreed: z.coerce.number().min(0, '≥ 0'),
-  revealLeft: z.coerce.number().min(0, '≥ 0').optional(),
-  revealRight: z.coerce.number().min(0, '≥ 0').optional(),
+  heightFromScreed: z.preprocess(
+    v => String(v).replace(',', '.'),
+    z.coerce.number().min(0, '≥ 0'),
+  ),
+  revealLeft: z.preprocess(
+    v => String(v).replace(',', '.'),
+    z.coerce.number().min(0, '≥ 0'),
+  ).optional(),
+  revealRight: z.preprocess(
+    v => String(v).replace(',', '.'),
+    z.coerce.number().min(0, '≥ 0'),
+  ).optional(),
   isFrenchDoor: z.boolean().optional(),
 });
 type DoorForm = z.infer<typeof doorSchema>;
@@ -33,20 +54,20 @@ function WindowCard({ wall, win }: { wall: Wall; win: WindowOpening }) {
   const { register, handleSubmit, formState: { errors, isSubmitting, isDirty } } = useForm<WindowForm>({
     resolver: zodResolver(windowSchema),
     defaultValues: {
-      ...(win.height > 0 && { height: win.height }),
-      ...(win.sillHeightFromScreed > 0 && { sillHeightFromScreed: win.sillHeightFromScreed }),
-      revealWidthLeft: win.revealWidthLeft ?? undefined,
-      revealWidthRight: win.revealWidthRight ?? undefined,
+      ...(win.height > 0 && { height: win.height / 1000 }),
+      ...(win.sillHeightFromScreed > 0 && { sillHeightFromScreed: win.sillHeightFromScreed / 1000 }),
+      revealWidthLeft: win.revealWidthLeft ? win.revealWidthLeft / 1000 : undefined,
+      revealWidthRight: win.revealWidthRight ? win.revealWidthRight / 1000 : undefined,
       isFrenchDoor: win.isFrenchDoor,
     },
   });
 
   const onSubmit = async (data: WindowForm) => {
     const updated = await openingsApi.windows.update(wall.id, win.id, {
-      height: data.height,
-      sillHeightFromScreed: data.sillHeightFromScreed,
-      revealWidthLeft: data.revealWidthLeft,
-      revealWidthRight: data.revealWidthRight,
+      height: data.height * 1000,
+      sillHeightFromScreed: data.sillHeightFromScreed * 1000,
+      revealWidthLeft: data.revealWidthLeft ? data.revealWidthLeft * 1000 : undefined,
+      revealWidthRight: data.revealWidthRight ? data.revealWidthRight * 1000 : undefined,
       isFrenchDoor: data.isFrenchDoor,
     });
     upsertWindow(wall.id, updated);
@@ -64,34 +85,30 @@ function WindowCard({ wall, win }: { wall: Wall; win: WindowOpening }) {
 
       <div className="grid grid-cols-2 gap-3">
         <Input
-          label="Высота, мм"
-          type="number"
-          step="1"
-          min="1"
+          label="Высота, м"
+          type="text"
+          inputMode="decimal"
           error={errors.height?.message}
           {...register('height')}
         />
         <Input
-          label="Высота подоконника от стяжки, мм"
-          type="number"
-          step="1"
-          min="0"
+          label="Высота подоконника от стяжки, м"
+          type="text"
+          inputMode="decimal"
           error={errors.sillHeightFromScreed?.message}
           {...register('sillHeightFromScreed')}
         />
         <Input
-          label="Откос слева, мм"
-          type="number"
-          step="1"
-          min="0"
+          label="Откос слева, м"
+          type="text"
+          inputMode="decimal"
           error={errors.revealWidthLeft?.message}
           {...register('revealWidthLeft')}
         />
         <Input
-          label="Откос справа, мм"
-          type="number"
-          step="1"
-          min="0"
+          label="Откос справа, м"
+          type="text"
+          inputMode="decimal"
           error={errors.revealWidthRight?.message}
           {...register('revealWidthRight')}
         />
@@ -118,18 +135,18 @@ function DoorCard({ wall, door }: { wall: Wall; door: DoorOpening }) {
   const { register, handleSubmit, formState: { errors, isSubmitting, isDirty } } = useForm<DoorForm>({
     resolver: zodResolver(doorSchema),
     defaultValues: {
-      ...(door.heightFromScreed > 0 && { heightFromScreed: door.heightFromScreed }),
-      revealLeft: door.revealLeft ?? undefined,
-      revealRight: door.revealRight ?? undefined,
+      ...(door.heightFromScreed > 0 && { heightFromScreed: door.heightFromScreed / 1000 }),
+      revealLeft: door.revealLeft ? door.revealLeft / 1000 : undefined,
+      revealRight: door.revealRight ? door.revealRight / 1000 : undefined,
       isFrenchDoor: door.isFrenchDoor,
     },
   });
 
   const onSubmit = async (data: DoorForm) => {
     const updated = await openingsApi.doors.update(wall.id, door.id, {
-      heightFromScreed: data.heightFromScreed,
-      revealLeft: data.revealLeft,
-      revealRight: data.revealRight,
+      heightFromScreed: data.heightFromScreed * 1000,
+      revealLeft: data.revealLeft ? data.revealLeft * 1000 : undefined,
+      revealRight: data.revealRight ? data.revealRight * 1000 : undefined,
       isFrenchDoor: data.isFrenchDoor,
     });
     upsertDoor(wall.id, updated);
@@ -146,27 +163,24 @@ function DoorCard({ wall, door }: { wall: Wall; door: DoorOpening }) {
 
       <div className="grid grid-cols-2 gap-3">
         <Input
-          label="Высота от стяжки, мм"
-          type="number"
-          step="1"
-          min="0"
+          label="Высота от стяжки, м"
+          type="text"
+          inputMode="decimal"
           error={errors.heightFromScreed?.message}
           {...register('heightFromScreed')}
         />
         <div />
         <Input
-          label="Откос слева, мм"
-          type="number"
-          step="1"
-          min="0"
+          label="Откос слева, м"
+          type="text"
+          inputMode="decimal"
           error={errors.revealLeft?.message}
           {...register('revealLeft')}
         />
         <Input
-          label="Откос справа, мм"
-          type="number"
-          step="1"
-          min="0"
+          label="Откос справа, м"
+          type="text"
+          inputMode="decimal"
           error={errors.revealRight?.message}
           {...register('revealRight')}
         />
