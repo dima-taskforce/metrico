@@ -246,15 +246,15 @@ export function PerimeterWalkStep() {
   return (
     <div className="p-6 max-w-xl pb-20 sm:pb-6">
       {/* Header with mini-map */}
-      <div className="flex items-start gap-4 mb-4">
-        <div className="flex-1">
+      <div className="flex flex-col gap-3 mb-4">
+        <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-1">3.4 Детализация стен</h3>
           <p className="text-sm text-gray-500">
             Разбейте стену на участки: просто стена, окно, дверь, выступ. Если особых участков нет — нажмите «Далее».
           </p>
         </div>
         {currentRoom && (
-          <div className="w-24 h-20 shrink-0 text-primary-400">
+          <div className="w-full h-36 text-primary-400">
             <WallMiniMap
               shape={currentRoom.shape}
               orientation={shapeOrientation}
