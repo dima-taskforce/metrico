@@ -13,16 +13,16 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
-      CORS_ORIGINS: https://metrico.n1tr0.space
-      CLIENT_URL: https://metrico.n1tr0.space
+      CORS_ORIGINS: https://metrico360.ru
+      CLIENT_URL: https://metrico360.ru
       UPLOADS_DIR: /app/data/uploads
       MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-10}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_CALLBACK_URL: https://metrico.n1tr0.space/api/auth/google/callback
+      GOOGLE_CALLBACK_URL: https://metrico360.ru/api/auth/google/callback
       YANDEX_CLIENT_ID: ${YANDEX_CLIENT_ID}
       YANDEX_CLIENT_SECRET: ${YANDEX_CLIENT_SECRET}
-      YANDEX_CALLBACK_URL: https://metrico.n1tr0.space/api/auth/yandex/callback
+      YANDEX_CALLBACK_URL: https://metrico360.ru/api/auth/yandex/callback
     volumes:
       - data:/app/data
     networks:

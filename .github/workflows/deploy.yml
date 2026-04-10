@@ -175,7 +175,7 @@ jobs:
             Tag: `${{ needs.build.outputs.image_tag }}`
             Commit: `${{ github.sha }}`
             By: ${{ github.actor }}
-            https://metrico.n1tr0.space
+            https://metrico360.ru
 
       - name: Notify Telegram — failure
         if: failure()
