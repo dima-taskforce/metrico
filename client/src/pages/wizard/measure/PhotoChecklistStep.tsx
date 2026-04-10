@@ -152,9 +152,10 @@ export function PhotoChecklistStep() {
             {overviewPhotos.map((photo) => (
               <div key={photo.id} className="relative group">
                 <img
-                  src={`/uploads/${photo.thumbPath ?? photo.originalPath}`}
+                  src={photo.thumbPath ?? photo.originalPath}
                   alt="общий вид"
                   className="w-24 h-24 object-cover rounded-md border border-gray-200"
+                  onError={(e) => { e.currentTarget.src = photo.originalPath; }}
                 />
                 <button
                   className="absolute top-1 right-1 bg-white/90 rounded-full w-5 h-5 text-xs text-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"

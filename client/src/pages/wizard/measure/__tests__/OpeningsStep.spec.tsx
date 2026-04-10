@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, assertType } from 'vitest';
 import { OpeningsStep } from '../OpeningsStep';
 import { useRoomMeasureStore } from '../../../../stores/roomMeasureStore';
 
@@ -23,6 +23,13 @@ const mockSetWindows = vi.fn();
 const mockSetDoors = vi.fn();
 const mockUpsertWindow = vi.fn();
 const mockUpsertDoor = vi.fn();
+
+// Type-cast for mocking
+const mockedUseRoomMeasureStore = useRoomMeasureStore as ReturnType<typeof vi.fn>;
+const mockedOpeningsWindowsList = (openingsApi.windows.list as any) as ReturnType<typeof vi.fn>;
+const mockedOpeningsWindowsUpdate = (openingsApi.windows.update as any) as ReturnType<typeof vi.fn>;
+const mockedOpeningsDoorsList = (openingsApi.doors.list as any) as ReturnType<typeof vi.fn>;
+const mockedOpeningsDoorsUpdate = (openingsApi.doors.update as any) as ReturnType<typeof vi.fn>;
 
 const makeWall = (overrides = {}) => ({
   id: 'w1',
@@ -89,7 +96,7 @@ const setupStore = (
   doors: Record<string, ReturnType<typeof makeDoor>[]> = {},
   segments: Record<string, ReturnType<typeof makeSegmentWithWindow>[]> = {},
 ) => {
-  vi.mocked(useRoomMeasureStore).mockReturnValue({
+  mockedUseRoomMeasureStore.mockReturnValue({
     walls,
     windows,
     doors,
@@ -107,8 +114,8 @@ const setupStore = (
 describe('OpeningsStep', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(openingsApi.windows.list).mockResolvedValue([]);
-    vi.mocked(openingsApi.doors.list).mockResolvedValue([]);
+    mockedOpeningsWindowsList.mockResolvedValue([]);
+    mockedOpeningsDoorsList.mockResolvedValue([]);
   });
 
   it('shows loading state initially when walls have segments', async () => {
@@ -197,7 +204,7 @@ describe('OpeningsStep', () => {
   });
 
   it('saves door on form submit', async () => {
-    const updated = makeDoor({ heightFromScreed: 2200 });
+    const updated = makeDoor({ heightFromScreed: 2200000 });
     vi.mocked(openingsApi.doors.update).mockResolvedValue(updated);
 
     setupStore(
@@ -208,8 +215,8 @@ describe('OpeningsStep', () => {
     );
     render(<OpeningsStep />);
 
-    const heightInput = screen.getByLabelText(/Высота от стяжки, мм/i);
-    fireEvent.change(heightInput, { target: { value: '2200' } });
+    const heightInput = screen.getByLabelText(/Высота от стяжки, м/i);
+    fireEvent.change(heightInput, { target: { value: '2.2' } });
 
     fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
 
@@ -244,77 +251,102 @@ describe('OpeningsStep', () => {
     expect(mockSetSubstep).toHaveBeenCalledWith(6);
   });
 
-  // ── Decimal input tests ────────────────────────────────────────────────
+  // ── Decimal input tests (meter values) ────────────────────────────────────
 
-  it('window height field has step="0.1" to allow decimal mm values', () => {
+  it('window height field accepts text input for meter values', () => {
     setupStore([makeWall()], { w1: [makeWindow()] }, {}, {});
     render(<OpeningsStep />);
-    const heightInput = screen.getByLabelText(/Высота, мм/i);
-    expect(heightInput).toHaveAttribute('step', '0.1');
+    const heightInput = screen.getByLabelText(/Высота, м/i);
+    expect(heightInput).toHaveAttribute('type', 'text');
+    expect(heightInput).toHaveAttribute('inputMode', 'decimal');
   });
 
-  it('window sill height field has step="0.1" to allow decimal mm values', () => {
+  it('window sill height field accepts text input for meter values', () => {
     setupStore([makeWall()], { w1: [makeWindow()] }, {}, {});
     render(<OpeningsStep />);
     const sillInput = screen.getByLabelText(/Высота подоконника от стяжки/i);
-    expect(sillInput).toHaveAttribute('step', '0.1');
+    expect(sillInput).toHaveAttribute('type', 'text');
+    expect(sillInput).toHaveAttribute('inputMode', 'decimal');
   });
 
-  it('window reveal fields have step="0.1" to allow decimal mm values', () => {
+  it('window reveal fields accept text input for meter values', () => {
     setupStore([makeWall()], { w1: [makeWindow()] }, {}, {});
     render(<OpeningsStep />);
-    const [revealLeft, revealRight] = screen.getAllByLabelText(/Откос/i);
-    expect(revealLeft).toHaveAttribute('step', '0.1');
-    expect(revealRight).toHaveAttribute('step', '0.1');
+    const [revealLeft, revealRight] = screen.getAllByLabelText(/Откос.*м/i);
+    expect(revealLeft).toHaveAttribute('type', 'text');
+    expect(revealLeft).toHaveAttribute('inputMode', 'decimal');
+    expect(revealRight).toHaveAttribute('type', 'text');
+    expect(revealRight).toHaveAttribute('inputMode', 'decimal');
   });
 
-  it('door height field has step="0.1" to allow decimal mm values', () => {
+  it('door height field accepts text input for meter values', () => {
     setupStore([makeWall()], {}, { w1: [makeDoor()] }, {});
     render(<OpeningsStep />);
-    const heightInput = screen.getByLabelText(/Высота от стяжки, мм/i);
-    expect(heightInput).toHaveAttribute('step', '0.1');
+    const heightInput = screen.getByLabelText(/Высота от стяжки, м/i);
+    expect(heightInput).toHaveAttribute('type', 'text');
+    expect(heightInput).toHaveAttribute('inputMode', 'decimal');
   });
 
-  it('door reveal fields have step="0.1" to allow decimal mm values', () => {
+  it('door reveal fields accept text input for meter values', () => {
     setupStore([makeWall()], {}, { w1: [makeDoor()] }, {});
     render(<OpeningsStep />);
-    const [revealLeft, revealRight] = screen.getAllByLabelText(/Откос/i);
-    expect(revealLeft).toHaveAttribute('step', '0.1');
-    expect(revealRight).toHaveAttribute('step', '0.1');
+    const [revealLeft, revealRight] = screen.getAllByLabelText(/Откос.*м/i);
+    expect(revealLeft).toHaveAttribute('type', 'text');
+    expect(revealLeft).toHaveAttribute('inputMode', 'decimal');
+    expect(revealRight).toHaveAttribute('type', 'text');
+    expect(revealRight).toHaveAttribute('inputMode', 'decimal');
   });
 
-  it('saves window with decimal mm values (e.g. 1125.5)', async () => {
-    const updated = makeWindow({ height: 1125.5 });
+  it('saves window with decimal meter values (e.g. 1.125)', async () => {
+    const updated = makeWindow({ height: 1125 });
     vi.mocked(openingsApi.windows.update).mockResolvedValue(updated);
 
     setupStore([makeWall()], { w1: [makeWindow({ height: 0 })] }, {}, {});
     render(<OpeningsStep />);
 
-    fireEvent.change(screen.getByLabelText(/Высота, мм/i), { target: { value: '1125.5' } });
+    fireEvent.change(screen.getByLabelText(/Высота, м/i), { target: { value: '1.125' } });
     fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
 
     await waitFor(() => {
       expect(openingsApi.windows.update).toHaveBeenCalledWith(
         'w1', 'win1',
-        expect.objectContaining({ height: 1125.5 }),
+        expect.objectContaining({ height: 1125 }),
       );
     });
   });
 
-  it('saves door with decimal mm height (e.g. 2100.5)', async () => {
-    const updated = makeDoor({ heightFromScreed: 2100.5 });
+  it('saves door with decimal meter height (e.g. 2.1)', async () => {
+    const updated = makeDoor({ heightFromScreed: 2100 });
     vi.mocked(openingsApi.doors.update).mockResolvedValue(updated);
 
     setupStore([makeWall()], {}, { w1: [makeDoor({ heightFromScreed: 0 })] }, {});
     render(<OpeningsStep />);
 
-    fireEvent.change(screen.getByLabelText(/Высота от стяжки, мм/i), { target: { value: '2100.5' } });
+    fireEvent.change(screen.getByLabelText(/Высота от стяжки, м/i), { target: { value: '2.1' } });
     fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
 
     await waitFor(() => {
       expect(openingsApi.doors.update).toHaveBeenCalledWith(
         'w1', 'door1',
-        expect.objectContaining({ heightFromScreed: 2100.5 }),
+        expect.objectContaining({ heightFromScreed: 2100 }),
+      );
+    });
+  });
+
+  it('converts comma decimal separator to dot in window height', async () => {
+    const updated = makeWindow({ height: 1400 });
+    vi.mocked(openingsApi.windows.update).mockResolvedValue(updated);
+
+    setupStore([makeWall()], { w1: [makeWindow({ height: 0 })] }, {}, {});
+    render(<OpeningsStep />);
+
+    fireEvent.change(screen.getByLabelText(/Высота, м/i), { target: { value: '1,4' } });
+    fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
+
+    await waitFor(() => {
+      expect(openingsApi.windows.update).toHaveBeenCalledWith(
+        'w1', 'win1',
+        expect.objectContaining({ height: 1400 }),
       );
     });
   });

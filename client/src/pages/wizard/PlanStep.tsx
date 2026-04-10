@@ -105,10 +105,29 @@ export function PlanStep() {
     navigate(`/wizard/${projectId}/walls`);
   };
 
-  if (status === 'loading' || !rooms.length) {
+  if (status === 'loading') {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-gray-500">Загрузка плана…</p>
+      </div>
+    );
+  }
+
+  if (!rooms.length) {
+    return (
+      <div className="p-6">
+        <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4 text-yellow-700">
+          <p className="font-medium">Комнаты не найдены</p>
+          <p className="text-sm mt-1">Вернитесь на шаг выбора комнат и добавьте хотя бы одну</p>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => navigate(`/wizard/${projectId}/rooms`)}
+            className="mt-4"
+          >
+            Вернуться к комнатам
+          </Button>
+        </div>
       </div>
     );
   }
