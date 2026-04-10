@@ -87,7 +87,7 @@ export function CreateProjectModal({ isOpen, onClose, onSubmit }: CreateProjectM
         <Input
           label="Высота потолков, м (необязательно)"
           type="number"
-          step="0.01"
+          step="0.001"
           min="1.5"
           max="10"
           error={errors.defaultCeilingHeight?.message}
