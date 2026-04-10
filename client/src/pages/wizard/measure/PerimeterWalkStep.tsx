@@ -114,6 +114,8 @@ export function PerimeterWalkStep() {
     wallLength: number;
     segmentsSum: number;
   } | null>(null);
+  const [beforeLength, setBeforeLength] = useState<string>('');
+  const [afterLength, setAfterLength] = useState<string>('');
 
   const currentWall = walls[wallIdx];
   const currentSegments: WallSegment[] = currentWall ? (segments[currentWall.id] ?? []) : [];
@@ -155,6 +157,8 @@ export function PerimeterWalkStep() {
     const r = calcRemainder(wallLength, currentSegments);
     reset({ segmentType: 'PLAIN', length: r || ('' as unknown as number) });
     setValidationResult(null);
+    setBeforeLength('');
+    setAfterLength('');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWall?.id, segments[currentWall?.id ?? '']?.length]);
 
@@ -171,26 +175,48 @@ export function PerimeterWalkStep() {
     } else {
       reset({ segmentType, length: '' as unknown as number } as SegmentForm);
     }
+    setBeforeLength('');
+    setAfterLength('');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [segmentType]);
 
   const goToWall = (idx: number) => {
     setWallIdx(idx);
     setValidationResult(null);
+    setBeforeLength('');
+    setAfterLength('');
   };
 
   const onAddSegment = async (data: SegmentForm) => {
     if (!currentWall) return;
     try {
+      let sortOrder = currentSegments.length;
+      const beforeVal = parseFloat(beforeLength);
+      const afterVal = parseFloat(afterLength);
+      const newlyCreated: WallSegment[] = [];
+
+      // 1. Plain wall before the segment
+      if (!isNaN(beforeVal) && beforeVal > 0) {
+        const plainBefore = await segmentsApi.create(currentWall.id, {
+          segmentType: 'PLAIN',
+          length: beforeVal,
+          sortOrder: sortOrder++,
+        });
+        upsertSegment(currentWall.id, plainBefore);
+        newlyCreated.push(plainBefore);
+      }
+
+      // 2. Main segment (window / door / protrusion / etc.)
       const created = await segmentsApi.create(currentWall.id, {
         segmentType: data.segmentType,
         length: data.length,
-        sortOrder: currentSegments.length,
+        sortOrder: sortOrder++,
         ...(needsDepth && 'depth' in data ? { depth: data.depth } : {}),
         ...('isInner' in data && data.isInner !== undefined ? { isInner: data.isInner } : {}),
         ...('description' in data && data.description ? { description: data.description } : {}),
       });
       upsertSegment(currentWall.id, created);
+      newlyCreated.push(created);
 
       if (data.segmentType === 'WINDOW') {
         const win = await openingsApi.windows.create(currentWall.id, {
@@ -208,8 +234,21 @@ export function PerimeterWalkStep() {
         upsertDoor(currentWall.id, door);
       }
 
-      const newSegs = [...currentSegments, created];
-      const newRemainder = calcRemainder(wallLength, newSegs);
+      // 3. Plain wall after the segment
+      if (!isNaN(afterVal) && afterVal > 0) {
+        const plainAfter = await segmentsApi.create(currentWall.id, {
+          segmentType: 'PLAIN',
+          length: afterVal,
+          sortOrder: sortOrder++,
+        });
+        upsertSegment(currentWall.id, plainAfter);
+        newlyCreated.push(plainAfter);
+      }
+
+      const allSegs = [...currentSegments, ...newlyCreated];
+      const newRemainder = calcRemainder(wallLength, allSegs);
+      setBeforeLength('');
+      setAfterLength('');
       reset({ segmentType: 'PLAIN', length: newRemainder || ('' as unknown as number) });
       setValidationResult(null);
     } catch (err) {
@@ -356,55 +395,102 @@ export function PerimeterWalkStep() {
           </select>
         </div>
 
-        {/* Length / width — context-aware label */}
-        <div className="mb-3">
-          <Input
-            label={LENGTH_LABEL[segmentType]}
-            type="number"
-            step="0.001"
-            min="0.001"
-            error={errors.length?.message}
-            {...register('length')}
-          />
-        </div>
-
-        {/* Depth — for PROTRUSION, NICHE, PARTITION, STEP */}
-        {needsDepth && (
-          <div className="mb-3">
-            <Input
-              label={DEPTH_LABEL[segmentType]}
-              type="number"
-              step="0.001"
-              min="0.001"
-              error={'depth' in errors ? errors.depth?.message : undefined}
-              {...register('depth' as 'length')}
-            />
-          </div>
-        )}
-
-        {/* isInner toggle — only for STEP */}
-        {isStep && (
-          <div className="mb-3 flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-700">Тип ступеньки:</span>
-            <label className="flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="radio"
-                value="false"
-                {...register('isInner' as 'length')}
-                onChange={() => setValue('isInner' as 'length', false as unknown as number)}
+        {segmentType !== 'PLAIN' ? (
+          <>
+            {/* 1. Wall before the segment */}
+            <div className="mb-3">
+              <Input
+                label="Стена до, м"
+                type="number"
+                step="0.001"
+                min="0"
+                placeholder="0"
+                value={beforeLength}
+                onChange={(e) => setBeforeLength(e.target.value)}
               />
-              <span className="text-sm text-gray-700">Внешняя</span>
-            </label>
-            <label className="flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="radio"
-                value="true"
-                {...register('isInner' as 'length')}
-                onChange={() => setValue('isInner' as 'length', true as unknown as number)}
+            </div>
+
+            {/* 2. The segment itself */}
+            <div className="mb-3">
+              <Input
+                label={LENGTH_LABEL[segmentType]}
+                type="number"
+                step="0.001"
+                min="0.001"
+                error={errors.length?.message}
+                {...register('length')}
               />
-              <span className="text-sm text-gray-700">Внутренняя</span>
-            </label>
-          </div>
+            </div>
+
+            {/* Depth — for PROTRUSION, NICHE, PARTITION, STEP */}
+            {needsDepth && (
+              <div className="mb-3">
+                <Input
+                  label={DEPTH_LABEL[segmentType]}
+                  type="number"
+                  step="0.001"
+                  min="0.001"
+                  error={'depth' in errors ? errors.depth?.message : undefined}
+                  {...register('depth' as 'length')}
+                />
+              </div>
+            )}
+
+            {/* isInner toggle — only for STEP */}
+            {isStep && (
+              <div className="mb-3 flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-700">Тип ступеньки:</span>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    value="false"
+                    {...register('isInner' as 'length')}
+                    onChange={() => setValue('isInner' as 'length', false as unknown as number)}
+                  />
+                  <span className="text-sm text-gray-700">Внешняя</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    value="true"
+                    {...register('isInner' as 'length')}
+                    onChange={() => setValue('isInner' as 'length', true as unknown as number)}
+                  />
+                  <span className="text-sm text-gray-700">Внутренняя</span>
+                </label>
+              </div>
+            )}
+
+            {/* 3. Wall after the segment */}
+            <div className="mb-3">
+              <Input
+                label="Стена после, м"
+                type="number"
+                step="0.001"
+                min="0"
+                placeholder="0"
+                value={afterLength}
+                onChange={(e) => setAfterLength(e.target.value)}
+              />
+              {remainder > 0 && (
+                <p className="text-xs text-gray-400 mt-1">Остаток стены: {remainder.toFixed(3)} м</p>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* PLAIN: single length field */}
+            <div className="mb-3">
+              <Input
+                label={LENGTH_LABEL[segmentType]}
+                type="number"
+                step="0.001"
+                min="0.001"
+                error={errors.length?.message}
+                {...register('length')}
+              />
+            </div>
+          </>
         )}
 
         <div className="mb-3">
