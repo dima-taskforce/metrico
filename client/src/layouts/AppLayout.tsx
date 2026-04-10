@@ -15,8 +15,9 @@ export function AppLayout() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-        <Link to="/projects" className="text-xl font-semibold text-primary-600">
-          Metrico
+        <Link to="/projects" className="flex items-center gap-2">
+          <img src="/logo.svg" alt="Metrico" className="h-8 w-8" />
+          <span className="text-xl font-semibold text-primary-600">Metrico</span>
         </Link>
         <div className="flex items-center gap-4">
           {user && (
