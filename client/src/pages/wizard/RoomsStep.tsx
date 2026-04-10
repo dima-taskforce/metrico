@@ -130,7 +130,9 @@ export function RoomsStep() {
     roomsApi
       .list(projectId)
       .then(setRooms)
-      .catch(() => {})
+      .catch((err) => {
+        console.error('Failed to load rooms:', err);
+      })
       .finally(() => setIsLoading(false));
   }, [projectId]);
 
@@ -147,6 +149,7 @@ export function RoomsStep() {
         sortOrder: rooms.length,
       });
       setShapeOrientation(pickerOrientation);
+      try { localStorage.setItem(`room_orientation_${room.id}`, String(pickerOrientation)); } catch { /* ignore */ }
       setRooms((prev) => [...prev, room]);
       setShowModal(false);
       reset();
@@ -170,7 +173,8 @@ export function RoomsStep() {
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-    const roomId = (e.target as HTMLDivElement).getAttribute('data-room-id');
+    const roomCard = (e.target as HTMLElement).closest('[data-room-id]') as HTMLDivElement | null;
+    const roomId = roomCard?.getAttribute('data-room-id');
     if (roomId) {
       setDraggedRoom(roomId);
       e.dataTransfer.effectAllowed = 'move';
@@ -210,15 +214,17 @@ export function RoomsStep() {
   };
 
   return (
-    <div className="p-6 max-w-2xl">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+    <div className="p-4 sm:p-6 pb-24 sm:pb-6 max-w-2xl">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 gap-3">
+        <div className="min-w-0">
           <h2 className="text-xl font-semibold text-gray-900">Комнаты</h2>
           {currentProject && (
-            <p className="text-sm text-gray-500 mt-1">{currentProject.name}</p>
+            <p className="text-sm text-gray-500 mt-0.5 truncate">{currentProject.name}</p>
           )}
         </div>
-        <Button onClick={() => setShowModal(true)}>+ Добавить комнату</Button>
+        <Button size="sm" onClick={() => setShowModal(true)} className="shrink-0">
+          + Добавить
+        </Button>
       </div>
 
       {hasMissingRoomTypes() && (
@@ -255,11 +261,16 @@ export function RoomsStep() {
         </div>
       )}
 
-      <div className="flex justify-between pt-6 mt-6 border-t border-gray-100">
-        <Button variant="secondary" onClick={() => navigate(`/wizard/${projectId}/info`)}>
+      <div className="sticky bottom-0 bg-white border-t border-gray-100 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 flex gap-3 mt-6">
+        <Button
+          variant="secondary"
+          className="flex-1 sm:flex-none"
+          onClick={() => navigate(`/wizard/${projectId}/info`)}
+        >
           ← Назад
         </Button>
         <Button
+          className="flex-1 sm:flex-none"
           onClick={() => navigate(`/wizard/${projectId}/plan`)}
           disabled={rooms.length === 0}
         >

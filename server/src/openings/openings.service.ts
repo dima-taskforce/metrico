@@ -16,7 +16,7 @@ export class OpeningsService {
       include: { room: { include: { project: { select: { userId: true } } } } },
     });
     if (!wall) throw new NotFoundException('Wall not found');
-    if ((wall as { room: { project: { userId: string } } }).room.project.userId !== userId) {
+    if (wall.room.project.userId !== userId) {
       throw new ForbiddenException();
     }
   }
