@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Room, Wall, Angle, WallSegment, WindowOpening, DoorOpening, RoomElement } from '@prisma/client';
+import type { Room, Wall, Angle, WallSegment, WallAdjacency, DoorOpening, RoomElement } from '@prisma/client';
 import { RoomsCalcService } from '../rooms/rooms-calc.service';
 import {
   FloorPlanRoom,
@@ -23,6 +23,10 @@ type RoomWithWalls = Room & {
   elements: RoomElement[];
 };
 
+type AdjacencyWithDoor = WallAdjacency & {
+  doorOpening: DoorOpening | null;
+};
+
 @Injectable()
 export class PlanAssemblerService {
   constructor(private roomsCalc: RoomsCalcService) {}
@@ -36,7 +40,7 @@ export class PlanAssemblerService {
     projectName: string,
     rooms: RoomWithWalls[],
     angles: Angle[],
-    adjacencies: any[], // WallAdjacency with relations
+    adjacencies: AdjacencyWithDoor[],
   ): GetPlanDto {
     const floorPlanRooms = rooms.map((room) => this.assembleRoom(room, angles));
 
@@ -163,7 +167,7 @@ export class PlanAssemblerService {
   /**
    * Assemble wall adjacency with label resolution.
    */
-  private assembleAdjacency(adjacency: any, rooms: RoomWithWalls[]): FloorPlanAdjacency {
+  private assembleAdjacency(adjacency: AdjacencyWithDoor, rooms: RoomWithWalls[]): FloorPlanAdjacency {
     // Find wall labels by ID from rooms
     let wallALabel = '';
     let wallBLabel = '';
@@ -180,7 +184,7 @@ export class PlanAssemblerService {
       wallALabel,
       wallBLabel,
       hasDoor: adjacency.hasDoorBetween,
-      doorLabel: adjacency.doorOpening ? adjacency.doorOpening.id : undefined,
+      ...(adjacency.doorOpening ? { doorLabel: adjacency.doorOpening.id } : {}),
     };
   }
 }

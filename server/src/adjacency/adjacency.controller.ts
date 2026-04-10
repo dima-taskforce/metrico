@@ -9,6 +9,7 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser, JwtPayload } from '../auth/decorators/current-user.decorator';
 import { AdjacencyService } from './adjacency.service';
 import { CreateAdjacencyDto } from './dto/create-adjacency.dto';
 
@@ -21,18 +22,26 @@ export class AdjacencyController {
   async create(
     @Param('projectId') projectId: string,
     @Body() dto: CreateAdjacencyDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.adjacencyService.create(projectId, dto);
+    return this.adjacencyService.create(projectId, dto, user.sub);
   }
 
   @Get()
-  async findByProject(@Param('projectId') projectId: string) {
-    return this.adjacencyService.findByProject(projectId);
+  async findByProject(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.adjacencyService.findByProject(projectId, user.sub);
   }
 
   @Delete(':adjacencyId')
   @HttpCode(204)
-  async delete(@Param('adjacencyId') adjacencyId: string) {
-    await this.adjacencyService.delete(adjacencyId);
+  async delete(
+    @Param('adjacencyId') adjacencyId: string,
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    await this.adjacencyService.delete(adjacencyId, projectId, user.sub);
   }
 }

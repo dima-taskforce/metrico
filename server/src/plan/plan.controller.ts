@@ -10,6 +10,7 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser, JwtPayload } from '../auth/decorators/current-user.decorator';
 import { PlanService } from './plan.service';
 import { GetPlanDto } from './dto/get-plan.dto';
 
@@ -23,8 +24,11 @@ export class PlanController {
    * Returns assembled floor plan (rooms, walls, elements, adjacencies, stats).
    */
   @Get(':projectId/plan')
-  async getFloorPlan(@Param('projectId') projectId: string): Promise<GetPlanDto> {
-    return this.planService.getFloorPlan(projectId);
+  async getFloorPlan(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<GetPlanDto> {
+    return this.planService.getFloorPlan(projectId, user.sub);
   }
 
   /**
@@ -36,8 +40,9 @@ export class PlanController {
   async saveFloorPlanLayout(
     @Param('projectId') projectId: string,
     @Body('layoutJson') layoutJson: string,
+    @CurrentUser() user: JwtPayload,
   ): Promise<{ id: string; projectId: string }> {
-    return this.planService.saveFloorPlanLayout(projectId, layoutJson);
+    return this.planService.saveFloorPlanLayout(projectId, layoutJson, user.sub);
   }
 
   /**
@@ -46,7 +51,10 @@ export class PlanController {
    */
   @Delete(':projectId/plan')
   @HttpCode(204)
-  async deleteFloorPlanLayout(@Param('projectId') projectId: string): Promise<void> {
-    return this.planService.deleteFloorPlanLayout(projectId);
+  async deleteFloorPlanLayout(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<void> {
+    return this.planService.deleteFloorPlanLayout(projectId, user.sub);
   }
 }

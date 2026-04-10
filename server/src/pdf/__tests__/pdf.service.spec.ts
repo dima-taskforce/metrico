@@ -109,47 +109,47 @@ describe('PdfGeneratorService', () => {
   });
 
   it('generates a non-empty PDF buffer', async () => {
-    const buffer = await service.generateProjectPdf('proj-1');
+    const buffer = await service.generateProjectPdf('proj-1', 'user-id');
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(0);
   });
 
   it('starts with PDF magic bytes %PDF', async () => {
-    const buffer = await service.generateProjectPdf('proj-1');
+    const buffer = await service.generateProjectPdf('proj-1', 'user-id');
     expect(buffer.slice(0, 4).toString()).toBe('%PDF');
   });
 
   it('generates PDF larger than 2KB', async () => {
-    const buffer = await service.generateProjectPdf('proj-1');
+    const buffer = await service.generateProjectPdf('proj-1', 'user-id');
     expect(buffer.length).toBeGreaterThan(2048);
   });
 
   it('throws NotFoundException when project does not exist', async () => {
     prisma.project.findUnique.mockResolvedValue(null);
-    await expect(service.generateProjectPdf('nonexistent')).rejects.toThrow(NotFoundException);
+    await expect(service.generateProjectPdf('nonexistent', 'user-id')).rejects.toThrow(NotFoundException);
   });
 
   it('calls getFloorPlan with the correct projectId', async () => {
-    await service.generateProjectPdf('proj-1');
-    expect(planService.getFloorPlan).toHaveBeenCalledWith('proj-1');
+    await service.generateProjectPdf('proj-1', 'user-id');
+    expect(planService.getFloorPlan).toHaveBeenCalledWith('proj-1', 'user-id');
   });
 
   it('generates PDF for project with no address', async () => {
     prisma.project.findUnique.mockResolvedValue({ ...mockProject, address: null });
-    const buffer = await service.generateProjectPdf('proj-1');
+    const buffer = await service.generateProjectPdf('proj-1', 'user-id');
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(0);
   });
 
   it('generates PDF for project with empty rooms', async () => {
     planService.getFloorPlan.mockResolvedValue({ ...mockPlan, rooms: [] });
-    const buffer = await service.generateProjectPdf('proj-1');
+    const buffer = await service.generateProjectPdf('proj-1', 'user-id');
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(0);
   });
 
   it('throws BadRequestException for DRAFT project', async () => {
     prisma.project.findUnique.mockResolvedValue({ ...mockProject, status: 'DRAFT' });
-    await expect(service.generateProjectPdf('proj-1')).rejects.toThrow(BadRequestException);
+    await expect(service.generateProjectPdf('proj-1', 'user-id')).rejects.toThrow(BadRequestException);
   });
 });

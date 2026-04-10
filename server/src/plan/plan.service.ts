@@ -17,7 +17,9 @@ export class PlanService {
    * Get assembled floor plan for a project.
    * Returns comprehensive room/wall/element structure.
    */
-  async getFloorPlan(projectId: string): Promise<GetPlanDto> {
+  async getFloorPlan(projectId: string, userId: string): Promise<GetPlanDto> {
+    await this.projectsService.findOne(projectId, userId);
+
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -73,13 +75,13 @@ export class PlanService {
   async saveFloorPlanLayout(
     projectId: string,
     layoutJson: string,
+    userId: string,
   ): Promise<{ id: string; projectId: string }> {
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId },
-    });
+    await this.projectsService.findOne(projectId, userId);
 
-    if (!project) {
-      throw new NotFoundException(`Project ${projectId} not found`);
+    // Validate size (max 1 MB)
+    if (layoutJson.length > 1_000_000) {
+      throw new BadRequestException('layoutJson exceeds maximum allowed size');
     }
 
     // Validate JSON
@@ -120,7 +122,8 @@ export class PlanService {
   /**
    * Delete floor plan layout (returns to default auto-generated layout).
    */
-  async deleteFloorPlanLayout(projectId: string): Promise<void> {
+  async deleteFloorPlanLayout(projectId: string, userId: string): Promise<void> {
+    await this.projectsService.findOne(projectId, userId);
     const layout = await this.prisma.floorPlanLayout.findUnique({
       where: { projectId },
     });

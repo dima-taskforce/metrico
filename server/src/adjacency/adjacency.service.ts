@@ -5,13 +5,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ProjectsService } from '../projects/projects.service';
 import { CreateAdjacencyDto } from './dto/create-adjacency.dto';
 
 @Injectable()
 export class AdjacencyService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly projectsService: ProjectsService,
+  ) {}
 
-  async create(projectId: string, dto: CreateAdjacencyDto) {
+  async create(projectId: string, dto: CreateAdjacencyDto, userId: string) {
+    await this.projectsService.findOne(projectId, userId);
     // Fetch both walls
     const wallA = await this.prisma.wall.findUnique({
       where: { id: dto.wallAId },
@@ -91,7 +96,8 @@ export class AdjacencyService {
     });
   }
 
-  async findByProject(projectId: string) {
+  async findByProject(projectId: string, userId: string) {
+    await this.projectsService.findOne(projectId, userId);
     return this.prisma.wallAdjacency.findMany({
       where: { projectId },
       include: {
@@ -102,12 +108,14 @@ export class AdjacencyService {
     });
   }
 
-  async delete(adjacencyId: string) {
+  async delete(adjacencyId: string, projectId: string, userId: string) {
+    await this.projectsService.findOne(projectId, userId);
+
     const adjacency = await this.prisma.wallAdjacency.findUnique({
       where: { id: adjacencyId },
     });
 
-    if (!adjacency) {
+    if (!adjacency || adjacency.projectId !== projectId) {
       throw new NotFoundException('Adjacency not found');
     }
 

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { AdjacencyService } from '../adjacency.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ProjectsService } from '../../projects/projects.service';
 
 describe('AdjacencyService', () => {
   let service: AdjacencyService;
@@ -49,6 +50,12 @@ describe('AdjacencyService', () => {
             },
           },
         },
+        {
+          provide: ProjectsService,
+          useValue: {
+            findOne: jest.fn().mockResolvedValue({ id: 'project-id' }),
+          },
+        },
       ],
     }).compile();
 
@@ -80,7 +87,7 @@ describe('AdjacencyService', () => {
         projectId: 'project-id',
       });
 
-      const result = await service.create('project-id', dto);
+      const result = await service.create('project-id', dto, 'user-id');
       expect(result).toBeDefined();
       expect(prisma.wallAdjacency.create).toHaveBeenCalled();
     });
@@ -97,7 +104,7 @@ describe('AdjacencyService', () => {
         .mockResolvedValueOnce(mockWallA)
         .mockResolvedValueOnce(wallSameRoom);
 
-      await expect(service.create('project-id', dto)).rejects.toThrow(
+      await expect(service.create('project-id', dto, 'user-id')).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -116,7 +123,7 @@ describe('AdjacencyService', () => {
         .mockResolvedValueOnce({ id: 'existing' }) // existing direct
         .mockResolvedValueOnce(null);
 
-      await expect(service.create('project-id', dto)).rejects.toThrow(
+      await expect(service.create('project-id', dto, 'user-id')).rejects.toThrow(
         ConflictException,
       );
     });
@@ -135,7 +142,7 @@ describe('AdjacencyService', () => {
         .mockResolvedValueOnce(null) // no direct
         .mockResolvedValueOnce({ id: 'existing-reverse' }); // existing reverse
 
-      await expect(service.create('project-id', dto)).rejects.toThrow(
+      await expect(service.create('project-id', dto, 'user-id')).rejects.toThrow(
         ConflictException,
       );
     });
@@ -152,7 +159,7 @@ describe('AdjacencyService', () => {
         .mockResolvedValueOnce(mockWallB);
       (prisma.wallAdjacency.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.create('project-id', dto)).rejects.toThrow(
+      await expect(service.create('project-id', dto, 'user-id')).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -168,7 +175,7 @@ describe('AdjacencyService', () => {
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
 
-      await expect(service.create('project-id', dto)).rejects.toThrow(
+      await expect(service.create('project-id', dto, 'user-id')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -187,7 +194,7 @@ describe('AdjacencyService', () => {
       (prisma.wallAdjacency.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.doorOpening.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.create('project-id', dto)).rejects.toThrow(
+      await expect(service.create('project-id', dto, 'user-id')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -202,7 +209,7 @@ describe('AdjacencyService', () => {
         mockAdjacencies,
       );
 
-      const result = await service.findByProject('project-id');
+      const result = await service.findByProject('project-id', 'user-id');
       expect(result).toEqual(mockAdjacencies);
       expect(prisma.wallAdjacency.findMany).toHaveBeenCalledWith({
         where: { projectId: 'project-id' },
@@ -217,7 +224,7 @@ describe('AdjacencyService', () => {
       (prisma.wallAdjacency.findUnique as jest.Mock).mockResolvedValue(mockAdj);
       (prisma.wallAdjacency.delete as jest.Mock).mockResolvedValue(mockAdj);
 
-      await service.delete('adj-id');
+      await service.delete('adj-id', 'project-id', 'user-id');
       expect(prisma.wallAdjacency.delete).toHaveBeenCalledWith({
         where: { id: 'adj-id' },
       });
@@ -226,7 +233,7 @@ describe('AdjacencyService', () => {
     it('should reject non-existent adjacency', async () => {
       (prisma.wallAdjacency.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.delete('nonexistent-id')).rejects.toThrow(
+      await expect(service.delete('nonexistent-id', 'project-id', 'user-id')).rejects.toThrow(
         NotFoundException,
       );
     });

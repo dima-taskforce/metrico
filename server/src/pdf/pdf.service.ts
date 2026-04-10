@@ -379,7 +379,7 @@ export class PdfGeneratorService {
     private planService: PlanService,
   ) {}
 
-  async generateProjectPdf(projectId: string): Promise<Buffer> {
+  async generateProjectPdf(projectId: string, userId: string): Promise<Buffer> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: { id: true, name: true, address: true, status: true },
@@ -393,7 +393,7 @@ export class PdfGeneratorService {
       throw new BadRequestException('PDF can only be generated for completed projects');
     }
 
-    const plan = await this.planService.getFloorPlan(projectId);
+    const plan = await this.planService.getFloorPlan(projectId, userId);
 
     const doc = React.createElement(PlanDocument, {
       plan,

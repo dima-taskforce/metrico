@@ -9,7 +9,7 @@ describe('PlanService', () => {
   let service: PlanService;
   let prisma: PrismaService;
   let assembler: PlanAssemblerService;
-  let projectsService: { updateStatus: jest.Mock };
+  let projectsService: { findOne: jest.Mock; updateStatus: jest.Mock };
 
   const mockProject = {
     id: 'proj-1',
@@ -80,6 +80,7 @@ describe('PlanService', () => {
         {
           provide: ProjectsService,
           useValue: {
+            findOne: jest.fn().mockResolvedValue({ id: 'proj-1' }),
             updateStatus: jest.fn().mockResolvedValue(undefined),
           },
         },
@@ -111,7 +112,7 @@ describe('PlanService', () => {
       (prisma.wallAdjacency.findMany as jest.Mock).mockResolvedValue([]);
       (assembler.assembleFloorPlan as jest.Mock).mockReturnValue(mockFloorPlan);
 
-      const result = await service.getFloorPlan('proj-1');
+      const result = await service.getFloorPlan('proj-1', 'user-id');
 
       expect(result).toEqual(mockFloorPlan);
       expect(prisma.project.findUnique).toHaveBeenCalledWith({
@@ -124,7 +125,7 @@ describe('PlanService', () => {
     it('should throw NotFoundException when project not found', async () => {
       (prisma.project.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.getFloorPlan('nonexistent')).rejects.toThrow(
+      await expect(service.getFloorPlan('nonexistent', 'user-id')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -143,8 +144,7 @@ describe('PlanService', () => {
       (prisma.wallAdjacency.findMany as jest.Mock).mockResolvedValue([]);
       (assembler.assembleFloorPlan as jest.Mock).mockReturnValue(mockFloorPlan);
 
-      await service.getFloorPlan('proj-1');
-
+      await service.getFloorPlan('proj-1', 'user-id');
       expect(projectsService.updateStatus).toHaveBeenCalledWith('proj-1', 'COMPLETED');
     });
 
@@ -163,7 +163,7 @@ describe('PlanService', () => {
         generatedAt: new Date(),
       });
 
-      await service.getFloorPlan('proj-1');
+      await service.getFloorPlan('proj-1', 'user-id');
 
       expect(prisma.angle.findMany).toHaveBeenCalledWith({
         where: {
@@ -183,7 +183,7 @@ describe('PlanService', () => {
       (prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject);
       (prisma.floorPlanLayout.upsert as jest.Mock).mockResolvedValue(mockLayout);
 
-      const result = await service.saveFloorPlanLayout('proj-1', validJson);
+      const result = await service.saveFloorPlanLayout('proj-1', validJson, 'user-id');
 
       expect(result).toEqual({ id: 'layout-1', projectId: 'proj-1' });
       expect(prisma.floorPlanLayout.upsert).toHaveBeenCalledWith({
@@ -197,10 +197,10 @@ describe('PlanService', () => {
     });
 
     it('should throw NotFoundException when project not found', async () => {
-      (prisma.project.findUnique as jest.Mock).mockResolvedValue(null);
+      projectsService.findOne.mockRejectedValueOnce(new NotFoundException());
 
       await expect(
-        service.saveFloorPlanLayout('nonexistent', '{}'),
+        service.saveFloorPlanLayout('nonexistent', '{}', 'user-id'),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -208,7 +208,7 @@ describe('PlanService', () => {
       (prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject);
 
       await expect(
-        service.saveFloorPlanLayout('proj-1', 'invalid json'),
+        service.saveFloorPlanLayout('proj-1', 'invalid json', 'user-id'),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -239,7 +239,7 @@ describe('PlanService', () => {
       (prisma.floorPlanLayout.findUnique as jest.Mock).mockResolvedValue(mockLayout);
       (prisma.floorPlanLayout.delete as jest.Mock).mockResolvedValue(mockLayout);
 
-      await service.deleteFloorPlanLayout('proj-1');
+      await service.deleteFloorPlanLayout('proj-1', 'user-id');
 
       expect(prisma.floorPlanLayout.delete).toHaveBeenCalledWith({
         where: { id: 'layout-1' },
@@ -250,7 +250,7 @@ describe('PlanService', () => {
       (prisma.floorPlanLayout.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        service.deleteFloorPlanLayout('proj-1'),
+        service.deleteFloorPlanLayout('proj-1', 'user-id'),
       ).resolves.toBeUndefined();
 
       expect(prisma.floorPlanLayout.delete).not.toHaveBeenCalled();
