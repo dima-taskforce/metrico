@@ -249,7 +249,7 @@ describe('PlanStep', () => {
 
     await waitFor(() => {
       expect(planApi.planApi.saveFloorPlanLayout).toHaveBeenCalled();
-      expect(mockNavigateFn).toHaveBeenCalledWith('/wizard/test-project/walls');
+      expect(mockNavigateFn).toHaveBeenCalledWith('/wizard/test-project/summary');
     });
   });
 

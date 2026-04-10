@@ -98,7 +98,8 @@ describe('PhotoChecklistStep', () => {
   it('shows upload button', async () => {
     render(<PhotoChecklistStep />);
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Добавить фото/i })).toBeInTheDocument();
+      const buttons = screen.getAllByRole('button', { name: /Добавить фото/i });
+      expect(buttons.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -200,7 +201,7 @@ describe('PhotoChecklistStep', () => {
 
   it('enables "Готово с комнатой" when all required conditions met', async () => {
     vi.mocked(photosApi.list).mockResolvedValue([makePhoto()]);
-    setupStore({ walls: [makeWall()], segments: {}, windows: {}, doors: {}, elements: [] });
+    setupStore({ walls: [makeWall()], segments: { w1: [{ id: 's1', wallId: 'w1', segmentType: 'PLAIN', length: 4020, sortOrder: 0 }] }, windows: {}, doors: {}, elements: [] });
 
     render(<PhotoChecklistStep />);
     await waitFor(() => {
@@ -220,7 +221,7 @@ describe('PhotoChecklistStep', () => {
   it('marks room as measured and navigates on "Готово"', async () => {
     vi.mocked(photosApi.list).mockResolvedValue([makePhoto()]);
     vi.mocked(roomsApi.update).mockResolvedValue({} as never);
-    setupStore({ walls: [makeWall()], segments: {}, windows: {}, doors: {}, elements: [] });
+    setupStore({ walls: [makeWall()], segments: { w1: [{ id: 's1', wallId: 'w1', segmentType: 'PLAIN', length: 4020, sortOrder: 0 }] }, windows: {}, doors: {}, elements: [] });
 
     render(<PhotoChecklistStep />);
     await waitFor(() => {

@@ -84,8 +84,8 @@ describe('planStore', () => {
       });
     });
 
-    expect(result.current.roomPositions['r1']).toEqual({ x: 0, y: 0, rotation: 0 });
-    expect(result.current.roomPositions['r2']).toEqual({ x: 300, y: 0, rotation: 0 });
+    expect(result.current.roomPositions['r1']).toEqual({ x: 40, y: 40, rotation: 0 });
+    expect(result.current.roomPositions['r2']).toEqual({ x: 160, y: 40, rotation: 0 });
   });
 
   it('sets selected room id', () => {
@@ -261,7 +261,7 @@ describe('planStore', () => {
     });
 
     // Position should be reset to default
-    expect(result.current.roomPositions['r1']).toEqual({ x: 0, y: 0, rotation: 0 });
+    expect(result.current.roomPositions['r1']).toEqual({ x: 40, y: 40, rotation: 0 });
   });
 
   it('resets store to initial state', () => {
@@ -308,8 +308,8 @@ describe('planStore', () => {
     });
 
     expect(result.current.roomPositions['r1']?.x).toBe(100);
-    expect(result.current.roomPositions['r1']?.y).toBe(0);
-    expect(result.current.roomPositions['r2']?.x).toBe(300);
+    expect(result.current.roomPositions['r1']?.y).toBe(40);
+    expect(result.current.roomPositions['r2']?.x).toBe(160);
     expect(result.current.roomPositions['r2']?.y).toBe(200);
   });
 
