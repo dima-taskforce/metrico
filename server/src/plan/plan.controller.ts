@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Param,
   Body,
@@ -43,6 +44,19 @@ export class PlanController {
     @CurrentUser() user: JwtPayload,
   ): Promise<{ id: string; projectId: string }> {
     return this.planService.saveFloorPlanLayout(projectId, layoutJson, user.sub);
+  }
+
+  /**
+   * PATCH /api/projects/:projectId/complete
+   * Mark project as COMPLETED. Called by client after user reviews SummaryStep.
+   */
+  @Patch(':projectId/complete')
+  @HttpCode(204)
+  async completeProject(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<void> {
+    return this.planService.completeProject(projectId, user.sub);
   }
 
   /**

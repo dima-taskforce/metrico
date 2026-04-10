@@ -34,6 +34,9 @@ export const planApi = {
   deleteFloorPlanLayout: (projectId: string) =>
     api.delete<void>(`/projects/${projectId}/plan`),
 
+  completeProject: (projectId: string) =>
+    api.patch<void>(`/projects/${projectId}/complete`, {}),
+
   downloadPdf: async (projectId: string): Promise<Blob> => {
     const res = await fetch(`/api/projects/${projectId}/plan/pdf`, {
       credentials: 'include',

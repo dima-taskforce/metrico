@@ -27,6 +27,8 @@ const makePhoto = (overrides = {}) => ({
   roomId: 'r1',
   photoType: PhotoType.OVERVIEW_BEFORE,
   filePath: 'uploads/photos/u1/p1/r1/abc.jpg',
+  originalPath: 'uploads/photos/u1/p1/r1/abc.jpg',
+  thumbPath: 'uploads/photos/u1/p1/r1/abc_thumb.jpg',
   createdAt: NOW,
   updatedAt: NOW,
   ...overrides,

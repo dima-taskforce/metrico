@@ -4,6 +4,8 @@ import { roomsApi } from '../../api/rooms';
 import { wallsApi } from '../../api/walls';
 import { anglesApi } from '../../api/angles';
 import { photosApi } from '../../api/photos';
+import { segmentsApi } from '../../api/segments';
+import { planApi } from '../../api/plan';
 import { useProjectsStore } from '../../stores/projectsStore';
 import { Button } from '../../components/ui/Button';
 import { RoomTypeIcon } from '../../components/RoomTypeIcon';
@@ -153,19 +155,12 @@ async function countOpenings(walls: Wall[]) {
   let windowCount = 0;
   let doorCount = 0;
 
-  // Load openings for each wall (this is a simplified approach)
-  // In a real scenario, we might fetch all openings at once
   for (const wall of walls) {
     try {
-      const segments = await fetch(`/api/walls/${wall.id}/segments`, {
-        credentials: 'include',
-      }).then((r) => r.json());
-
-      if (Array.isArray(segments)) {
-        for (const seg of segments) {
-          if (seg.windowOpeningId) windowCount++;
-          if (seg.doorOpeningId) doorCount++;
-        }
+      const segments = await segmentsApi.list(wall.id);
+      for (const seg of segments) {
+        if (seg.windowOpeningId) windowCount++;
+        if (seg.doorOpeningId) doorCount++;
       }
     } catch {
       // Silently skip errors
@@ -177,13 +172,10 @@ async function countOpenings(walls: Wall[]) {
 
 async function loadRoomStats(room: Room, projectId: string): Promise<RoomStats> {
   try {
-    const [walls, angles, openingsData] = await Promise.all([
+    const [walls, angles] = await Promise.all([
       wallsApi.list(room.id),
       anglesApi.list(room.id),
-      countOpenings([]), // Start with empty to avoid premature calls
     ]);
-
-    // Load openings properly
     const { windowCount, doorCount } = await countOpenings(walls);
 
     const area = computeArea(walls, angles);
@@ -341,10 +333,17 @@ export function SummaryStep() {
     }
   };
 
-  const handleGeneratePlan = () => {
-    if (projectId) {
-      navigate(`/projects/${projectId}/plan`);
+  const [isCompleting, setIsCompleting] = useState(false);
+
+  const handleGeneratePlan = async () => {
+    if (!projectId) return;
+    setIsCompleting(true);
+    try {
+      await planApi.completeProject(projectId);
+    } catch {
+      // Non-blocking — if already completed, continue
     }
+    navigate(`/projects/${projectId}/plan`);
   };
 
   if (isLoading) {
@@ -463,8 +462,8 @@ export function SummaryStep() {
         >
           ← Назад
         </Button>
-        <Button onClick={handleGeneratePlan}>
-          Сформировать обмерный план →
+        <Button onClick={handleGeneratePlan} disabled={isCompleting}>
+          {isCompleting ? 'Сохранение…' : 'Сформировать обмерный план →'}
         </Button>
       </div>
     </div>

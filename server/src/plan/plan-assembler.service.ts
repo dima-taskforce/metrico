@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Room, Wall, Angle, WallSegment, WallAdjacency, DoorOpening, RoomElement } from '@prisma/client';
+import type { Room, Wall, Angle, WallSegment, WallAdjacency, DoorOpening, WindowOpening, RoomElement } from '@prisma/client';
 import { RoomsCalcService } from '../rooms/rooms-calc.service';
 import {
   FloorPlanRoom,
@@ -14,8 +14,13 @@ import {
 /**
  * Extended types to include relations
  */
+type SegmentWithOpenings = WallSegment & {
+  windowOpening: WindowOpening | null;
+  doorOpening: DoorOpening | null;
+};
+
 type WallWithSegmentsAndOpenings = Wall & {
-  segments: WallSegment[];
+  segments: SegmentWithOpenings[];
 };
 
 type RoomWithWalls = Room & {
@@ -107,7 +112,7 @@ export class PlanAssemblerService {
   /**
    * Assemble wall segment.
    */
-  private assembleSegment(segment: WallSegment): FloorPlanSegment {
+  private assembleSegment(segment: SegmentWithOpenings): FloorPlanSegment {
     // Generate label from segment type
     const label = segment.description || `${segment.segmentType}-${segment.sortOrder}`;
     return {
@@ -119,28 +124,29 @@ export class PlanAssemblerService {
   }
 
   /**
-   * Combine windows and doors from wall segments.
+   * Combine windows and doors from wall segments using joined relation data.
    */
   private assembleOpenings(wall: WallWithSegmentsAndOpenings): FloorPlanOpening[] {
     const openings: FloorPlanOpening[] = [];
 
     for (const segment of wall.segments) {
-      if (segment.segmentType === 'WINDOW' && segment.windowOpeningId) {
-        // Note: actual window data would need to be fetched separately or included in segment
+      if (segment.segmentType === 'WINDOW' && segment.windowOpening) {
+        const win = segment.windowOpening;
         openings.push({
-          id: segment.windowOpeningId,
+          id: win.id,
           label: `Window ${segment.sortOrder}`,
           type: 'WINDOW',
-          width: 0, // Would come from WindowOpening relation
-          height: 0,
+          width: win.width,
+          height: win.height,
         });
-      } else if (segment.segmentType === 'DOOR' && segment.doorOpeningId) {
+      } else if (segment.segmentType === 'DOOR' && segment.doorOpening) {
+        const door = segment.doorOpening;
         openings.push({
-          id: segment.doorOpeningId,
+          id: door.id,
           label: `Door ${segment.sortOrder}`,
           type: 'DOOR',
-          width: 0, // Would come from DoorOpening relation
-          height: 0,
+          width: door.width,
+          height: door.heightFromScreed,
         });
       }
     }

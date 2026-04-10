@@ -27,7 +27,13 @@ export class PlanService {
           include: {
             walls: {
               include: {
-                segments: true,
+                segments: {
+                  include: {
+                    windowOpening: true,
+                    doorOpening: true,
+                  },
+                  orderBy: { sortOrder: 'asc' as const },
+                },
               },
             },
             elements: true,
@@ -61,9 +67,6 @@ export class PlanService {
       angles,
       adjacencies,
     );
-
-    // Mark project COMPLETED after successful assembly
-    await this.projectsService.updateStatus(projectId, ProjectStatus.COMPLETED);
 
     return plan;
   }
@@ -117,6 +120,14 @@ export class PlanService {
     }
 
     return layout.layoutJson;
+  }
+
+  /**
+   * Mark project as COMPLETED. Called explicitly when user finishes review in SummaryStep.
+   */
+  async completeProject(projectId: string, userId: string): Promise<void> {
+    await this.projectsService.findOne(projectId, userId);
+    await this.projectsService.updateStatus(projectId, ProjectStatus.COMPLETED);
   }
 
   /**

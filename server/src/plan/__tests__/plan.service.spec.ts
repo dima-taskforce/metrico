@@ -130,7 +130,7 @@ describe('PlanService', () => {
       );
     });
 
-    it('should set project status to COMPLETED after successful assembly', async () => {
+    it('should NOT set project status to COMPLETED in getFloorPlan (done by completeProject)', async () => {
       const mockFloorPlan = {
         projectId: 'proj-1',
         projectLabel: 'Demo Apartment',
@@ -145,6 +145,11 @@ describe('PlanService', () => {
       (assembler.assembleFloorPlan as jest.Mock).mockReturnValue(mockFloorPlan);
 
       await service.getFloorPlan('proj-1', 'user-id');
+      expect(projectsService.updateStatus).not.toHaveBeenCalled();
+    });
+
+    it('completeProject should set status to COMPLETED', async () => {
+      await service.completeProject('proj-1', 'user-id');
       expect(projectsService.updateStatus).toHaveBeenCalledWith('proj-1', 'COMPLETED');
     });
 

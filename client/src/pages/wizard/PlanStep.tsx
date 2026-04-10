@@ -102,7 +102,7 @@ export function PlanStep() {
 
   const handleNext = async () => {
     await handleSaveLayout();
-    navigate(`/wizard/${projectId}/walls`);
+    navigate(`/wizard/${projectId}/summary`);
   };
 
   if (status === 'loading') {
