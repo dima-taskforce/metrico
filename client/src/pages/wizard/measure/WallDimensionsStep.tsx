@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { wallsApi } from '../../../api/walls';
+import { sketchApi } from '../../../api/sketch';
 import { useRoomMeasureStore } from '../../../stores/roomMeasureStore';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
@@ -24,15 +26,15 @@ const WALL_TYPE_OPTIONS: { value: WallType; label: string }[] = [
 
 const CORNER_LETTERS = 'ABCDEFGH';
 
-function getCornersForShape(shape: RoomShape): Array<{ from: string; to: string }> {
-  const counts: Record<RoomShape, number> = {
-    RECTANGLE: 4,
-    L_SHAPE: 6,
-    U_SHAPE: 8,
-    T_SHAPE: 8,
-    CUSTOM: 4,
-  };
-  const n = counts[shape];
+const SHAPE_CORNER_COUNTS: Record<RoomShape, number> = {
+  RECTANGLE: 4,
+  L_SHAPE: 6,
+  U_SHAPE: 8,
+  T_SHAPE: 8,
+  CUSTOM: 4,
+};
+
+function cornersFromCount(n: number): Array<{ from: string; to: string }> {
   const letters = CORNER_LETTERS.slice(0, n).split('');
   return letters.map((from, i) => ({
     from,
@@ -55,25 +57,60 @@ const schema = z.object({
 type WallDimensionsForm = z.infer<typeof schema>;
 
 export function WallDimensionsStep() {
+  const { projectId } = useParams<{ projectId: string }>();
+  const { currentRoom, walls, setWalls, upsertWall, setSubstep } = useRoomMeasureStore();
+  const [cornerCount, setCornerCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!currentRoom) {
+      setCornerCount(4);
+      return;
+    }
+    if (!projectId) {
+      setCornerCount(SHAPE_CORNER_COUNTS[currentRoom.shape]);
+      return;
+    }
+    sketchApi.get(projectId).then((data) => {
+      if (data) {
+        const sketchRoom =
+          data.rooms.find((r) => r.roomId === currentRoom.id) ??
+          data.rooms.find((r) => r.label === currentRoom.name) ??
+          (data.rooms.length === 1 ? data.rooms[0] : undefined);
+        if (sketchRoom && sketchRoom.nodeIds.length >= 3) {
+          setCornerCount(sketchRoom.nodeIds.length);
+          return;
+        }
+      }
+      setCornerCount(SHAPE_CORNER_COUNTS[currentRoom.shape]);
+    }).catch(() => {
+      setCornerCount(SHAPE_CORNER_COUNTS[currentRoom.shape]);
+    });
+  }, [projectId, currentRoom]);
+
+  if (cornerCount === null) {
+    return (
+      <div className="flex items-center justify-center h-40">
+        <p className="text-gray-400 text-sm">Загрузка…</p>
+      </div>
+    );
+  }
+
+  return <WallDimensionsForm cornerCount={cornerCount} />;
+}
+
+function WallDimensionsForm({ cornerCount }: { cornerCount: number }) {
   const { currentRoom, walls, setWalls, upsertWall, setSubstep } = useRoomMeasureStore();
 
-  const corners = currentRoom ? getCornersForShape(currentRoom.shape) : [];
+  const corners = cornersFromCount(cornerCount);
 
-  // Build default values from existing walls or from corner structure
-  const defaultWalls = corners.map(({ from, to }, idx) => {
+  const defaultWalls = corners.map(({ from, to }) => {
     const existing = walls.find(
       (w) => w.cornerFrom === from && w.cornerTo === to,
     );
-    // For rectangles: C-D = A-B length, D-A = B-C length
-    let autoLength: number | undefined;
-    if (currentRoom?.shape === 'RECTANGLE' && walls.length >= 2) {
-      if (idx === 2) autoLength = walls[0]?.length;
-      if (idx === 3) autoLength = walls[1]?.length;
-    }
     return {
       cornerFrom: from,
       cornerTo: to,
-      length: existing?.length ?? autoLength ?? ('' as unknown as number),
+      length: existing?.length ?? ('' as unknown as number),
       material: (existing?.material ?? 'CONCRETE') as WallMaterial,
       wallType: (existing?.wallType ?? 'INTERNAL') as WallType,
     };
@@ -82,7 +119,6 @@ export function WallDimensionsStep() {
   const {
     register,
     handleSubmit,
-    setValue,
     control,
     setError,
     formState: { errors, isSubmitting },
@@ -135,27 +171,18 @@ export function WallDimensionsStep() {
     }
   };
 
-  const isRectangle = currentRoom?.shape === 'RECTANGLE';
-
   return (
     <div className="p-6 max-w-xl pb-20 sm:pb-6">
       <div className="flex items-center gap-2 mb-1">
         <h3 className="text-lg font-semibold text-gray-900">3.3 Габариты стен</h3>
         <MeasurementHint stepKey="wall-length" />
       </div>
-      <p className="text-sm text-gray-500 mb-2">
+      <p className="text-sm text-gray-500 mb-4">
         Введите длину каждой стены в метрах. Укажите материал и тип стены.
       </p>
-      {isRectangle && (
-        <p className="text-xs text-primary-700 bg-primary-50 rounded px-3 py-2 mb-4">
-          Для прямоугольной комнаты: длины стен C-D и D-A заполняются автоматически
-          (равны A-B и B-C соответственно).
-        </p>
-      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
         {fields.map((field, idx) => {
-          const isAutoFilled = isRectangle && idx >= 2;
           const wallErrors = errors.walls?.[idx];
           return (
             <div key={field.id} className="bg-white border border-gray-200 rounded-lg p-4">
@@ -166,38 +193,17 @@ export function WallDimensionsStep() {
                 <span className="font-medium text-gray-800">
                   Стена {field.cornerFrom}–{field.cornerTo}
                 </span>
-                {isAutoFilled && (
-                  <span className="text-xs text-gray-400">(авто)</span>
-                )}
               </div>
 
               <div className="flex flex-col gap-3">
-                {(() => {
-                  const reg = register(`walls.${idx}.length`);
-                  const origOnChange = reg.onChange;
-                  const onChange = isRectangle && idx < 2
-                    ? (e: React.ChangeEvent<HTMLInputElement>) => {
-                        void origOnChange(e);
-                        const val = parseFloat(e.target.value);
-                        if (!isNaN(val) && val > 0) {
-                          if (idx === 0) setValue('walls.2.length', val as unknown as number);
-                          if (idx === 1) setValue('walls.3.length', val as unknown as number);
-                        }
-                      }
-                    : origOnChange;
-                  return (
-                    <Input
-                      label="Длина, м"
-                      type="number"
-                      step="0.001"
-                      min="0.001"
-                      readOnly={isAutoFilled}
-                      error={wallErrors?.length?.message}
-                      {...reg}
-                      onChange={onChange}
-                    />
-                  );
-                })()}
+                <Input
+                  label="Длина, м"
+                  type="number"
+                  step="0.001"
+                  min="0.001"
+                  error={wallErrors?.length?.message}
+                  {...register(`walls.${idx}.length`)}
+                />
 
                 <div className="flex flex-col gap-1.5">
                   <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Материал</span>
