@@ -12,9 +12,10 @@ export function SketchStep() {
   const store = useSketchStore();
   const [status, setStatus] = useState<'idle' | 'loading' | 'saving'>('idle');
 
-  // Load existing sketch
+  // Load existing sketch; reset first so a new project never shows stale data
   useEffect(() => {
     if (!projectId) return;
+    store.reset();
     setStatus('loading');
     sketchApi
       .get(projectId)

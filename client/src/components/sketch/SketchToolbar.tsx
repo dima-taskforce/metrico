@@ -12,17 +12,22 @@ const TOOLS: { mode: ToolMode; label: string; icon: string }[] = [
 export function SketchToolbar() {
   const {
     mode, setMode,
-    selectedNodeId, selectedEdgeId, removeNode, removeEdge,
+    selectedNodeId, selectedEdgeId, activeNodeId,
+    removeNode, removeEdge,
     past, future, undo, redo,
   } = useSketchStore();
 
-  const canDelete = selectedNodeId !== null || selectedEdgeId !== null;
+  const canDelete = selectedNodeId !== null || selectedEdgeId !== null || activeNodeId !== null;
   const canUndo = past.length > 0;
   const canRedo = future.length > 0;
 
   const handleDelete = () => {
     if (selectedNodeId) removeNode(selectedNodeId);
     else if (selectedEdgeId) removeEdge(selectedEdgeId);
+    else if (activeNodeId) {
+      removeNode(activeNodeId);
+      useSketchStore.setState({ activeNodeId: null });
+    }
   };
 
   // Keyboard shortcuts: Cmd/Ctrl+Z = undo, Cmd/Ctrl+Shift+Z = redo
