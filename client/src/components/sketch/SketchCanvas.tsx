@@ -158,7 +158,6 @@ export function SketchCanvas() {
         }
         useSketchStore.setState({ activeNodeId: null });
       } else {
-        // New node on empty space: continue chain or start new one
         const newNode: SketchNode = {
           id: crypto.randomUUID(),
           x: snapToGrid(x),
@@ -166,9 +165,13 @@ export function SketchCanvas() {
         };
         addNode(newNode);
         if (activeNodeId) {
+          // Second click: complete wall segment, stop chain
           addEdge({ id: crypto.randomUUID(), fromNodeId: activeNodeId, toNodeId: newNode.id });
+          useSketchStore.setState({ activeNodeId: null });
+        } else {
+          // First click: start new wall, wait for second click
+          useSketchStore.setState({ activeNodeId: newNode.id });
         }
-        useSketchStore.setState({ activeNodeId: newNode.id });
       }
     } else if (mode === 'select') {
       setSelectedNodeId(null);
@@ -405,7 +408,7 @@ export function SketchCanvas() {
 
       {/* Hint */}
       <div className="absolute bottom-2 left-2 text-xs text-gray-400 pointer-events-none">
-        {mode === 'draw' && 'Тапайте углы, проводите стены'}
+        {mode === 'draw' && (activeNodeId ? 'Тапните конец стены или существующий узел' : 'Тапните начало стены')}
         {mode === 'select' && 'Перетаскивайте узлы, тапайте для выбора'}
         {mode === 'room' && 'Тапайте рёбра по контуру комнаты'}
       </div>
