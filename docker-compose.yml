@@ -46,21 +46,28 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - client_dist:/usr/share/nginx/html:ro
       - data:/app/data:ro
+      - certbot_www:/var/www/certbot:ro
+      - letsencrypt:/etc/letsencrypt:ro
     networks:
       - metrico
     depends_on:
       app:
         condition: service_healthy
-      client-builder:
-        condition: service_completed_successfully
 
 volumes:
   data:
   client_dist:
+  certbot_www:
+    external: true
+    name: metrico_certbot_www
+  letsencrypt:
+    external: true
+    name: metrico_letsencrypt
 
 networks:
   metrico:
