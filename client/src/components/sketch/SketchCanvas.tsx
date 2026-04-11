@@ -215,15 +215,20 @@ export function SketchCanvas() {
         if (prev.includes(edgeId)) return prev;
         const next = [...prev, edgeId];
 
-        // Check if closed: last edge connects back to first edge's fromNode
+        // Check if closed: traverse chain to find actual start node,
+        // then see if the last edge connects back to it.
         if (next.length >= 3) {
           const firstEdge = edges.find((ed) => ed.id === next[0]!);
+          const secondEdge = edges.find((ed) => ed.id === next[1]!);
           const lastEdge = edges.find((ed) => ed.id === next[next.length - 1]!);
-          if (firstEdge && lastEdge) {
-            const firstStart = firstEdge.fromNodeId;
-            const lastEnd = lastEdge.toNodeId;
-            const lastEndAlt = lastEdge.fromNodeId;
-            if (lastEnd === firstStart || lastEndAlt === firstStart) {
+          if (firstEdge && secondEdge && lastEdge) {
+            // Determine which end of firstEdge is the chain start
+            const firstStart =
+              secondEdge.fromNodeId === firstEdge.toNodeId ||
+              secondEdge.toNodeId === firstEdge.toNodeId
+                ? firstEdge.fromNodeId
+                : firstEdge.toNodeId;
+            if (lastEdge.toNodeId === firstStart || lastEdge.fromNodeId === firstStart) {
               setShowRoomForm(true);
               return next;
             }
@@ -251,15 +256,32 @@ export function SketchCanvas() {
   }, [handleDeleteSelected]);
 
   const handleRoomCreate = useCallback((label: string, type: RoomType) => {
-    // Collect ordered nodeIds from edge chain
+    // Traverse edge chain bidirectionally to collect ordered corner nodeIds.
+    // Edges can be stored in any direction (from/to), so we follow each edge
+    // from the endpoint that connects to the previous edge.
     const nodeIds: string[] = [];
-    for (const eid of pendingRoomEdges) {
-      const edge = edges.find((e) => e.id === eid);
-      if (edge && !nodeIds.includes(edge.fromNodeId)) nodeIds.push(edge.fromNodeId);
+
+    for (let i = 0; i < pendingRoomEdges.length; i++) {
+      const edge = edges.find((e) => e.id === pendingRoomEdges[i]!);
+      if (!edge) continue;
+
+      if (i === 0) {
+        // Determine direction of first edge using the second edge connection
+        const nextEdge = edges.find((e) => e.id === pendingRoomEdges[1]!);
+        const forward =
+          !nextEdge ||
+          nextEdge.fromNodeId === edge.toNodeId ||
+          nextEdge.toNodeId === edge.toNodeId;
+        nodeIds.push(forward ? edge.fromNodeId : edge.toNodeId);
+        nodeIds.push(forward ? edge.toNodeId : edge.fromNodeId);
+      } else {
+        const prevEnd = nodeIds[nodeIds.length - 1]!;
+        const nextNode =
+          edge.fromNodeId === prevEnd ? edge.toNodeId : edge.fromNodeId;
+        // Stop before adding the closing node (it equals the start)
+        if (nextNode !== nodeIds[0]) nodeIds.push(nextNode);
+      }
     }
-    // Close the loop
-    const lastEdge = edges.find((e) => e.id === pendingRoomEdges[pendingRoomEdges.length - 1]!);
-    if (lastEdge && !nodeIds.includes(lastEdge.toNodeId)) nodeIds.push(lastEdge.toNodeId);
 
     addRoom({
       id: crypto.randomUUID(),
