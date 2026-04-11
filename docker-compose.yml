@@ -29,15 +29,13 @@ services:
     working_dir: /build
     volumes:
       - ./client:/build/client
+      - ./server/package.json:/build/server/package.json:ro
       - ./package.json:/build/package.json:ro
       - ./package-lock.json:/build/package-lock.json:ro
       - ./tsconfig.base.json:/build/tsconfig.base.json:ro
       - client_dist:/dist
     command: >
       sh -c "
-        cd /build &&
-        mkdir -p server &&
-        echo '{\"name\":\"@metrico/server\",\"version\":\"1.0.0\",\"private\":true}' > server/package.json &&
         npm ci --workspace=client --ignore-scripts &&
         cd client &&
         NODE_ENV=production npx vite build --outDir /dist
