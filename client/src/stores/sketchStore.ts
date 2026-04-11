@@ -120,7 +120,7 @@ export const useSketchStore = create<SketchState>((set, get) => ({
              (e.fromNodeId === edge.toNodeId && e.toNodeId === edge.fromNodeId),
     );
     if (exists) return s;
-    return { ...pushHistory(s), edges: [...s.edges, edge], isDirty: true, activeNodeId: edge.toNodeId };
+    return { ...pushHistory(s), edges: [...s.edges, edge], isDirty: true };
   }),
 
   removeEdge: (id) => set((s) => ({

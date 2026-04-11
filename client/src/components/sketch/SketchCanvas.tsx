@@ -152,14 +152,13 @@ export function SketchCanvas() {
     if (mode === 'draw') {
       const nearest = findNearestNode(nodes, x, y);
       if (nearest) {
-        // Snap to existing node
+        // Snap to existing node: connect if chain active, then STOP chain
         if (activeNodeId && activeNodeId !== nearest.id) {
           addEdge({ id: crypto.randomUUID(), fromNodeId: activeNodeId, toNodeId: nearest.id });
-        } else {
-          useSketchStore.setState({ activeNodeId: nearest.id });
         }
+        useSketchStore.setState({ activeNodeId: null });
       } else {
-        // Create new node
+        // New node on empty space: continue chain or start new one
         const newNode: SketchNode = {
           id: crypto.randomUUID(),
           x: snapToGrid(x),
@@ -168,9 +167,8 @@ export function SketchCanvas() {
         addNode(newNode);
         if (activeNodeId) {
           addEdge({ id: crypto.randomUUID(), fromNodeId: activeNodeId, toNodeId: newNode.id });
-        } else {
-          useSketchStore.setState({ activeNodeId: newNode.id });
         }
+        useSketchStore.setState({ activeNodeId: newNode.id });
       }
     } else if (mode === 'select') {
       setSelectedNodeId(null);
@@ -183,10 +181,14 @@ export function SketchCanvas() {
 
     if (mode === 'draw') {
       if (activeNodeId && activeNodeId !== nodeId) {
+        // Connect to existing node and STOP chain
         addEdge({ id: crypto.randomUUID(), fromNodeId: activeNodeId, toNodeId: nodeId });
+        useSketchStore.setState({ activeNodeId: null });
       } else if (activeNodeId === nodeId) {
+        // Click active node again — cancel active, don't start chain
         useSketchStore.setState({ activeNodeId: null });
       } else {
+        // No chain active — this node becomes the start
         useSketchStore.setState({ activeNodeId: nodeId });
       }
     } else if (mode === 'select') {
