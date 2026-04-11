@@ -170,7 +170,9 @@ export function CornerLabelStep() {
     sketchApi.get(projectId).then((json) => {
       if (!json) { setLoadingSketch(false); return; }
       const data: SketchData = JSON.parse(json);
-      const sketchRoom = data.rooms.find((r) => r.roomId === currentRoom.id);
+      const sketchRoom =
+        data.rooms.find((r) => r.roomId === currentRoom.id) ??
+        data.rooms.find((r) => r.label === currentRoom.name);
       if (!sketchRoom || sketchRoom.nodeIds.length < 3) {
         setLoadingSketch(false);
         return;
