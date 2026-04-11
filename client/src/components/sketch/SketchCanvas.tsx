@@ -215,23 +215,20 @@ export function SketchCanvas() {
         if (prev.includes(edgeId)) return prev;
         const next = [...prev, edgeId];
 
-        // Check if closed: traverse chain to find actual start node,
-        // then see if the last edge connects back to it.
+        // Closed polygon detection: count node degrees.
+        // A valid closed room polygon has every node with degree exactly 2.
         if (next.length >= 3) {
-          const firstEdge = edges.find((ed) => ed.id === next[0]!);
-          const secondEdge = edges.find((ed) => ed.id === next[1]!);
-          const lastEdge = edges.find((ed) => ed.id === next[next.length - 1]!);
-          if (firstEdge && secondEdge && lastEdge) {
-            // Determine which end of firstEdge is the chain start
-            const firstStart =
-              secondEdge.fromNodeId === firstEdge.toNodeId ||
-              secondEdge.toNodeId === firstEdge.toNodeId
-                ? firstEdge.fromNodeId
-                : firstEdge.toNodeId;
-            if (lastEdge.toNodeId === firstStart || lastEdge.fromNodeId === firstStart) {
-              setShowRoomForm(true);
-              return next;
-            }
+          const degree = new Map<string, number>();
+          for (const eid of next) {
+            const e = edges.find((ed) => ed.id === eid);
+            if (!e) continue;
+            degree.set(e.fromNodeId, (degree.get(e.fromNodeId) ?? 0) + 1);
+            degree.set(e.toNodeId, (degree.get(e.toNodeId) ?? 0) + 1);
+          }
+          const isClosed = degree.size >= 3 && [...degree.values()].every((d) => d === 2);
+          if (isClosed) {
+            setShowRoomForm(true);
+            return next;
           }
         }
         return next;
@@ -256,31 +253,28 @@ export function SketchCanvas() {
   }, [handleDeleteSelected]);
 
   const handleRoomCreate = useCallback((label: string, type: RoomType) => {
-    // Traverse edge chain bidirectionally to collect ordered corner nodeIds.
-    // Edges can be stored in any direction (from/to), so we follow each edge
-    // from the endpoint that connects to the previous edge.
-    const nodeIds: string[] = [];
-
-    for (let i = 0; i < pendingRoomEdges.length; i++) {
-      const edge = edges.find((e) => e.id === pendingRoomEdges[i]!);
+    // Build adjacency graph from pending edges and walk the cycle.
+    const adj = new Map<string, string[]>();
+    for (const eid of pendingRoomEdges) {
+      const edge = edges.find((e) => e.id === eid);
       if (!edge) continue;
+      adj.set(edge.fromNodeId, [...(adj.get(edge.fromNodeId) ?? []), edge.toNodeId]);
+      adj.set(edge.toNodeId, [...(adj.get(edge.toNodeId) ?? []), edge.fromNodeId]);
+    }
 
-      if (i === 0) {
-        // Determine direction of first edge using the second edge connection
-        const nextEdge = edges.find((e) => e.id === pendingRoomEdges[1]!);
-        const forward =
-          !nextEdge ||
-          nextEdge.fromNodeId === edge.toNodeId ||
-          nextEdge.toNodeId === edge.toNodeId;
-        nodeIds.push(forward ? edge.fromNodeId : edge.toNodeId);
-        nodeIds.push(forward ? edge.toNodeId : edge.fromNodeId);
-      } else {
-        const prevEnd = nodeIds[nodeIds.length - 1]!;
-        const nextNode =
-          edge.fromNodeId === prevEnd ? edge.toNodeId : edge.fromNodeId;
-        // Stop before adding the closing node (it equals the start)
-        if (nextNode !== nodeIds[0]) nodeIds.push(nextNode);
-      }
+    const firstEdge = edges.find((e) => e.id === pendingRoomEdges[0]);
+    const nodeIds: string[] = [];
+    if (firstEdge && adj.size > 0) {
+      const startId = firstEdge.fromNodeId;
+      let current = startId;
+      let prev = '';
+      do {
+        nodeIds.push(current);
+        const neighbors = adj.get(current) ?? [];
+        const next = neighbors.find((n) => n !== prev) ?? '';
+        prev = current;
+        current = next;
+      } while (current && current !== startId && nodeIds.length <= pendingRoomEdges.length);
     }
 
     addRoom({
