@@ -42,18 +42,20 @@ export function SketchToolbar() {
     return () => window.removeEventListener('keydown', handler);
   }, [undo, redo]);
 
+  const btnBase = 'flex flex-col items-center flex-1 py-2 rounded-lg text-xs font-medium transition';
+
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-white border-t border-gray-200 gap-2">
-      {/* Mode tools */}
-      <div className="flex gap-1">
+    <div className="bg-white border-t border-gray-200 px-2 pb-1">
+      {/* Row 1: mode tools */}
+      <div className="flex gap-1 pt-1.5">
         {TOOLS.map((tool) => (
           <button
             key={tool.mode}
             onClick={() => setMode(tool.mode)}
-            className={`flex flex-col items-center px-3 py-2 rounded-lg text-xs font-medium transition min-w-[60px] ${
+            className={`${btnBase} ${
               mode === tool.mode
                 ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300'
+                : 'bg-gray-100 text-gray-700 active:bg-gray-300'
             }`}
           >
             <span className="text-base leading-none mb-0.5">{tool.icon}</span>
@@ -62,14 +64,13 @@ export function SketchToolbar() {
         ))}
       </div>
 
-      {/* History + Delete */}
-      <div className="flex gap-1">
+      {/* Row 2: history + delete */}
+      <div className="flex gap-1 pt-1">
         <button
           onClick={undo}
           disabled={!canUndo}
           title="Отменить (Cmd+Z)"
-          className="flex flex-col items-center px-3 py-2 rounded-lg text-xs font-medium transition min-w-[56px]
-            bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 disabled:opacity-40 disabled:pointer-events-none"
+          className={`${btnBase} bg-gray-100 text-gray-700 active:bg-gray-300 disabled:opacity-40 disabled:pointer-events-none`}
         >
           <span className="text-base leading-none mb-0.5">↩</span>
           Отмена
@@ -78,8 +79,7 @@ export function SketchToolbar() {
           onClick={redo}
           disabled={!canRedo}
           title="Повторить (Cmd+Shift+Z)"
-          className="flex flex-col items-center px-3 py-2 rounded-lg text-xs font-medium transition min-w-[56px]
-            bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 disabled:opacity-40 disabled:pointer-events-none"
+          className={`${btnBase} bg-gray-100 text-gray-700 active:bg-gray-300 disabled:opacity-40 disabled:pointer-events-none`}
         >
           <span className="text-base leading-none mb-0.5">↪</span>
           Повтор
@@ -88,8 +88,7 @@ export function SketchToolbar() {
           onClick={handleDelete}
           disabled={!canDelete}
           title="Удалить выбранное (Delete)"
-          className="flex flex-col items-center px-3 py-2 rounded-lg text-xs font-medium transition min-w-[60px]
-            bg-red-50 text-red-600 hover:bg-red-100 active:bg-red-200 disabled:opacity-40 disabled:pointer-events-none"
+          className={`${btnBase} bg-red-50 text-red-600 active:bg-red-200 disabled:opacity-40 disabled:pointer-events-none`}
         >
           <span className="text-base leading-none mb-0.5">🗑</span>
           Удалить
