@@ -1,7 +1,7 @@
 # Post-Deploy Report — metrico Sprint 5
-**Дата:** 2026-04-09  
+**Дата:** 2026-04-09 (обновлено 2026-04-12)
 **Сервер:** venus (95.181.174.207)  
-**Домен:** https://metrico.n1tr0.space  
+**Домен:** https://metrico360.ru (ранее metrico.n1tr0.space, мигрирован 2026-04-10)  
 **Ветка:** main (commit `db2d23b`)
 
 ---
@@ -11,7 +11,7 @@
 Деплой **успешен**. Приложение доступно по HTTPS, все сервисы запущены, БД работает.
 
 ```json
-GET https://metrico.n1tr0.space/api/health →
+GET https://metrico360.ru/api/health →
 {
   "status": "ok",
   "uptime": 495,
@@ -36,16 +36,20 @@ GET https://metrico.n1tr0.space/api/health →
 | Контейнер | Образ | Статус |
 |-----------|-------|--------|
 | `metrico-app-1` | `ghcr.io/metrico/server:latest` | Up (healthy) |
-| `metrico-nginx-1` | `nginx:1.27-alpine` | Up |
+| `metrico-nginx-1` | `nginx:1.27-alpine` | Up (без port bindings, только внутренняя сеть) |
 | `metrico-certbot-1` | `certbot/certbot:latest` | Up (autorenewal) |
+
+> **Обновление 2026-04-12:** Порты 80/443 переданы хостовому nginx (Ubuntu).
+> Docker nginx больше не занимает внешние порты. NestJS доступен через `127.0.0.1:3000`.
+> Статика SPA обслуживается из `/var/www/metrico/` (не из Docker volume).
 
 ### Docker Volumes
 
 | Volume | Назначение |
 |--------|-----------|
 | `metrico_data` | SQLite DB + uploads |
-| `metrico_client_dist` | Vite SPA build |
-| `metrico_certbot_conf` | Let's Encrypt сертификаты |
+| `metrico_client_dist` | Vite SPA build (использовался до 2026-04-12) |
+| `metrico_letsencrypt` | Let's Encrypt сертификаты (читает host nginx) |
 | `metrico_certbot_www` | ACME webroot |
 
 ---
@@ -64,10 +68,31 @@ GET https://metrico.n1tr0.space/api/health →
 
 ## Архитектура
 
+### Текущая (с 2026-04-12)
+
 ```
 Internet :80/:443
   │
-nginx:1.27-alpine (reverse proxy + static)
+Host nginx (Ubuntu 1.24) — обслуживает 3 сайта
+  ├─ metrico360.ru
+  │    ├─ /          → /var/www/metrico/ (Vite SPA, статика на хосте)
+  │    ├─ /api/*     → http://127.0.0.1:3000
+  │    └─ /.well-known/ → Docker volume metrico_certbot_www
+  ├─ quantoo.io      → отдельный конфиг
+  └─ taskforce.now   → отдельный конфиг
+          │
+    NestJS API 127.0.0.1:3000 (Docker, без внешних портов на 80/443)
+    nginx:alpine (Docker, без port bindings)
+          │
+    SQLite /app/data/metrico.db (Prisma)
+```
+
+### Исходная (до 2026-04-12)
+
+```
+Internet :80/:443
+  │
+nginx:1.27-alpine (Docker, reverse proxy + static)
   ├─ /          → client_dist volume (Vite SPA)
   ├─ /api/*     → app:3000
   ├─ /uploads/* → data volume
@@ -153,11 +178,11 @@ Certbot-контейнер с `restart: no` работает как бескон
 
 | URL | Описание |
 |-----|---------|
-| `https://metrico.n1tr0.space/` | React SPA |
-| `https://metrico.n1tr0.space/api/health` | Health (DB + disk) |
-| `https://metrico.n1tr0.space/api/auth/login` | JWT авторизация |
-| `https://metrico.n1tr0.space/api/auth/google` | OAuth Google *(нужны credentials)* |
-| `https://metrico.n1tr0.space/api/auth/yandex` | OAuth Yandex *(нужны credentials)* |
+| `https://metrico360.ru/` | React SPA |
+| `https://metrico360.ru/api/health` | Health (DB + disk) |
+| `https://metrico360.ru/api/auth/login` | JWT авторизация |
+| `https://metrico360.ru/api/auth/google` | OAuth Google *(нужны credentials)* |
+| `https://metrico360.ru/api/auth/yandex` | OAuth Yandex *(нужны credentials)* |
 
 ---
 
