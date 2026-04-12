@@ -91,7 +91,6 @@ const mockAngle = (wallAId: string, wallBId: string): Angle => ({
 
 const mockPhoto = (id: string, photoType = 'OVERVIEW_BEFORE'): Photo => ({
   id,
-  userId: 'user-1',
   roomId: 'room-1',
   photoType: photoType as Photo['photoType'],
   originalPath: '/photos/' + id + '.jpg',
