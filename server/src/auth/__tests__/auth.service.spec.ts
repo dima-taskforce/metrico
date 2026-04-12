@@ -5,32 +5,37 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
-const makePrisma = () => ({
-  user: {
-    findUnique: jest.fn(),
-    create: jest.fn(),
-    findUniqueOrThrow: jest.fn(),
-    update: jest.fn(),
-  },
-  refreshToken: {
-    create: jest.fn(),
-    findUnique: jest.fn(),
-    update: jest.fn(),
-    updateMany: jest.fn(),
-  },
-  passwordResetToken: {
-    create: jest.fn(),
-    findUnique: jest.fn(),
-    update: jest.fn(),
-  },
-  $transaction: jest.fn((fn) => {
-    // Mock $transaction to accept array of operations and return results
-    if (Array.isArray(fn)) {
-      return Promise.resolve([{}, {}, {}]);
-    }
-    return Promise.resolve({});
-  }),
-});
+const makePrisma = () => {
+  const base = {
+    user: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      findUniqueOrThrow: jest.fn(),
+      update: jest.fn(),
+    },
+    refreshToken: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+    },
+    passwordResetToken: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+  };
+  const p = {
+    ...base,
+    $transaction: jest.fn((fn: unknown) => {
+      if (Array.isArray(fn)) {
+        return Promise.resolve([{}, {}, {}]);
+      }
+      return (fn as (tx: typeof base) => Promise<unknown>)(base);
+    }),
+  };
+  return p;
+};
 
 describe('AuthService', () => {
   let service: AuthService;

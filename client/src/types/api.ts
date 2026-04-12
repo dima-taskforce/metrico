@@ -134,7 +134,6 @@ export interface Angle {
 
 export interface Photo {
   id: string;
-  userId: string;
   roomId: string;
   photoType: PhotoType;
   originalPath: string;

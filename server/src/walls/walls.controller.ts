@@ -16,17 +16,17 @@ import { WallsService } from './walls.service';
 import { CreateWallDto } from './dto/create-wall.dto';
 import { UpdateWallDto } from './dto/update-wall.dto';
 
-@Controller()
+@Controller('rooms/:roomId/walls')
 @UseGuards(JwtAuthGuard)
 export class WallsController {
   constructor(private readonly wallsService: WallsService) {}
 
-  @Get('rooms/:roomId/walls')
+  @Get()
   findAll(@Param('roomId') roomId: string, @CurrentUser() user: JwtPayload) {
     return this.wallsService.findAll(roomId, user.sub);
   }
 
-  @Get('rooms/:roomId/walls/:wallId')
+  @Get(':wallId')
   findOne(
     @Param('roomId') roomId: string,
     @Param('wallId') wallId: string,
@@ -35,7 +35,7 @@ export class WallsController {
     return this.wallsService.findOne(roomId, wallId, user.sub);
   }
 
-  @Post('rooms/:roomId/walls')
+  @Post()
   create(
     @Param('roomId') roomId: string,
     @Body() dto: CreateWallDto,
@@ -44,8 +44,9 @@ export class WallsController {
     return this.wallsService.create(roomId, user.sub, dto);
   }
 
-  @Patch('walls/:wallId')
+  @Patch(':wallId')
   update(
+    @Param('roomId') roomId: string,
     @Param('wallId') wallId: string,
     @Body() dto: UpdateWallDto,
     @CurrentUser() user: JwtPayload,
@@ -53,9 +54,13 @@ export class WallsController {
     return this.wallsService.update(wallId, user.sub, dto);
   }
 
-  @Delete('walls/:wallId')
+  @Delete(':wallId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('wallId') wallId: string, @CurrentUser() user: JwtPayload) {
+  remove(
+    @Param('roomId') roomId: string,
+    @Param('wallId') wallId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
     return this.wallsService.remove(wallId, user.sub);
   }
 }

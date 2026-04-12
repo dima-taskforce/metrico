@@ -168,7 +168,7 @@ describe('WallDimensionsStep', () => {
     fireEvent.click(screen.getByRole('button', { name: /периметр/i }));
 
     await waitFor(() => {
-      expect(wallsApi.update).toHaveBeenCalledWith('w1', expect.objectContaining({ length: 5 }));
+      expect(wallsApi.update).toHaveBeenCalledWith('r1', 'w1', expect.objectContaining({ length: 5 }));
       expect(mockSetSubstep).toHaveBeenCalledWith(4);
     });
   });

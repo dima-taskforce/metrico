@@ -140,7 +140,7 @@ function WallDimensionsForm({ cornerCount }: { cornerCount: number }) {
           (w) => w.cornerFrom === entry.cornerFrom && w.cornerTo === entry.cornerTo,
         );
         if (existing) {
-          const updated = await wallsApi.update(existing.id, {
+          const updated = await wallsApi.update(currentRoom.id, existing.id, {
             length: entry.length,
             material: entry.material,
             wallType: entry.wallType,

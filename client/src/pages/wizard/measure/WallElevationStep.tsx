@@ -180,7 +180,7 @@ function CurvatureCard({ wall }: { wall: Wall }) {
   });
 
   const onSubmit = async (data: CurvatureForm) => {
-    const updated = await wallsApi.update(wall.id, {
+    const updated = await wallsApi.update(wall.roomId, wall.id, {
       curvatureBottom: data.curvatureBottom,
       curvatureMiddle: data.curvatureMiddle,
       curvatureTop: data.curvatureTop,

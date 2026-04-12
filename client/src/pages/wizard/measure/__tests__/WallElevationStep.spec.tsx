@@ -149,7 +149,7 @@ describe('WallElevationStep', () => {
     fireEvent.submit(screen.getByLabelText(/Низ/i).closest('form')!);
 
     await waitFor(() => {
-      expect(wallsApi.update).toHaveBeenCalledWith('w1', expect.objectContaining({
+      expect(wallsApi.update).toHaveBeenCalledWith('r1', 'w1', expect.objectContaining({
         curvatureBottom: 0.01,
       }));
       expect(mockUpsertWall).toHaveBeenCalledWith(updated);

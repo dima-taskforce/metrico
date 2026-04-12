@@ -54,18 +54,17 @@ export class AuthService {
 
   async refresh(rawToken: string): Promise<{ accessToken: string; refreshToken: string }> {
     const tokenHash = this.hashToken(rawToken);
-    const stored = await this.prisma.refreshToken.findUnique({ where: { tokenHash } });
-
-    if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
-
-    // Rotate: revoke old, issue new
-    await this.prisma.refreshToken.update({
-      where: { id: stored.id },
-      data: { revokedAt: new Date() },
+    const stored = await this.prisma.$transaction(async (tx) => {
+      const found = await tx.refreshToken.findUnique({ where: { tokenHash } });
+      if (!found || found.revokedAt || found.expiresAt < new Date()) {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+      await tx.refreshToken.update({
+        where: { id: found.id },
+        data: { revokedAt: new Date() },
+      });
+      return found;
     });
-
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: stored.userId } });
     return this.issueTokens(user.id, user.email);
   }

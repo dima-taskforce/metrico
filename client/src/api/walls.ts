@@ -23,8 +23,9 @@ export const wallsApi = {
   create: (roomId: string, data: CreateWallData) =>
     api.post<Wall>(`/rooms/${roomId}/walls`, data),
 
-  update: (wallId: string, data: Partial<CreateWallData>) =>
-    api.patch<Wall>(`/walls/${wallId}`, data),
+  update: (roomId: string, wallId: string, data: Partial<CreateWallData>) =>
+    api.patch<Wall>(`/rooms/${roomId}/walls/${wallId}`, data),
 
-  remove: (wallId: string) => api.delete<void>(`/walls/${wallId}`),
+  remove: (roomId: string, wallId: string) =>
+    api.delete<void>(`/rooms/${roomId}/walls/${wallId}`),
 };

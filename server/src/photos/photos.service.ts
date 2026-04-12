@@ -99,14 +99,18 @@ export class PhotosService {
     await this.prisma.roomPhoto.delete({ where: { id: photoId } });
 
     // Delete original and thumbnail — guard against path traversal
-    const originalFullPath = path.resolve(this.uploadsDir, photo.originalPath.replace(/^uploads\//, ''));
     const uploadsRoot = path.resolve(this.uploadsDir);
+    const originalFullPath = path.resolve(this.uploadsDir, photo.originalPath.replace(/^uploads\//, ''));
     if (!originalFullPath.startsWith(uploadsRoot + path.sep) && originalFullPath !== uploadsRoot) {
       throw new BadRequestException('Invalid file path');
     }
-    await Promise.all([
-      fs.unlink(originalFullPath).catch(() => undefined),
-      photo.thumbPath ? fs.unlink(path.resolve(this.uploadsDir, photo.thumbPath.replace(/^uploads\//, ''))).catch(() => undefined) : Promise.resolve(),
-    ]);
+    await fs.unlink(originalFullPath).catch(() => undefined);
+    if (photo.thumbPath) {
+      const thumbFullPath = path.resolve(this.uploadsDir, photo.thumbPath.replace(/^uploads\//, ''));
+      if (!thumbFullPath.startsWith(uploadsRoot + path.sep) && thumbFullPath !== uploadsRoot) {
+        throw new BadRequestException('Invalid thumbnail path');
+      }
+      await fs.unlink(thumbFullPath).catch(() => undefined);
+    }
   }
 }
