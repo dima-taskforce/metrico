@@ -232,6 +232,136 @@ URL превью (`thumbPath` или `originalPath`) из API возвращае
 
 ---
 
+## B-11 — Race condition при ротации refresh-токена
+
+**Дата:** 2026-04-12 (код-ревью)
+**Статус:** Открыт  
+**Приоритет:** Важно
+
+### Симптом
+
+Два одновременных запроса `/api/auth/refresh` с одним и тем же токеном могут оба получить новые access + refresh токены. Ротация должна быть атомарной: один использовал — остальные невалидны.
+
+### Root cause
+
+`auth.service.ts` метод `refresh()` выполняет check-then-act без транзакции:
+
+```typescript
+// Две горутины читают — обе видят revokedAt = null → обе проходят
+const stored = await this.prisma.refreshToken.findUnique({ where: { tokenHash } });
+if (!stored || stored.revokedAt ...) throw new UnauthorizedException(...)
+// Между check и update — окно гонки
+await this.prisma.refreshToken.update({ data: { revokedAt: new Date() } });
+```
+
+### Затронутый файл
+
+`server/src/auth/auth.service.ts` — метод `refresh()` (~строки 55–71)
+
+### Фикс
+
+Обернуть в `$transaction`:
+
+```typescript
+await this.prisma.$transaction(async (tx) => {
+  const stored = await tx.refreshToken.findUnique({ where: { tokenHash } });
+  if (!stored || stored.revokedAt || stored.expiresAt < new Date())
+    throw new UnauthorizedException('Invalid or expired refresh token');
+  await tx.refreshToken.update({ where: { id: stored.id }, data: { revokedAt: new Date() } });
+  return stored;
+});
+```
+
+---
+
+## B-12 — Тип Photo.userId отсутствует в схеме БД
+
+**Дата:** 2026-04-12 (код-ревью)
+**Статус:** Открыт  
+**Приоритет:** Важно
+
+### Симптом
+
+Клиент обращается к `photo.userId` — поле всегда `undefined`, возможны тихие ошибки логики.
+
+### Root cause
+
+Интерфейс `Photo` в `client/src/types/api.ts` объявляет поле `userId: string`, которого нет в модели `RoomPhoto` (Prisma schema). API никогда не возвращает это поле.
+
+### Затронутые файлы
+
+- `client/src/types/api.ts` — интерфейс `Photo`
+- `server/prisma/schema.prisma` — модель `RoomPhoto`
+
+### Фикс
+
+Удалить `userId` из интерфейса `Photo` в `api.ts`. Если поле нужно — добавить в схему Prisma и создать миграцию.
+
+---
+
+## B-13 — Отсутствует проверка path traversal для thumbPath при удалении фото
+
+**Дата:** 2026-04-12 (код-ревью)
+**Статус:** Открыт  
+**Приоритет:** Важно
+
+### Симптом
+
+При удалении фото `originalPath` проверяется на выход за пределы `uploadsDir`, а `thumbPath` — нет.
+
+### Root cause
+
+В `photos.service.ts` метод `remove()`: для `originalPath` есть `path.resolve` + проверка `startsWith(uploadsRoot)`, для `thumbPath` эта же проверка отсутствует. Сейчас thumbPath генерируется безопасно, но при изменении логики сохранения уязвимость откроется.
+
+### Затронутый файл
+
+`server/src/photos/photos.service.ts` — метод `remove()` (~строка 109)
+
+### Фикс
+
+Применить ту же проверку к thumbPath:
+
+```typescript
+const thumbFullPath = path.resolve(this.uploadsDir, photo.thumbPath.replace(/^uploads\//, ''));
+if (!thumbFullPath.startsWith(uploadsRoot + path.sep))
+  throw new BadRequestException('Invalid thumbnail path');
+await fs.unlink(thumbFullPath).catch(() => undefined);
+```
+
+---
+
+## B-14 — Несогласованные маршруты WallsController
+
+**Дата:** 2026-04-12 (код-ревью)
+**Статус:** Открыт  
+**Приоритет:** Минорно
+
+### Симптом
+
+PATCH/DELETE запросы к стенам уходят на `/api/walls/:wallId` вместо ожидаемого `/api/rooms/:roomId/walls/:wallId`. REST-контракт непоследователен.
+
+### Root cause
+
+`WallsController` использует пустой `@Controller()`. GET и POST используют полный путь `rooms/:roomId/walls`, а PATCH и DELETE — только `walls/:wallId`.
+
+### Затронутый файл
+
+`server/src/walls/walls.controller.ts`
+
+### Фикс
+
+```typescript
+@Controller('rooms/:roomId/walls')
+export class WallsController {
+  @Patch(':wallId')   // → /api/rooms/:roomId/walls/:wallId
+  @Delete(':wallId')  // → /api/rooms/:roomId/walls/:wallId
+}
+```
+
+Обновить соответственно `client/src/api/walls.ts`.
+
+---
+
 ## B-10 — Внешние шаги 3+ визарда не реализованы (заглушки)
 
 **Дата:** 2026-04-10  
