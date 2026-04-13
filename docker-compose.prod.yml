@@ -26,6 +26,8 @@ services:
       VK_CLIENT_ID: ${VK_CLIENT_ID:-}
       VK_CLIENT_SECRET: ${VK_CLIENT_SECRET:-}
       VK_CALLBACK_URL: https://metrico360.ru/api/auth/vk/callback
+    ports:
+      - "127.0.0.1:3000:3000"
     volumes:
       - data:/app/data
     networks:
