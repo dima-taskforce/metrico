@@ -11,6 +11,7 @@
 | Стек | NestJS + React 18 + Vite + SQLite/Prisma |
 | CI/CD | GitHub Actions → GHCR → Docker Compose |
 | Тесты | 220 / 220 ✅ |
+| Деплой | ✅ prod (2026-04-13) |
 
 ---
 
@@ -74,33 +75,25 @@
 
 ---
 
-## Prod-окружение — Критические проблемы
+## Prod-окружение — Статус (2026-04-13)
 
-### 🔴 P0: Сервер запускает dev-конфиг
+### ✅ ИСПРАВЛЕНО: Сервер переведён на prod-конфиг
 
-Prod-сервер (`venus`) работает с `docker-compose.yml` (dev) вместо `docker-compose.prod.yml`.
+- `NODE_ENV=production` ✅
+- `CORS_ORIGINS=https://metrico360.ru` ✅  
+- `DATABASE_URL=file:/app/data/metrico.db` ✅
+- App публикует порт `127.0.0.1:3000` для host nginx ✅
+- SPA обновлён из Docker volume в `/var/www/metrico` ✅
+- CI/CD обновлён: deploy.yml копирует SPA на хост вместо попытки запустить Docker nginx ✅
 
-**Следствия:**
-- Cookies без флага `Secure` (NODE_ENV=development)
-- CORS заблокирован для `metrico360.ru`  
-- JWT_REFRESH_SECRET может отличаться
+### 🟡 OAuth-провайдеры — частично настроены
 
-**Команда исправления (требует одобрения):**
-```bash
-cd /opt/metrico
-git pull
-docker compose down
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d
-```
+В `.env.production` на сервере:
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — ✅ есть
+- `YANDEX_CLIENT_ID` / `YANDEX_CLIENT_SECRET` — ✅ есть  
+- `VK_CLIENT_ID` / `VK_CLIENT_SECRET` — ❌ отсутствуют (нужно создать VK App)
 
-### 🟡 OAuth-провайдеры не настроены на проде
-
-В `.env.production` на сервере отсутствуют:
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
-- `YANDEX_CLIENT_ID` / `YANDEX_CLIENT_SECRET`  
-- `VK_CLIENT_ID` / `VK_CLIENT_SECRET` (новые)
-
-Кнопки OAuth на login-странице ведут на `/api/auth/google` и т.д., но стратегии инициализированы с `disabled` плейсхолдерами.
+VK OAuth: стратегия инициализируется с `disabled` плейсхолдером и не активна.
 
 ---
 
@@ -124,7 +117,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d
 | Health check + автоотрат | ✅ |
 | Telegram-уведомление о деплое | ✅ |
 
-> ⚠️ `deploy.yml` деплоит с `docker-compose.yml` (dev). Нужно переключить на `docker-compose.prod.yml`.
+> ✅ `deploy.yml` деплоит через `docker-compose.prod.yml`, копирует SPA в `/var/www/metrico`.
 
 ---
 
