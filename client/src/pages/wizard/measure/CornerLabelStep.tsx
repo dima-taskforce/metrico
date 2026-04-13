@@ -5,7 +5,7 @@ import { sketchApi } from '../../../api/sketch';
 import { Button } from '../../../components/ui/Button';
 import { MeasurementHint } from '../../../components/MeasurementHint';
 import type { RoomShape } from '../../../types/api';
-import type { SketchData, SketchNode } from '../../../types/sketch';
+import type { SketchNode } from '../../../types/sketch';
 
 // ─── Fallback hardcoded shapes ───────────────────────────────────────────────
 
@@ -167,9 +167,8 @@ export function CornerLabelStep() {
       setLoadingSketch(false);
       return;
     }
-    sketchApi.get(projectId).then((json) => {
-      if (!json) { setLoadingSketch(false); return; }
-      const data: SketchData = JSON.parse(json);
+    sketchApi.get(projectId).then((data) => {
+      if (!data) { setLoadingSketch(false); return; }
       const sketchRoom =
         data.rooms.find((r) => r.roomId === currentRoom.id) ??
         data.rooms.find((r) => r.label === currentRoom.name) ??

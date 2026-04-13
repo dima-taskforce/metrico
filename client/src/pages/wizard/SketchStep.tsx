@@ -46,8 +46,8 @@ export function SketchStep() {
     setStatus('loading');
     sketchApi
       .get(projectId)
-      .then((json) => {
-        if (json) store.loadSketch(JSON.parse(json));
+      .then((data) => {
+        if (data) store.loadSketch(data);
         setStatus('idle');
       })
       .catch(() => setStatus('idle'));

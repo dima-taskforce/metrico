@@ -1,8 +1,13 @@
 import { api } from './client';
+import type { SketchData } from '../types/sketch';
 
 export const sketchApi = {
-  get: (projectId: string) =>
-    api.get<string | null>(`/projects/${projectId}/sketch`),
+  get: async (projectId: string): Promise<SketchData | null> => {
+    const raw = await api.get<string | SketchData | null>(`/projects/${projectId}/sketch`);
+    if (!raw) return null;
+    if (typeof raw === 'string') return JSON.parse(raw) as SketchData;
+    return raw as SketchData;
+  },
 
   save: (projectId: string, sketchJson: string) =>
     api.put<{ id: string }>(`/projects/${projectId}/sketch`, { sketchJson }),
