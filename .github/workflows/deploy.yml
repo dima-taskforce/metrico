@@ -139,8 +139,14 @@ jobs:
             # ── Build client SPA ──
             IMAGE_TAG="$IMAGE_TAG" docker compose -f docker-compose.prod.yml run --rm client-builder
 
-            # ── Bring up app + nginx ──
-            IMAGE_TAG="$IMAGE_TAG" docker compose -f docker-compose.prod.yml up -d --no-deps app nginx
+            # ── Copy SPA to host nginx web root ──
+            docker run --rm \
+              -v metrico_client_dist:/src:ro \
+              -v /var/www/metrico:/dst \
+              alpine sh -c "rm -rf /dst/* && cp -rp /src/. /dst/ && echo 'SPA copied'"
+
+            # ── Bring up app (host nginx serves SSL/static) ──
+            IMAGE_TAG="$IMAGE_TAG" docker compose -f docker-compose.prod.yml up -d --no-deps app
 
             # ── Wait for healthy (max 30s) ──
             echo "Waiting for health..."
