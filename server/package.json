@@ -10,7 +10,7 @@
     "prisma:generate": "prisma generate",
     "seed": "ts-node --project tsconfig.json -e \"require('tsconfig-paths/register')\" ../../seed/seed.ts",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests",
+    "test": "jest --passWithNoTests --forceExit",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config test/jest-e2e.json"
