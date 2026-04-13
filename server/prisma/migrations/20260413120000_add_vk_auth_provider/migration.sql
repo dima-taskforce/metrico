@@ -1,0 +1,3 @@
+-- AddValueToEnum: AuthProvider
+-- SQLite stores enums as TEXT, so no DDL change is needed.
+-- Prisma tracks the schema update in migration history.

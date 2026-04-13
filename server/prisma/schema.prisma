@@ -18,6 +18,7 @@ enum AuthProvider {
   LOCAL
   GOOGLE
   YANDEX
+  VK
 }
 
 enum ObjectType {

@@ -175,7 +175,7 @@ export class AuthService {
 
   async validateOAuthUser(
     email: string,
-    provider: 'GOOGLE' | 'YANDEX',
+    provider: 'GOOGLE' | 'YANDEX' | 'VK',
     name?: string,
   ): Promise<{ id: string; email: string }> {
     const existing = await this.prisma.user.findUnique({ where: { email } });

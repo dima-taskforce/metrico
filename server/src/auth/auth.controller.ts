@@ -18,6 +18,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { YandexAuthGuard } from './guards/yandex-auth.guard';
+import { VkAuthGuard } from './guards/vk-auth.guard';
 import { CurrentUser, JwtPayload } from './decorators/current-user.decorator';
 
 const COOKIE_OPTIONS = {
@@ -123,6 +124,28 @@ export class AuthController {
   @Get('yandex/callback')
   @UseGuards(YandexAuthGuard)
   async yandexCallback(
+    @Req() req: Request & { user?: { id: string; email: string } },
+    @Res() res: Response,
+  ) {
+    const oauthUser = req.user!;
+    const { accessToken, refreshToken } = await this.authService.issueTokensPublic(
+      oauthUser.id,
+      oauthUser.email,
+    );
+    this.setTokenCookies(res, accessToken, refreshToken);
+    const clientUrl = process.env['CLIENT_URL'] ?? 'http://localhost:5173';
+    res.redirect(`${clientUrl}/dashboard`);
+  }
+
+  @Get('vk')
+  @UseGuards(VkAuthGuard)
+  vkLogin() {
+    // Passport redirects to VK — no body needed
+  }
+
+  @Get('vk/callback')
+  @UseGuards(VkAuthGuard)
+  async vkCallback(
     @Req() req: Request & { user?: { id: string; email: string } },
     @Res() res: Response,
   ) {

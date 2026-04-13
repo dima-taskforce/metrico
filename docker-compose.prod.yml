@@ -23,6 +23,9 @@ services:
       YANDEX_CLIENT_ID: ${YANDEX_CLIENT_ID}
       YANDEX_CLIENT_SECRET: ${YANDEX_CLIENT_SECRET}
       YANDEX_CALLBACK_URL: https://metrico360.ru/api/auth/yandex/callback
+      VK_CLIENT_ID: ${VK_CLIENT_ID:-}
+      VK_CLIENT_SECRET: ${VK_CLIENT_SECRET:-}
+      VK_CALLBACK_URL: https://metrico360.ru/api/auth/vk/callback
     volumes:
       - data:/app/data
     networks:
